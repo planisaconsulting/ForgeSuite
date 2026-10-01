@@ -853,7 +853,7 @@ $router->post('/quotes/{id}/configure/preview', static function (string $id): vo
 
 $router->get('/admin/portal', static function (): void {
     (new PortalAdminController())->index();
-}, true, 'portal.manage');
+}, true, 'portal.access_manage');
 $router->post('/admin/portal', static function (): void {
     (new PortalAdminController())->store();
 }, true, true, 'portal.access_manage');

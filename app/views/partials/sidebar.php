@@ -70,7 +70,7 @@ $groups = [
         ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],
         ['users', 'Users', '/users', 'fa-user-gear', 'users.manage'],
         ['roles', 'Roles', '/admin/roles', 'fa-user-shield', 'users.manage'],
-        ['portal', 'Portal access', '/admin/portal', 'fa-id-card', 'portal.manage'],
+        ['portal', 'Portal access', '/admin/portal', 'fa-id-card', 'portal.access_manage'],
         ['notifications', 'Notifications', '/notifications', 'fa-bell', null],
         ['automations', 'Automations', '/admin/automations', 'fa-robot', 'automations.view'],
         ['audit', 'Audit log', '/admin/audit', 'fa-list-check', 'audit.view'],
