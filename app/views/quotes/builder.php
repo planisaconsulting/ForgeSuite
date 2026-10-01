@@ -141,8 +141,12 @@
     </form>
 </section>
 
+<div class="sf-action-row mb-3">
+    <a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $quote['id'] . '/configure')) ?>">Add configured sign</a>
+    <a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $quote['id'] . '/configure')) ?>">Add from template</a>
+</div>
 <section class="sf-panel sf-form mb-3">
-    <div class="sf-panel-head"><h2>Add a product</h2></div>
+    <div class="sf-panel-head"><h2>Add a standard product</h2></div>
     <form method="post" action="<?= e(url('/quotes/' . $quote['id'] . '/lines')) ?>" id="line-form">
         <?= csrf_field() ?>
         <input type="hidden" name="version_number" value="<?= e((string) $quote['version_number']) ?>">

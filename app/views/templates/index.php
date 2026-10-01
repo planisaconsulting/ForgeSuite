@@ -1,0 +1,3 @@
+<?php require base_path('app/views/partials/flashes.php'); ?>
+<div class="sf-page-head sf-page-head-row"><div><h1>Signage templates</h1><p class="sf-muted mb-0">Start a quotation from a common sign.</p></div><?php if ($canManage): ?><a class="btn btn-sf" href="<?= e(url('/templates/new')) ?>">New template</a><?php endif; ?></div>
+<section class="sf-panel"><ul class="sf-feed"><?php foreach ($rows as $row): ?><li><a href="<?= e(url('/templates/' . $row['id'] . '/edit')) ?>"><?= e((string) $row['name']) ?></a><small><?= e((string) ($row['category'] ?? '')) ?> · <?= e((string) ($row['recipe_name'] ?? 'No recipe')) ?></small></li><?php endforeach; ?></ul><?php if ($rows === []): ?><div class="sf-empty"><p>No templates yet.</p></div><?php endif; ?></section>

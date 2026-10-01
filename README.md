@@ -1,6 +1,6 @@
 # Sign-Forge Management System
 
-Staff application for **Sign-Forge Signs**. Phase 1 is the foundation: sign-in, company settings, customers, the catalogue, and the pricing engine. Phase 2 adds opportunities and quotations. Phase 3 runs the job after an accepted quote: artwork, production, materials actually used, labour, installation, and job costing. Phase 4 is the stock ledger, rolls, sheets, offcuts, and purchasing. Invoices and payments are not built yet.
+Staff application for **Sign-Forge Signs**. Phases 1 to 6 cover customers, quotations, jobs, stock, invoices, and management reports. Phase 7 adds site surveys, signage recipes, and a customer portal at `/portal`.
 
 The application name in the interface is Sign-Forge Management System. The company name (Sign-Forge Signs) comes from settings and can be changed without editing code.
 
@@ -83,11 +83,11 @@ The browser can show a live preview, but the preview is the server's answer. A p
 
 ## What is deliberately not in the database yet
 
-Invoices, deposits as receipts, payments, credit notes, customer statements, and recipes. Quotations, jobs, stock movements, and purchase orders are stored.
+Quotations, jobs, stock movements, purchase orders, invoices, payments, credit notes, and statements are stored. A signage recipe is a separate bill of materials. It points at material, labour, and hardware products. A finished product is the sign the customer buys. It is not the same row as the board or vinyl it is made from.
 
 There is no `products.stock_quantity` column. On hand is the sum of signed `stock_movements` rows. A product is tracked only when `inventory_method` is not `NONE`.
 
-A recipe such as a printed Chromadek sign will point at existing products (board, vinyl, laminate, labour). Product types are already material, component, service, labour, and consumable so that recipe does not need a new kind of catalogue row.
+Product types are material, component, service, labour, consumable, and finished product. Stock and buy prices stay on the material rows. The recipe calculates how much of each one a configured sign needs.
 
 `products.supplier_id` is the preferred supplier. `supplier_products` holds extra supplier SKUs and buy prices without replacing that column.
 
@@ -168,6 +168,7 @@ php tests/finance_math.php
 php tests/finance_flow.php
 php tests/reporting.php
 php tests/reporting_flow.php
+php tests/phase7.php
 php tests/acceptance.php http://127.0.0.1:8741
 ```
 
@@ -314,7 +315,7 @@ Scheduled work is `php cron/run.php` from the command line. On Xneelo, schedule 
 
 Backups are created from Administration → Backups and stored in `storage/backups`, which the web server does not serve. Download is limited to a user with `system.backup`. Restore is a manual import of that SQL file after you have a newer successful backup. There is no restore button.
 
-The installable app caches only the CSS and JavaScript shell. Reports, invoices, customers, and sign-in responses are not cached.
+The installable app caches only the CSS and JavaScript shell. Reports, invoices, customers, the portal, site surveys, and sign-in responses are not cached.
 
 Application version is `App\Version::NUMBER`.
 
@@ -323,6 +324,28 @@ Application version is `App\Version::NUMBER`.
 Back up the database first. Then import `database/migrations/006_reporting_automation.sql` once. It adds reporting support tables, the Management role, and report permissions. It does not copy invoices or jobs into another ledger. Do not import `schema.sql` on that database.
 
 A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `006` on a database created from the current `schema.sql`.
+
+## Phase 7 surveys, recipes, and the portal
+
+A site survey can start from a customer, an opportunity, a quotation, a job, or on its own. The number is `SFS-2026-0001` (`survey_prefix`). Measurements and photos stay on the survey. A later quotation can be linked without replacing those records. The survey form is built for a phone: large fields, a camera file input, and short sections. The internal PDF lists the site, the measurements, the notes, and the photo captions. It does not embed the image files.
+
+A recipe describes how a finished sign is made. Quantities come from a restricted formula. The formula may use `W`, `H`, `L`, `D`, `Q`, `AREA_M2`, and `PERIMETER_M`, plus the recipe's own numeric inputs. `AREA_M2` is the face area of one sign. Multiply by `Q` when the component is for the whole line. Allowed functions are `CEIL`, `FLOOR`, `ROUND`, `MAX`, `MIN`, and `ABS`. The parser does not call `eval()` and it rejects PHP, SQL, and shell text. Millimetres become metres, and minutes become hours, in `UnitConversionService`.
+
+A printed ACM sign of 2400 mm by 1200 mm has a face of 2.88 m². Two of them need 5.76 m² of board before waste. Waste still comes from `WasteCalculationService`. The selling price of the assembled cost goes through `PricingService`, so markup is not calculated a second way. Roll yield still uses `MaterialConsumptionService`. A sheet count is a simple rectangular fit, and the user can override it. It is not a nesting layout. Vehicle graphics use a measured area. The recipe does not guess a vehicle's surface.
+
+Saving a recipe writes a version. A quotation stores that version, the inputs, the component quantities, the cost, and the production route. Editing the recipe later does not change the quotation. Converting the accepted quotation builds the job item, the material requirements, the expected labour, and the production stages from that snapshot. The current recipe is not read again. Pack size can raise the purchase quantity above the job quantity. Suggested stock, offcuts, and rolls are shown on the job. Nothing is reserved or consumed until someone does that from the existing stock actions.
+
+The customer portal is `/portal`. It uses portal users, not staff accounts. A magic link stores only the hash of a random token, expires, and a login link works once. Every portal query uses the customer id from the session. Internal cost, markup, profit, suppliers, waste, and internal notes are not on those pages. Quote acceptance and artwork approval need an unticked confirmation, store the statement text, and notify the assigned person. A change request does not edit the quote or replace the artwork file. The next artwork upload is a new revision. Customer job status comes from `portal_status_map`. Quality-control failures are not shown as customer status. Uploaded files use the same type checks as staff uploads and are stored outside the public folder. Email templates exist and stay inactive until a sender is configured. WhatsApp is a `wa.me` link with text to copy. It is not a WhatsApp Business connection.
+
+`php tests/phase7.php` checks the formula engine, the 2.88 m² / 5.76 m² example, recipe versions on old and new quotations, job generation from the snapshot, stock suggestions that do not consume stock, a survey linked to a later quote, portal access between two customers, quote acceptance, artwork approval and change requests, and rejected uploads.
+
+## Upgrading a Phase 6 database
+
+Back up the database first. Export it from the host panel and keep that file off the server. Confirm the export contains `users`, `quotes`, `jobs`, and `invoices` before you change anything.
+
+Then import `database/migrations/007_signage_automation_portal.sql` once. It adds surveys, recipes, portal access, and the new permissions. Existing attachments stay internal. Existing quotations are not recalculated. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `007` on a database created from the current `schema.sql`.
 
 ## Cron on Xneelo
 

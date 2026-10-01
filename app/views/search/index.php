@@ -121,6 +121,27 @@
             <?php endif; ?>
         </section>
     <?php endif; ?>
+    <?php if (!empty($showSurveys)): ?>
+        <section class="sf-panel mb-3"><div class="sf-panel-head"><h2>Site surveys</h2></div>
+            <?php if ($surveys === []): ?><div class="sf-empty"><p>No surveys.</p></div><?php else: ?><ul class="sf-feed"><?php foreach ($surveys as $row): ?><li><a href="<?= e(url('/surveys/' . $row['id'])) ?>"><?= e((string) $row['survey_number']) ?></a><small><?= e((string) $row['site_name']) ?></small></li><?php endforeach; ?></ul><?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showRecipes)): ?>
+        <section class="sf-panel mb-3"><div class="sf-panel-head"><h2>Recipes</h2></div>
+            <?php if ($recipes === []): ?><div class="sf-empty"><p>No recipes.</p></div><?php else: ?><ul class="sf-feed"><?php foreach ($recipes as $row): ?><li><a href="<?= e(url('/recipes/' . $row['id'] . '/edit')) ?>"><?= e((string) $row['name']) ?></a><small><?= e((string) $row['code']) ?></small></li><?php endforeach; ?></ul><?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showPortal)): ?>
+        <section class="sf-panel mb-3"><div class="sf-panel-head"><h2>Portal contacts</h2></div>
+            <?php if ($portalUsers === []): ?><div class="sf-empty"><p>No portal contacts.</p></div><?php else: ?><ul class="sf-feed"><?php foreach ($portalUsers as $row): ?><li><a href="<?= e(url('/admin/portal')) ?>"><?= e((string) $row['email']) ?></a><small><?= e((string) ($row['company_name'] ?? '')) ?></small></li><?php endforeach; ?></ul><?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showTemplates)): ?>
+        <section class="sf-panel mb-3"><div class="sf-panel-head"><h2>Signage templates</h2></div>
+            <?php $matched = array_values(array_filter($templates, static fn (array $row): bool => $term === '' || stripos((string) $row['name'], $term) !== false || stripos((string) $row['code'], $term) !== false)); ?>
+            <?php if ($matched === []): ?><div class="sf-empty"><p>No templates.</p></div><?php else: ?><ul class="sf-feed"><?php foreach ($matched as $row): ?><li><a href="<?= e(url('/templates/' . $row['id'] . '/edit')) ?>"><?= e((string) $row['name']) ?></a></li><?php endforeach; ?></ul><?php endif; ?>
+        </section>
+    <?php endif; ?>
     <?php if ($showSuppliers): ?>
         <section class="sf-panel mb-3">
             <div class="sf-panel-head"><h2>Suppliers</h2></div>

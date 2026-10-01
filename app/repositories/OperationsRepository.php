@@ -364,13 +364,40 @@ final class OperationsRepository extends Repository
         $this->run(
             'INSERT INTO job_material_requirements (
                 job_id, job_item_id, product_id, required_quantity, unit, calculated_quantity,
-                manual_adjustment, final_required_quantity, source, notes, created_by
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                manual_adjustment, final_required_quantity, purchase_quantity, pack_size, source, notes, created_by
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $data['job_id'], $data['job_item_id'], $data['product_id'], $data['required_quantity'],
                 $data['unit'], $data['calculated_quantity'], $data['manual_adjustment'],
-                $data['final_required_quantity'], $data['source'], $data['notes'], $data['created_by'],
+                $data['final_required_quantity'], $data['purchase_quantity'] ?? null, $data['pack_size'] ?? null,
+                $data['source'], $data['notes'], $data['created_by'],
             ]
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function insertExpectedLabour(array $data): void
+    {
+        $this->run(
+            'INSERT INTO job_expected_labour (job_id, job_item_id, description, expected_minutes, hourly_cost_snapshot, source)
+             VALUES (?, ?, ?, ?, ?, \'RECIPE\')',
+            [
+                $data['job_id'], $data['job_item_id'], $data['description'],
+                $data['expected_minutes'], $data['hourly_cost_snapshot'],
+            ]
+        );
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function expectedLabour(int $jobId): array
+    {
+        return $this->rows(
+            'SELECT * FROM job_expected_labour WHERE job_id = ? ORDER BY id',
+            [$jobId]
         );
     }
 

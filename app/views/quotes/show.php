@@ -14,6 +14,7 @@
         <?php endif; ?>
         <a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $quote['id'] . '/pdf' . (!empty($historical) ? '?revision=' . (int) $revisionNumber : ''))) ?>">PDF</a>
         <a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $quote['id'] . '/print' . (!empty($historical) ? '?revision=' . (int) $revisionNumber : ''))) ?>">Print</a>
+        <?php if (can('site_surveys.create')): ?><a class="btn btn-outline-light" href="<?= e(url('/surveys/new?customer_id=' . $quote['customer_id'] . '&quote_id=' . $quote['id'])) ?>">Site survey</a><?php endif; ?>
         <?php if (empty($historical) && $canManage): ?>
             <a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $quote['id'] . '/duplicate')) ?>">Duplicate</a>
         <?php endif; ?>

@@ -153,14 +153,26 @@ final class JobController
                     ];
                 }
                 $data['coverage'] = $coverage;
+                $hints = [];
+                $matcher = new \App\Services\RecipeStockMatcher();
+                foreach ($data['requirements'] as $requirement) {
+                    $productId = (int) ($requirement['product_id'] ?? 0);
+                    if ($productId < 1) {
+                        continue;
+                    }
+                    $hints[$productId] = $matcher->suggest($productId, (string) ($requirement['final_required_quantity'] ?? '0'));
+                }
+                $data['stockHints'] = $hints;
             } else {
                 $data['locations'] = [];
                 $data['reservations'] = [];
                 $data['openItems'] = [];
                 $data['jobOrders'] = [];
                 $data['coverage'] = [];
+                $data['stockHints'] = [];
             }
         } elseif ($tab === 'labour') {
+            $data['expectedLabour'] = $ops->expectedLabour($jobId);
             $entries = $ops->timeEntries($jobId);
             if (!can('time.view_all') && !can('costing.view')) {
                 $entries = array_values(array_filter(

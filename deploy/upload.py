@@ -25,7 +25,7 @@ from pathlib import Path
 import paramiko
 
 ROOT = Path(__file__).resolve().parent.parent
-SKIP_DIRS = {".git"}
+SKIP_DIRS = {".git", "backups"}
 SKIP_FILES = {".DS_Store"}
 
 

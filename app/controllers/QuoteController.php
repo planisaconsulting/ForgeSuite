@@ -17,10 +17,12 @@ use App\Repositories\JobRepository;
 use App\Repositories\PricingLevelRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\QuoteRepository;
+use App\Repositories\SiteSurveyRepository;
 use App\Repositories\UserRepository;
 use App\Services\QuoteConflictException;
 use App\Services\QuotePdf;
 use App\Services\QuoteService;
+use App\Services\SiteSurveyService;
 use App\Services\QuoteTotals;
 use App\Services\SettingsService;
 
@@ -55,9 +57,18 @@ final class QuoteController
     {
         $customerId = (int) ($_GET['customer_id'] ?? 0);
         $opportunityId = (int) ($_GET['opportunity_id'] ?? 0);
+        $surveyId = (int) ($_GET['survey_id'] ?? 0);
+        $survey = $surveyId > 0 ? (new SiteSurveyRepository())->find($surveyId) : null;
+        if ($survey !== null) {
+            $customerId = (int) $survey['customer_id'];
+            if ($opportunityId < 1) {
+                $opportunityId = (int) ($survey['opportunity_id'] ?? 0);
+            }
+        }
         $this->form([
             'customer_id' => $customerId,
             'opportunity_id' => $opportunityId,
+            'survey_id' => $survey !== null ? (int) $survey['id'] : 0,
             'quote_date' => date('Y-m-d'),
             'vat_mode' => 'EXCLUSIVE',
             'assigned_to' => (int) (auth_user()['id'] ?? 0),
@@ -71,6 +82,14 @@ final class QuoteController
             $this->form($_POST, $result['errors']);
 
             return;
+        }
+        $surveyId = (int) ($_POST['survey_id'] ?? 0);
+        if ($surveyId > 0) {
+            $survey = (new SiteSurveyRepository())->find($surveyId);
+            $quote = (new QuoteRepository())->find((int) $result['id']);
+            if ($survey !== null && $quote !== null && (int) $survey['customer_id'] === (int) $quote['customer_id']) {
+                (new SiteSurveyService())->linkQuote($surveyId, (int) $result['id']);
+            }
         }
         flash('success', 'Quotation created. Add the lines next.');
         redirect('/quotes/' . $result['id'] . '/edit');

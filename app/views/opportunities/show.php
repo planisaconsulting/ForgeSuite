@@ -9,6 +9,7 @@
         <div class="sf-action-row">
             <a class="btn btn-outline-light" href="<?= e(url('/opportunities/' . $opportunity['id'] . '/edit')) ?>">Edit</a>
             <?php if ($canQuote): ?><a class="btn btn-sf" href="<?= e(url('/quotes/new?customer_id=' . $opportunity['customer_id'] . '&opportunity_id=' . $opportunity['id'])) ?>">Create quote</a><?php endif; ?>
+            <?php if (can('site_surveys.create')): ?><a class="btn btn-outline-light" href="<?= e(url('/surveys/new?customer_id=' . $opportunity['customer_id'] . '&opportunity_id=' . $opportunity['id'])) ?>">Site survey</a><?php endif; ?>
         </div>
     <?php endif; ?>
 </div>

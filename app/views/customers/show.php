@@ -279,6 +279,7 @@ $activityValue = static function (string $key, string $default = '') use ($activ
                 <?php endforeach; ?>
             </ul>
             <?php if (!empty($canQuote)): ?><div class="p-3"><a href="<?= e(url('/quotes/new?customer_id=' . $customer['id'])) ?>">New quotation</a></div><?php endif; ?>
+            <?php if (can('site_surveys.create')): ?><div class="p-3 pt-0"><a href="<?= e(url('/surveys/new?customer_id=' . $customer['id'])) ?>">New site survey</a></div><?php endif; ?>
         </section>
     </div>
     <div class="col-12 col-lg-4">

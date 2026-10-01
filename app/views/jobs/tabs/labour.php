@@ -1,3 +1,8 @@
+<?php if (!empty($expectedLabour)): ?>
+<section class="sf-panel mb-3"><div class="sf-panel-head"><h2>Expected from the recipe</h2></div>
+    <ul class="sf-feed"><?php foreach ($expectedLabour as $row): ?><li><?= e((string) $row['description']) ?><small><?= e((string) $row['expected_minutes']) ?> minutes</small></li><?php endforeach; ?></ul>
+</section>
+<?php endif; ?>
 <?php if (can('time.record')): ?>
 <section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Add time</h2></div>

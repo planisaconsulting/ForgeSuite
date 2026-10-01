@@ -13,6 +13,7 @@
         <a class="btn btn-outline-light" href="<?= e(url('/jobs/' . $job['id'] . '/card')) ?>" target="_blank" rel="noopener">Print job card</a>
         <a class="btn btn-outline-light" href="<?= e(url('/jobs/' . $job['id'] . '/card.pdf')) ?>">Download job card PDF</a>
         <a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $job['quote_id'])) ?>">View source quote</a>
+        <?php if (can('site_surveys.create')): ?><a class="btn btn-outline-light" href="<?= e(url('/surveys/new?customer_id=' . $job['customer_id'] . '&job_id=' . $job['id'] . (!empty($job['quote_id']) ? '&quote_id=' . (int) $job['quote_id'] : ''))) ?>">Site survey</a><?php endif; ?>
     </div>
 </div>
 <?php if ((int) ($job['account_on_hold'] ?? 0) === 1): ?>

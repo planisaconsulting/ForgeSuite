@@ -352,6 +352,23 @@ final class InventoryRepository extends Repository
     }
 
     /**
+     * Rolls that still have length. Candidates only. Nothing is consumed.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function rollsForProduct(int $productId): array
+    {
+        return $this->rows(
+            "SELECT i.*, l.name AS location_name
+             FROM inventory_items i
+             INNER JOIN stock_locations l ON l.id = i.stock_location_id
+             WHERE i.product_id = ? AND i.inventory_type = 'ROLL' AND i.status = 'AVAILABLE' AND i.remaining_quantity > 0
+             ORDER BY i.remaining_quantity DESC",
+            [$productId]
+        );
+    }
+
+    /**
      * @param array<string, mixed> $data
      */
     public function insertReservation(array $data): int

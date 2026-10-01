@@ -80,6 +80,11 @@ final class NumberingService
         return $this->next('batch', 'batch_prefix', 'BAT');
     }
 
+    public function survey(): string
+    {
+        return $this->next('site_survey', 'survey_prefix', 'SFS');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

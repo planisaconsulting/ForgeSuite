@@ -170,6 +170,19 @@ $reservations = $reservations ?? [];
         </table>
     </div>
 </section>
+<?php if (!empty($stockHints)): ?>
+<section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Possible stock</h2></div>
+    <div class="p-3">
+        <p class="sf-muted">These are candidates. Nothing is reserved until you confirm.</p>
+        <?php foreach ($stockHints as $productId => $hint): ?>
+            <p><strong>Product <?= e((string) $productId) ?></strong> required <?= e((string) $hint['required']) ?> · available <?= e((string) $hint['available']) ?> · reserved <?= e((string) $hint['reserved']) ?> · shortage <?= e((string) $hint['shortage']) ?></p>
+            <?php if ($hint['offcuts'] !== []): ?><p>Suitable offcut available: <?php foreach (array_slice($hint['offcuts'], 0, 3) as $offcut): ?><?= e((string) $offcut['inventory_code']) ?> <?= e((string) ($offcut['width_mm'] ?? '')) ?>×<?= e((string) ($offcut['height_mm'] ?? '')) ?> <?php endforeach; ?></p><?php endif; ?>
+            <?php if ($hint['rolls'] !== []): ?><p>Rolls: <?php foreach (array_slice($hint['rolls'], 0, 3) as $roll): ?><?= e((string) $roll['inventory_code']) ?> remaining <?= e((string) $roll['remaining_quantity']) ?> at <?= e((string) ($roll['location_name'] ?? '')) ?> <?php endforeach; ?></p><?php endif; ?>
+        <?php endforeach; ?>
+    </div>
+</section>
+<?php endif; ?>
 <section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Actual usage</h2></div>
     <div class="table-responsive">

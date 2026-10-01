@@ -40,6 +40,11 @@ use App\Controllers\SearchController;
 use App\Controllers\SettingsController;
 use App\Controllers\SupplierController;
 use App\Controllers\UserController;
+use App\Controllers\PortalAdminController;
+use App\Controllers\PortalController;
+use App\Controllers\RecipeController;
+use App\Controllers\SiteSurveyController;
+use App\Controllers\TemplateController;
 
 $router->get('/login', static function (): void {
     (new AuthController())->showLogin();
@@ -763,6 +768,168 @@ $router->post('/quotes/{id}/follow-up', static function (string $id): void {
 $router->post('/customers/{id}/communications', static function (string $id): void {
     (new CustomerController())->storeCommunication($id);
 }, true, true, 'activities.manage');
+
+$router->get('/surveys', static function (): void {
+    (new SiteSurveyController())->index();
+}, true, 'site_surveys.view');
+$router->get('/surveys/new', static function (): void {
+    (new SiteSurveyController())->create();
+}, true, 'site_surveys.create');
+$router->post('/surveys', static function (): void {
+    (new SiteSurveyController())->store();
+}, true, true, 'site_surveys.create');
+$router->get('/surveys/{id}', static function (string $id): void {
+    (new SiteSurveyController())->show($id);
+}, true, 'site_surveys.view');
+$router->get('/surveys/{id}/edit', static function (string $id): void {
+    (new SiteSurveyController())->edit($id);
+}, true, 'site_surveys.edit');
+$router->post('/surveys/{id}', static function (string $id): void {
+    (new SiteSurveyController())->update($id);
+}, true, true, 'site_surveys.edit');
+$router->post('/surveys/{id}/measurements', static function (string $id): void {
+    (new SiteSurveyController())->measure($id);
+}, true, true, 'site_surveys.edit');
+$router->post('/surveys/{id}/photos', static function (string $id): void {
+    (new SiteSurveyController())->photo($id);
+}, true, true, 'site_surveys.edit');
+$router->get('/surveys/{id}/pdf', static function (string $id): void {
+    (new SiteSurveyController())->pdf($id);
+}, true, 'site_surveys.view');
+
+$router->get('/recipes', static function (): void {
+    (new RecipeController())->index();
+}, true, 'recipes.view');
+$router->get('/recipes/new', static function (): void {
+    (new RecipeController())->create();
+}, true, 'recipes.create');
+$router->post('/recipes', static function (): void {
+    (new RecipeController())->store();
+}, true, true, 'recipes.create');
+$router->get('/recipes/test', static function (): void {
+    (new RecipeController())->testForm();
+}, true, 'recipes.test');
+$router->post('/recipes/test', static function (): void {
+    (new RecipeController())->test();
+}, true, true, 'recipes.test');
+$router->get('/recipes/{id}/edit', static function (string $id): void {
+    (new RecipeController())->edit($id);
+}, true, 'recipes.edit');
+$router->post('/recipes/{id}', static function (string $id): void {
+    (new RecipeController())->update($id);
+}, true, true, 'recipes.edit');
+$router->post('/recipes/{id}/duplicate', static function (string $id): void {
+    (new RecipeController())->duplicate($id);
+}, true, true, 'recipes.create');
+$router->post('/recipes/{id}/deactivate', static function (string $id): void {
+    (new RecipeController())->deactivate($id);
+}, true, true, 'recipes.deactivate');
+
+$router->get('/templates', static function (): void {
+    (new TemplateController())->index();
+}, true, 'templates.view');
+$router->get('/templates/new', static function (): void {
+    (new TemplateController())->create();
+}, true, 'templates.manage');
+$router->post('/templates', static function (): void {
+    (new TemplateController())->store();
+}, true, true, 'templates.manage');
+$router->get('/templates/{id}/edit', static function (string $id): void {
+    (new TemplateController())->edit($id);
+}, true, 'templates.manage');
+$router->post('/templates/{id}', static function (string $id): void {
+    (new TemplateController())->update($id);
+}, true, true, 'templates.manage');
+
+$router->get('/quotes/{id}/configure', static function (string $id): void {
+    (new RecipeController())->configure($id);
+}, true, 'quotes.manage');
+$router->post('/quotes/{id}/configure', static function (string $id): void {
+    (new RecipeController())->addToQuote($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/configure/preview', static function (string $id): void {
+    (new RecipeController())->previewConfigure($id);
+}, true, true, 'quotes.manage');
+
+$router->get('/admin/portal', static function (): void {
+    (new PortalAdminController())->index();
+}, true, 'portal.manage');
+$router->post('/admin/portal', static function (): void {
+    (new PortalAdminController())->store();
+}, true, true, 'portal.access_manage');
+$router->post('/admin/portal/link', static function (): void {
+    (new PortalAdminController())->link();
+}, true, true, 'portal.access_manage');
+$router->post('/admin/portal/deactivate', static function (): void {
+    (new PortalAdminController())->deactivate();
+}, true, true, 'portal.access_manage');
+
+$router->get('/portal/login', static function (): void {
+    (new PortalController())->loginForm();
+}, false);
+$router->post('/portal/login', static function (): void {
+    (new PortalController())->login();
+}, false, true);
+$router->get('/portal/access/{token}', static function (string $token): void {
+    (new PortalController())->access($token);
+}, false);
+$router->post('/portal/logout', static function (): void {
+    (new PortalController())->logout();
+}, false, true);
+$router->get('/portal', static function (): void {
+    (new PortalController())->home();
+}, false);
+$router->get('/portal/quotes/{id}', static function (string $id): void {
+    (new PortalController())->quote($id);
+}, false);
+$router->get('/portal/quotes/{id}/pdf', static function (string $id): void {
+    (new PortalController())->quotePdf($id);
+}, false);
+$router->post('/portal/quotes/{id}/accept', static function (string $id): void {
+    (new PortalController())->acceptQuote($id);
+}, false, true);
+$router->post('/portal/quotes/{id}/decline', static function (string $id): void {
+    (new PortalController())->declineQuote($id);
+}, false, true);
+$router->post('/portal/quotes/{id}/changes', static function (string $id): void {
+    (new PortalController())->quoteChange($id);
+}, false, true);
+$router->get('/portal/quotes/{id}/whatsapp', static function (string $id): void {
+    (new PortalController())->whatsapp($id);
+}, false);
+$router->get('/portal/artwork/{id}', static function (string $id): void {
+    (new PortalController())->artwork($id);
+}, false);
+$router->get('/portal/artwork/{id}/file', static function (string $id): void {
+    (new PortalController())->artworkFile($id);
+}, false);
+$router->post('/portal/artwork/{id}/approve', static function (string $id): void {
+    (new PortalController())->approveArtwork($id);
+}, false, true);
+$router->post('/portal/artwork/{id}/changes', static function (string $id): void {
+    (new PortalController())->artworkChange($id);
+}, false, true);
+$router->get('/portal/jobs/{id}', static function (string $id): void {
+    (new PortalController())->job($id);
+}, false);
+$router->get('/portal/invoices/{id}', static function (string $id): void {
+    (new PortalController())->invoice($id);
+}, false);
+$router->get('/portal/invoices/{id}/pdf', static function (string $id): void {
+    (new PortalController())->invoicePdf($id);
+}, false);
+$router->get('/portal/statement', static function (): void {
+    (new PortalController())->statement();
+}, false);
+$router->post('/portal/files', static function (): void {
+    (new PortalController())->upload();
+}, false, true);
+$router->get('/portal/files/{id}', static function (string $id): void {
+    (new PortalController())->file($id);
+}, false);
+$router->post('/portal/messages', static function (): void {
+    (new PortalController())->message();
+}, false, true);
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

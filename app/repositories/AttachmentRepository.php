@@ -47,4 +47,29 @@ final class AttachmentRepository extends Repository
 
         return $this->insertId();
     }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    public function applyMeta(int $id, array $meta): void
+    {
+        $visibility = strtoupper((string) ($meta['visibility'] ?? 'INTERNAL'));
+        if (!in_array($visibility, ['INTERNAL', 'CUSTOMER_VISIBLE', 'CUSTOMER_UPLOADED'], true)) {
+            $visibility = 'INTERNAL';
+        }
+        $tag = strtoupper(preg_replace('/[^A-Z_]/', '', (string) ($meta['photo_tag'] ?? '')) ?? '');
+        $this->run(
+            'UPDATE attachments SET visibility = ?, photo_tag = ?, measurement_id = ?, portal_user_id = ?, annotation_json = ?, notes = COALESCE(?, notes)
+             WHERE id = ?',
+            [
+                $visibility,
+                $tag !== '' ? $tag : null,
+                ((int) ($meta['measurement_id'] ?? 0)) > 0 ? (int) $meta['measurement_id'] : null,
+                ((int) ($meta['portal_user_id'] ?? 0)) > 0 ? (int) $meta['portal_user_id'] : null,
+                isset($meta['annotation_json']) ? json_encode($meta['annotation_json']) : null,
+                $meta['caption'] ?? null,
+                $id,
+            ]
+        );
+    }
 }

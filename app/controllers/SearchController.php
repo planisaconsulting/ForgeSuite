@@ -10,7 +10,10 @@ use App\Repositories\InventoryRepository;
 use App\Repositories\SystemRepository;
 use App\Repositories\OpportunityRepository;
 use App\Repositories\ProductRepository;
+use App\Repositories\PortalRepository;
 use App\Repositories\QuoteRepository;
+use App\Repositories\RecipeRepository;
+use App\Repositories\SiteSurveyRepository;
 use App\Repositories\SupplierRepository;
 
 /**
@@ -62,6 +65,14 @@ final class SearchController
             'showContacts' => can('customers.view'),
             'showOrders' => can('purchasing.view'),
             'showDocuments' => can('customers.view') || can('quotes.view') || can('jobs.view'),
+            'surveys' => $term !== '' && can('site_surveys.view') ? (new SiteSurveyRepository())->search($term) : [],
+            'recipes' => $term !== '' && can('recipes.view') ? (new RecipeRepository())->search($term) : [],
+            'templates' => $term !== '' && can('templates.view') ? (new RecipeRepository())->templates(false) : [],
+            'showSurveys' => can('site_surveys.view'),
+            'showRecipes' => can('recipes.view'),
+            'showTemplates' => can('templates.view'),
+            'portalUsers' => $term !== '' && can('portal.manage') ? (new PortalRepository())->searchUsers($term) : [],
+            'showPortal' => can('portal.manage'),
         ]);
     }
 }

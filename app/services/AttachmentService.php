@@ -17,7 +17,7 @@ final class AttachmentService
     private const MAX_BYTES = 8388608;
 
     /** @var list<string> */
-    private const ENTITIES = ['customer', 'quote', 'opportunity', 'job', 'job_item', 'artwork', 'installation'];
+    private const ENTITIES = ['customer', 'quote', 'opportunity', 'job', 'job_item', 'artwork', 'installation', 'site_survey', 'invoice'];
 
     /** @var array<string, list<string>> */
     private const ALLOWED = [
@@ -47,7 +47,8 @@ final class AttachmentService
         int $userId,
         string $purpose = 'GENERAL',
         ?string $notes = null,
-        bool $requireUpload = true
+        bool $requireUpload = true,
+        ?array $meta = null
     ): array {
         if (!in_array($entityType, self::ENTITIES, true) || $entityId < 1) {
             return ['_form' => 'That record cannot take a file.'];
@@ -64,7 +65,7 @@ final class AttachmentService
         if ($purpose === '') {
             $purpose = 'GENERAL';
         }
-        Database::transaction(function () use ($entityType, $entityId, $checked, $placed, $userId, $purpose, $notes): void {
+        Database::transaction(function () use ($entityType, $entityId, $checked, $placed, $userId, $purpose, $notes, $meta): void {
             $id = $this->attachments->insert([
                 'entity_type' => $entityType,
                 'entity_id' => $entityId,
@@ -74,8 +75,11 @@ final class AttachmentService
                 'file_size' => $checked['size'],
                 'purpose' => $purpose,
                 'notes' => blank_to_null($notes),
-                'uploaded_by' => $userId,
+                'uploaded_by' => $userId > 0 ? $userId : null,
             ]);
+            if ($meta !== null) {
+                $this->attachments->applyMeta($id, $meta);
+            }
             $this->audit->record('attachment', $id, 'uploaded', null, [
                 'entity_type' => $entityType,
                 'entity_id' => $entityId,
@@ -120,7 +124,8 @@ final class AttachmentService
         }
         $original = (string) ($file['name'] ?? 'file');
         $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
-        if (!isset(self::ALLOWED[$extension]) || str_contains(strtolower($original), '.php')) {
+        $lowerName = strtolower($original);
+        if (!isset(self::ALLOWED[$extension]) || str_contains($lowerName, '.php') || str_contains($lowerName, '.phtml') || str_contains($lowerName, '.phar')) {
             $empty['errors'] = ['file' => 'Allowed files are PDF, JPG, PNG, WEBP, GIF, and TXT.'];
 
             return $empty;
@@ -168,6 +173,7 @@ final class AttachmentService
             return ['errors' => ['file' => 'The file could not be stored.']];
         }
         chmod($target, 0640);
+        $this->writePreview($target, $checked['extension']);
 
         return ['relative' => $entityType . '/' . $entityId . '/' . $stored];
     }
@@ -195,5 +201,37 @@ final class AttachmentService
             'name' => (string) $row['original_filename'],
             'mime' => (string) $row['mime_type'],
         ];
+    }
+
+    /**
+     * A smaller JPEG beside the original. The original file is left as stored.
+     */
+    private function writePreview(string $path, string $extension): void
+    {
+        if (!in_array($extension, ['jpg', 'jpeg'], true) || !function_exists('imagecreatefromjpeg')) {
+            return;
+        }
+        $size = filesize($path);
+        if ($size === false || $size < 1500000) {
+            return;
+        }
+        $image = @imagecreatefromjpeg($path);
+        if ($image === false) {
+            return;
+        }
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $max = 1600;
+        if ($width > $max) {
+            $scale = $max / $width;
+            $copy = imagescale($image, $max, (int) max(1, round($height * $scale)));
+            imagedestroy($image);
+            if ($copy === false) {
+                return;
+            }
+            $image = $copy;
+        }
+        imagejpeg($image, $path . '.preview.jpg', 75);
+        imagedestroy($image);
     }
 }

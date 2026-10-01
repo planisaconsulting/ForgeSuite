@@ -114,7 +114,21 @@ INSERT INTO permissions (code, name, module) VALUES
 ('automations.manage', 'Change automation rules', 'admin'),
 ('system.health', 'View system health', 'admin'),
 ('system.backup', 'Create and download backups', 'admin'),
-('system.logs', 'View application errors', 'admin');
+('system.logs', 'View application errors', 'admin'),
+('recipes.view', 'View signage recipes', 'automation'),
+('recipes.create', 'Create signage recipes', 'automation'),
+('recipes.edit', 'Edit signage recipes', 'automation'),
+('recipes.deactivate', 'Deactivate signage recipes', 'automation'),
+('recipes.view_cost', 'See recipe cost and margin', 'automation'),
+('recipes.test', 'Test a recipe without a quote', 'automation'),
+('templates.view', 'View signage templates', 'sales'),
+('templates.manage', 'Manage signage templates', 'sales'),
+('site_surveys.view', 'View site surveys', 'crm'),
+('site_surveys.create', 'Create site surveys', 'crm'),
+('site_surveys.edit', 'Edit site surveys', 'crm'),
+('site_surveys.complete', 'Complete site surveys', 'crm'),
+('portal.manage', 'Manage the customer portal', 'admin'),
+('portal.access_manage', 'Issue customer portal access', 'admin');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
@@ -139,7 +153,11 @@ WHERE r.code = 'SALES'
     'jobs.view', 'jobs.create', 'jobs.edit', 'installations.view', 'artwork.approve_record',
     'attachments.manage', 'inventory.view',
     'invoices.view', 'payments.view',
-    'reports.sales', 'reports.export'
+    'reports.sales', 'reports.export',
+    'recipes.view', 'recipes.test', 'recipes.view_cost',
+    'templates.view', 'templates.manage',
+    'site_surveys.view', 'site_surveys.create', 'site_surveys.edit', 'site_surveys.complete',
+    'portal.access_manage'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -151,7 +169,8 @@ WHERE r.code = 'DESIGN'
     'dashboard.view',
     'customers.view', 'activities.view',
     'products.view', 'calculator.use',
-    'jobs.view', 'artwork.upload', 'artwork.approve_record', 'production.view', 'time.record', 'attachments.manage'
+    'jobs.view', 'artwork.upload', 'artwork.approve_record', 'production.view', 'time.record', 'attachments.manage',
+    'site_surveys.view', 'recipes.view', 'templates.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -164,7 +183,8 @@ WHERE r.code = 'PRODUCTION'
     'jobs.view', 'jobs.change_status', 'production.view', 'production.update',
     'materials.view', 'materials.record_usage', 'time.record', 'attachments.manage',
     'inventory.view', 'inventory.consume', 'inventory.transfer',
-    'reports.operations'
+    'reports.operations',
+    'site_surveys.view', 'recipes.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -197,7 +217,8 @@ WHERE r.code = 'MANAGEMENT'
     'costing.view', 'finance.costing.view', 'finance.vat_report.view',
     'reports.executive', 'reports.sales', 'reports.operations', 'reports.finance',
     'reports.inventory', 'reports.profitability', 'reports.export',
-    'audit.view', 'automations.view', 'notifications.manage'
+    'audit.view', 'automations.view', 'notifications.manage',
+    'recipes.view', 'recipes.view_cost', 'recipes.test', 'templates.view', 'site_surveys.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -208,7 +229,8 @@ WHERE r.code = 'INSTALLER'
   AND p.code IN (
     'dashboard.view', 'customers.view',
     'jobs.view', 'installations.view', 'installations.complete', 'time.record', 'attachments.manage',
-    'inventory.view'
+    'inventory.view',
+    'site_surveys.view', 'site_surveys.create', 'site_surveys.edit'
   );
 
 INSERT INTO users (name, email, password_hash, role_id, active, must_change_password)
@@ -264,7 +286,12 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('large_balance_amount', '50000'),
 ('backup_keep_daily', '7'),
 ('backup_keep_weekly', '4'),
-('backup_keep_monthly', '6');
+('backup_keep_monthly', '6'),
+('survey_prefix', 'SFS'),
+('travel_rate_per_km', '0'),
+('quote_acceptance_statement', 'I accept this quotation, including the revision, total, VAT, terms, and expiry shown above.'),
+('artwork_approval_statement', 'Please check spelling, contact details, colours, dimensions and layout carefully before approving. I approve this artwork revision for production.'),
+('portal_link_hours', '72');
 
 INSERT INTO kpi_targets (kpi_code, name, target_value, comparison_type, period_type, active) VALUES
 ('TARGET_GROSS_MARGIN', 'Target gross margin %', 35, 'MINIMUM', 'MONTH', 1),
@@ -662,3 +689,45 @@ UPDATE products SET inventory_method = 'LENGTH', track_stock = 1
 WHERE sku = 'SF-ST-2525' AND inventory_method = 'NONE';
 UPDATE products SET inventory_method = 'NONE', track_stock = 0
 WHERE sku IN ('SF-LAB-DES', 'SF-LAB-INS');
+
+INSERT INTO recipe_categories (name, sort_order)
+SELECT v.name, v.sort_order FROM (
+    SELECT 'Boards' AS name, 10 AS sort_order
+    UNION ALL SELECT 'Vinyl', 20
+    UNION ALL SELECT 'Vehicle Branding', 30
+    UNION ALL SELECT 'Banners', 40
+    UNION ALL SELECT 'Fabricated Signs', 50
+    UNION ALL SELECT 'Illuminated Signs', 60
+    UNION ALL SELECT '3D Lettering', 70
+    UNION ALL SELECT 'Installation', 80
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM recipe_categories c WHERE c.name = v.name);
+
+INSERT INTO portal_status_map (internal_status, customer_label, sort_order)
+SELECT v.internal_status, v.customer_label, v.sort_order FROM (
+    SELECT 'NEW' AS internal_status, 'In preparation' AS customer_label, 10 AS sort_order
+    UNION ALL SELECT 'AWAITING_ARTWORK', 'In preparation', 20
+    UNION ALL SELECT 'AWAITING_CUSTOMER_APPROVAL', 'In preparation', 30
+    UNION ALL SELECT 'APPROVED_FOR_PRODUCTION', 'In production', 40
+    UNION ALL SELECT 'MATERIALS_REQUIRED', 'In production', 50
+    UNION ALL SELECT 'READY_FOR_PRODUCTION', 'In production', 60
+    UNION ALL SELECT 'IN_PRODUCTION', 'In production', 70
+    UNION ALL SELECT 'QUALITY_CONTROL', 'In production', 80
+    UNION ALL SELECT 'READY_FOR_INSTALLATION', 'Ready for installation', 90
+    UNION ALL SELECT 'INSTALLATION_SCHEDULED', 'Ready for installation', 100
+    UNION ALL SELECT 'INSTALLATION_IN_PROGRESS', 'Ready for installation', 110
+    UNION ALL SELECT 'READY_FOR_COLLECTION', 'Ready for collection', 120
+    UNION ALL SELECT 'COMPLETED', 'Completed', 130
+    UNION ALL SELECT 'ON_HOLD', 'On hold', 140
+    UNION ALL SELECT 'CANCELLED', 'Cancelled', 150
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM portal_status_map m WHERE m.internal_status = v.internal_status);
+
+INSERT INTO email_templates (code, name, subject, body, active)
+SELECT v.code, v.name, v.subject, v.body, 0 FROM (
+    SELECT 'QUOTE_AVAILABLE' AS code, 'Quote available' AS name, 'Your quotation is ready' AS subject, 'A quotation is available in the Sign-Forge portal. Open the link your salesperson sent you. This message is not sent until email delivery is configured.' AS body
+    UNION ALL SELECT 'ARTWORK_APPROVAL', 'Artwork approval requested', 'Please approve your artwork', 'Artwork is ready for your review in the portal. Check spelling, contact details, colours, dimensions, and layout before you approve.'
+    UNION ALL SELECT 'INVOICE_AVAILABLE', 'Invoice available', 'Your invoice is ready', 'An invoice is available in the portal, including the total, the amount paid, and the balance.'
+    UNION ALL SELECT 'INSTALLATION_SCHEDULED', 'Installation scheduled', 'Your installation is scheduled', 'An installation date is on your job in the portal.'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM email_templates t WHERE t.code = v.code);

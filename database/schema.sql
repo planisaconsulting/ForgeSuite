@@ -334,7 +334,7 @@ CREATE TABLE products (
     sku VARCHAR(64) NOT NULL,
     name VARCHAR(180) NOT NULL,
     description TEXT NULL,
-    product_type ENUM('MATERIAL', 'COMPONENT', 'SERVICE', 'LABOUR', 'CONSUMABLE') NOT NULL DEFAULT 'MATERIAL',
+    product_type ENUM('MATERIAL', 'COMPONENT', 'SERVICE', 'LABOUR', 'CONSUMABLE', 'FINISHED_PRODUCT') NOT NULL DEFAULT 'MATERIAL',
     pricing_method ENUM(
         'AREA',
         'LINEAR_METRE',
@@ -772,6 +772,11 @@ CREATE TABLE attachments (
     stored_filename VARCHAR(255) NOT NULL,
     mime_type VARCHAR(120) NOT NULL,
     purpose VARCHAR(40) NOT NULL DEFAULT 'GENERAL',
+    visibility VARCHAR(30) NOT NULL DEFAULT 'INTERNAL',
+    photo_tag VARCHAR(40) NULL,
+    measurement_id INT UNSIGNED NULL,
+    portal_user_id INT UNSIGNED NULL,
+    annotation_json JSON NULL,
     notes VARCHAR(255) NULL,
     file_size INT UNSIGNED NOT NULL,
     uploaded_by INT UNSIGNED NULL,
@@ -972,6 +977,8 @@ CREATE TABLE job_material_requirements (
     calculated_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
     manual_adjustment DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
     final_required_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    purchase_quantity DECIMAL(14,4) NULL,
+    pack_size DECIMAL(14,4) NULL,
     source VARCHAR(20) NOT NULL DEFAULT 'MANUAL',
     notes VARCHAR(255) NULL,
     created_by INT UNSIGNED NULL,
@@ -1966,4 +1973,334 @@ CREATE TABLE login_events (
     KEY idx_login_events_created (created_at),
     CONSTRAINT fk_login_events_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Phase 7: recipes, site surveys, and the customer portal.
+
+CREATE TABLE recipe_categories (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(80) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_recipe_categories_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recipes (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    category_id INT UNSIGNED NULL,
+    finished_product_id INT UNSIGNED NULL,
+    recipe_type VARCHAR(20) NOT NULL DEFAULT 'SIGNAGE',
+    pricing_method VARCHAR(20) NOT NULL DEFAULT 'MARKUP',
+    production_route_template_id INT UNSIGNED NULL,
+    active TINYINT(1) NOT NULL DEFAULT 0,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_recipes_code (code),
+    KEY idx_recipes_active (active, name),
+    CONSTRAINT fk_recipes_category FOREIGN KEY (category_id) REFERENCES recipe_categories (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_recipes_product FOREIGN KEY (finished_product_id) REFERENCES products (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_recipes_route FOREIGN KEY (production_route_template_id) REFERENCES production_route_templates (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_recipes_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recipe_inputs (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    recipe_id INT UNSIGNED NOT NULL,
+    code VARCHAR(40) NOT NULL,
+    label VARCHAR(120) NOT NULL,
+    input_type VARCHAR(20) NOT NULL DEFAULT 'NUMBER',
+    unit VARCHAR(20) NULL,
+    required TINYINT(1) NOT NULL DEFAULT 1,
+    default_value VARCHAR(120) NULL,
+    min_value VARCHAR(40) NULL,
+    max_value VARCHAR(40) NULL,
+    options_json JSON NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_recipe_inputs_code (recipe_id, code),
+    CONSTRAINT fk_recipe_inputs_recipe FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recipe_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    recipe_id INT UNSIGNED NOT NULL,
+    component_type VARCHAR(20) NOT NULL DEFAULT 'MATERIAL',
+    product_id INT UNSIGNED NULL,
+    nested_recipe_id INT UNSIGNED NULL,
+    description VARCHAR(180) NOT NULL,
+    quantity_formula VARCHAR(255) NOT NULL,
+    waste_percent_override DECIMAL(7,2) NULL,
+    unit VARCHAR(20) NOT NULL DEFAULT 'unit',
+    cost_calculation_method VARCHAR(20) NOT NULL DEFAULT 'PRODUCT',
+    rounding_rule VARCHAR(10) NOT NULL DEFAULT 'NONE',
+    pack_size DECIMAL(14,4) NULL,
+    yield_mode VARCHAR(10) NOT NULL DEFAULT 'NONE',
+    condition_json JSON NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    optional TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_recipe_items_recipe (recipe_id, sort_order),
+    CONSTRAINT fk_recipe_items_recipe FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_recipe_items_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_recipe_items_nested FOREIGN KEY (nested_recipe_id) REFERENCES recipes (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recipe_versions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    recipe_id INT UNSIGNED NOT NULL,
+    version_number INT UNSIGNED NOT NULL,
+    snapshot_json JSON NOT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_recipe_versions (recipe_id, version_number),
+    CONSTRAINT fk_recipe_versions_recipe FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_recipe_versions_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE signage_templates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    category VARCHAR(80) NULL,
+    finished_product_id INT UNSIGNED NULL,
+    recipe_id INT UNSIGNED NULL,
+    default_inputs_json JSON NULL,
+    customer_description TEXT NULL,
+    internal_description TEXT NULL,
+    notes TEXT NULL,
+    production_route_template_id INT UNSIGNED NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_signage_templates_code (code),
+    CONSTRAINT fk_signage_templates_product FOREIGN KEY (finished_product_id) REFERENCES products (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_signage_templates_recipe FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_signage_templates_route FOREIGN KEY (production_route_template_id) REFERENCES production_route_templates (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_signage_templates_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE quote_recipe_snapshots (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    quote_item_id INT UNSIGNED NOT NULL,
+    recipe_id INT UNSIGNED NULL,
+    recipe_version INT UNSIGNED NOT NULL,
+    input_snapshot_json JSON NOT NULL,
+    component_snapshot_json JSON NOT NULL,
+    cost_snapshot_json JSON NOT NULL,
+    production_route_snapshot_json JSON NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_quote_recipe_item (quote_item_id),
+    CONSTRAINT fk_quote_recipe_item FOREIGN KEY (quote_item_id) REFERENCES quote_items (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_quote_recipe_recipe FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_expected_labour (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    description VARCHAR(180) NOT NULL,
+    expected_minutes DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    hourly_cost_snapshot DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    source VARCHAR(20) NOT NULL DEFAULT 'RECIPE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_expected_labour_job (job_id),
+    CONSTRAINT fk_expected_labour_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_expected_labour_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE site_surveys (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    survey_number VARCHAR(40) NOT NULL,
+    customer_id INT UNSIGNED NOT NULL,
+    contact_id INT UNSIGNED NULL,
+    opportunity_id INT UNSIGNED NULL,
+    quote_id INT UNSIGNED NULL,
+    job_id INT UNSIGNED NULL,
+    site_name VARCHAR(180) NOT NULL,
+    address_line_1 VARCHAR(180) NULL,
+    address_line_2 VARCHAR(180) NULL,
+    city VARCHAR(80) NULL,
+    province VARCHAR(80) NULL,
+    postal_code VARCHAR(20) NULL,
+    latitude DECIMAL(10,7) NULL,
+    longitude DECIMAL(10,7) NULL,
+    site_contact_name VARCHAR(120) NULL,
+    site_contact_phone VARCHAR(40) NULL,
+    survey_date DATE NULL,
+    surveyed_by INT UNSIGNED NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    environment VARCHAR(20) NULL,
+    surface_type VARCHAR(80) NULL,
+    mounting_height_mm DECIMAL(10,2) NULL,
+    access_difficulty VARCHAR(40) NULL,
+    ladder_required TINYINT(1) NOT NULL DEFAULT 0,
+    scaffolding_required TINYINT(1) NOT NULL DEFAULT 0,
+    cherry_picker_required TINYINT(1) NOT NULL DEFAULT 0,
+    electrical_supply TINYINT(1) NOT NULL DEFAULT 0,
+    power_location VARCHAR(180) NULL,
+    height_notes TEXT NULL,
+    traffic_notes TEXT NULL,
+    special_access TEXT NULL,
+    access_notes TEXT NULL,
+    installation_notes TEXT NULL,
+    electrical_notes TEXT NULL,
+    general_notes TEXT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_site_surveys_number (survey_number),
+    KEY idx_site_surveys_customer (customer_id),
+    KEY idx_site_surveys_status (status),
+    CONSTRAINT fk_site_surveys_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_site_surveys_contact FOREIGN KEY (contact_id) REFERENCES customer_contacts (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_site_surveys_opportunity FOREIGN KEY (opportunity_id) REFERENCES sales_opportunities (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_site_surveys_quote FOREIGN KEY (quote_id) REFERENCES quotes (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_site_surveys_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_site_surveys_user FOREIGN KEY (surveyed_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_site_surveys_created FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE site_survey_measurements (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    site_survey_id INT UNSIGNED NOT NULL,
+    reference VARCHAR(80) NOT NULL,
+    measurement_type VARCHAR(40) NOT NULL DEFAULT 'OTHER',
+    width_mm DECIMAL(12,2) NULL,
+    height_mm DECIMAL(12,2) NULL,
+    depth_mm DECIMAL(12,2) NULL,
+    length_mm DECIMAL(12,2) NULL,
+    quantity DECIMAL(12,2) NOT NULL DEFAULT 1.00,
+    description VARCHAR(255) NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_survey_measurements_survey (site_survey_id),
+    CONSTRAINT fk_survey_measurements_survey FOREIGN KEY (site_survey_id) REFERENCES site_surveys (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE portal_users (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    customer_contact_id INT UNSIGNED NULL,
+    email VARCHAR(190) NOT NULL,
+    password_hash VARCHAR(255) NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    last_login_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_portal_users_email (email),
+    KEY idx_portal_users_customer (customer_id),
+    CONSTRAINT fk_portal_users_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_portal_users_contact FOREIGN KEY (customer_contact_id) REFERENCES customer_contacts (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE portal_access_tokens (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    token_hash CHAR(64) NOT NULL,
+    portal_user_id INT UNSIGNED NULL,
+    customer_id INT UNSIGNED NOT NULL,
+    purpose VARCHAR(40) NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    expires_at DATETIME NOT NULL,
+    revoked_at DATETIME NULL,
+    used_at DATETIME NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_portal_tokens_hash (token_hash),
+    KEY idx_portal_tokens_customer (customer_id, purpose),
+    CONSTRAINT fk_portal_tokens_user FOREIGN KEY (portal_user_id) REFERENCES portal_users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_portal_tokens_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE portal_actions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    portal_user_id INT UNSIGNED NULL,
+    action VARCHAR(40) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    revision_number INT UNSIGNED NULL,
+    statement_version VARCHAR(20) NULL,
+    statement_text TEXT NULL,
+    ip_address VARCHAR(45) NULL,
+    payload_json JSON NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_portal_actions_entity (entity_type, entity_id),
+    CONSTRAINT fk_portal_actions_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_portal_actions_user FOREIGN KEY (portal_user_id) REFERENCES portal_users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE portal_audit_log (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    portal_user_id INT UNSIGNED NULL,
+    customer_id INT UNSIGNED NULL,
+    event VARCHAR(40) NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    ip_address VARCHAR(45) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_portal_audit_customer (customer_id, created_at),
+    CONSTRAINT fk_portal_audit_user FOREIGN KEY (portal_user_id) REFERENCES portal_users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE portal_rate_limits (
+    bucket VARCHAR(190) NOT NULL,
+    attempts INT UNSIGNED NOT NULL DEFAULT 0,
+    window_start DATETIME NOT NULL,
+    PRIMARY KEY (bucket)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE portal_messages (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    portal_user_id INT UNSIGNED NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    body VARCHAR(2000) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_portal_messages_entity (entity_type, entity_id),
+    CONSTRAINT fk_portal_messages_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_portal_messages_user FOREIGN KEY (portal_user_id) REFERENCES portal_users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE portal_status_map (
+    internal_status VARCHAR(40) NOT NULL,
+    customer_label VARCHAR(80) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (internal_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE email_templates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    subject VARCHAR(180) NOT NULL,
+    body TEXT NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_email_templates_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE attachments
+    ADD CONSTRAINT fk_attachments_measurement FOREIGN KEY (measurement_id) REFERENCES site_survey_measurements (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    ADD CONSTRAINT fk_attachments_portal_user FOREIGN KEY (portal_user_id) REFERENCES portal_users (id) ON DELETE SET NULL ON UPDATE CASCADE;
 

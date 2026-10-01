@@ -1,6 +1,6 @@
 /**
- * App shell cache only. Reports, invoices, customers, and sign-in stay online.
- * A later phase can queue site photos. This file does not sync them.
+ * App shell cache only. Reports, invoices, customers, the portal, and
+ * site surveys stay online. This file does not sync survey photos.
  */
 const SHELL = "signforge-shell-v2";
 const FILES = [

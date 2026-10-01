@@ -134,6 +134,137 @@ final class QuoteService
     }
 
     /**
+     * Add a configured sign from a recipe. The calculation is stored on the
+     * line snapshot so a later recipe edit does not change this quotation.
+     *
+     * @param array<string, mixed> $input
+     * @return array{errors: list<string>, id: int|null}
+     */
+    public function addRecipeLine(int $quoteId, array $input, int $version, int $userId): array
+    {
+        $quote = $this->quotes->find($quoteId);
+        if ($quote === null) {
+            return ['errors' => ['That quotation was not found.'], 'id' => null];
+        }
+        $recipeId = (int) ($input['recipe_id'] ?? 0);
+        $recipes = new \App\Repositories\RecipeRepository();
+        $recipe = $recipes->find($recipeId);
+        if ($recipe === null || (int) $recipe['active'] !== 1) {
+            return ['errors' => ['Choose an active recipe.'], 'id' => null];
+        }
+        $calc = (new RecipeCalculationService())->calculate(
+            $recipe,
+            $recipes->inputs($recipeId),
+            $recipes->items($recipeId),
+            $input,
+            $this->level($quote)
+        );
+        if (!$calc['ok']) {
+            return ['errors' => [(string) $calc['error']], 'id' => null];
+        }
+        $route = (new RecipeService())->route((int) ($recipe['production_route_template_id'] ?? 0));
+        $calc['production_route'] = $route;
+        $line = $this->recipeQuoteLine($recipe, $calc, $input, $this->level($quote));
+        $stored = $this->storeLine($quoteId, $version, $userId, static function () use ($line): array {
+            return ['errors' => [], 'line' => $line];
+        }, 'Configured sign added');
+        if ($stored['id'] !== null) {
+            $recipes->insertSnapshot((int) $stored['id'], [
+                'recipe_id' => $recipeId,
+                'recipe_version' => (int) $recipe['version_number'],
+                'inputs' => $calc['inputs'],
+                'components' => $calc['components'],
+                'cost' => [
+                    'total_cost' => $calc['total_cost'],
+                    'selling_price' => $calc['selling_price'],
+                    'gross_profit' => $calc['gross_profit'],
+                    'gross_margin' => $calc['gross_margin'],
+                    'markup_percent' => $calc['markup_percent'],
+                    'face_area_each' => $calc['face_area_each'],
+                    'face_area_total' => $calc['face_area_total'],
+                ],
+                'route' => $route,
+            ]);
+        }
+
+        return $stored;
+    }
+
+    /**
+     * @param array<string, mixed> $recipe
+     * @param array<string, mixed> $calc
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $level
+     * @return array<string, mixed>
+     */
+    private function recipeQuoteLine(array $recipe, array $calc, array $input, array $level): array
+    {
+        $quantity = (string) ($calc['inputs']['Q'] ?? '1');
+        $sell = (string) $calc['selling_price'];
+        $cost = (string) $calc['total_cost'];
+        $description = trim((string) ($input['customer_description'] ?? ''));
+        if ($description === '') {
+            $description = (string) $recipe['name'];
+            $width = (string) ($calc['inputs']['W'] ?? '');
+            $height = (string) ($calc['inputs']['H'] ?? '');
+            if ($width !== '' && $height !== '' && $width !== '0' && $height !== '0') {
+                $description .= ' ' . Decimal::round($width, 0) . ' x ' . Decimal::round($height, 0) . ' mm';
+            }
+        }
+        $unitCost = Decimal::cmp($quantity, '0') === 0 ? $cost : Decimal::div($cost, $quantity, 4);
+
+        return [
+            'product_id' => !empty($recipe['finished_product_id']) ? (int) $recipe['finished_product_id'] : null,
+            'is_custom_item' => 0,
+            'is_optional' => 0,
+            'include_optional' => 0,
+            'product_name_snapshot' => (string) $recipe['name'],
+            'product_description_snapshot' => blank_to_null($recipe['description'] ?? null),
+            'sku_snapshot' => (string) $recipe['code'],
+            'product_type_snapshot' => 'FINISHED_PRODUCT',
+            'pricing_method_snapshot' => 'RECIPE',
+            'width_mm' => $calc['inputs']['W'] ?? null,
+            'height_mm' => $calc['inputs']['H'] ?? null,
+            'length_mm' => $calc['inputs']['L'] ?? null,
+            'quantity' => Decimal::qty($quantity),
+            'actual_quantity' => (string) $calc['face_area_total'],
+            'billable_quantity' => Decimal::qty($quantity),
+            'actual_area' => (string) $calc['face_area_total'],
+            'billable_area' => (string) $calc['face_area_total'],
+            'waste_area' => '0',
+            'waste_mode' => 'ACTUAL',
+            'standard_waste_percent_snapshot' => '0',
+            'cost_unit_snapshot' => 'unit',
+            'unit_cost_snapshot' => Decimal::round($unitCost, 4),
+            'base_cost' => $cost,
+            'waste_cost' => '0.00',
+            'total_cost' => $cost,
+            'pricing_level_id' => isset($level['id']) ? (int) $level['id'] : null,
+            'markup_percent_snapshot' => Decimal::round((string) ($calc['markup_percent'] ?? '0'), 2),
+            'calculated_price' => $sell,
+            'final_sell_price' => $sell,
+            'unit_sell_price' => Decimal::cmp($quantity, '0') === 0 ? $sell : Decimal::money(Decimal::div($sell, $quantity)),
+            'price_overridden' => 0,
+            'override_reason' => null,
+            'overridden_by' => null,
+            'overridden_at' => null,
+            'line_discount_type' => 'NONE',
+            'line_discount_value' => '0',
+            'discount_amount' => '0.00',
+            'line_subtotal' => $sell,
+            'line_total' => $sell,
+            'customer_description' => $description,
+            'internal_description' => blank_to_null($input['internal_description'] ?? null),
+            'measure_snapshot' => json_encode([
+                'recipe_id' => (int) $recipe['id'],
+                'recipe_version' => (int) $recipe['version_number'],
+                'face_area_each' => $calc['face_area_each'],
+                'face_area_total' => $calc['face_area_total'],
+            ], JSON_THROW_ON_ERROR),
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $input
      * @return array{errors: list<string>, id: int|null}
      */
@@ -170,7 +301,8 @@ final class QuoteService
                 if ($existing === null || (int) $existing['quote_id'] !== $quoteId) {
                     throw new QuoteRejected(['_form' => 'That line is not on this quotation.']);
                 }
-                $this->quotes->insertItem($quoteId, $existing, $this->quotes->nextSort($quoteId));
+                $newId = $this->quotes->insertItem($quoteId, $existing, $this->quotes->nextSort($quoteId));
+                (new \App\Repositories\RecipeRepository())->copySnapshot($lineId, $newId);
                 $this->retotal($quoteId);
                 $this->quotes->touch($quoteId, $userId);
             });
@@ -254,6 +386,9 @@ final class QuoteService
         $rows = [];
         foreach ($this->quotes->items($quoteId) as $line) {
             if ((int) $line['is_custom_item'] === 1 || empty($line['product_id'])) {
+                continue;
+            }
+            if ((new \App\Repositories\RecipeRepository())->snapshotForItem((int) $line['id']) !== null) {
                 continue;
             }
             $product = $this->products->find((int) $line['product_id']);
@@ -847,7 +982,12 @@ final class QuoteService
     /**
      * @param array<string, mixed> $quote
      */
-    private function freeze(array $quote, string $summary, int $userId): void
+    public function captureRevision(array $quote, string $summary, ?int $userId = null): void
+    {
+        $this->freeze($quote, $summary, $userId);
+    }
+
+    private function freeze(array $quote, string $summary, ?int $userId): void
     {
         $number = (int) $quote['revision_number'];
         if ($this->quotes->revision((int) $quote['id'], $number) !== null) {

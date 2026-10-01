@@ -8,6 +8,9 @@
     <?php if (!empty($old['opportunity_id'])): ?>
         <input type="hidden" name="opportunity_id" value="<?= e((string) $old['opportunity_id']) ?>">
     <?php endif; ?>
+    <?php if (!empty($old['survey_id'])): ?>
+        <input type="hidden" name="survey_id" value="<?= e((string) $old['survey_id']) ?>">
+    <?php endif; ?>
     <div class="row g-3">
         <div class="col-md-6">
             <label class="form-label" for="customer_id">Customer <span class="sf-req">*</span></label>

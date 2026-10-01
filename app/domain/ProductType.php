@@ -7,10 +7,9 @@ namespace App\Domain;
 /**
  * What a catalogue row is.
  *
- * A later recipe (a printed Chromadek sign made of board, vinyl, laminate,
- * and labour) will point at these rows. It is not a product type of its own
- * in this phase, so stock and pricing stay attached to the thing you buy
- * or the hour you spend.
+ * A finished product is something the customer buys, such as a printed ACM
+ * sign. Materials, labour, and hardware stay separate catalogue rows.
+ * A recipe points at those rows. It is not itself a product.
  */
 enum ProductType: string
 {
@@ -19,6 +18,7 @@ enum ProductType: string
     case Service = 'SERVICE';
     case Labour = 'LABOUR';
     case Consumable = 'CONSUMABLE';
+    case Finished = 'FINISHED_PRODUCT';
 
     public function label(): string
     {
@@ -28,6 +28,7 @@ enum ProductType: string
             self::Service => 'Service',
             self::Labour => 'Labour',
             self::Consumable => 'Consumable',
+            self::Finished => 'Finished product',
         };
     }
 

@@ -9,19 +9,20 @@ $groups = [
         ['customers', 'Customers', '/customers', 'fa-users', 'customers.view'],
         ['activities', 'Activities', '/activities', 'fa-comments', 'activities.view'],
         ['opportunities', 'Opportunities', '/opportunities', 'fa-bullseye', 'opportunities.view'],
+        ['surveys', 'Site surveys', '/surveys', 'fa-ruler-combined', 'site_surveys.view'],
     ]],
     ['label' => 'Sales', 'links' => [
         ['calculator', 'Calculator', '/calculator', 'fa-calculator', 'calculator.use'],
         ['quotes', 'Quotes', '/quotes', 'fa-file-invoice', 'quotes.view'],
+        ['templates', 'Signage templates', '/templates', 'fa-swatchbook', 'templates.view'],
     ]],
     ['label' => 'Operations', 'links' => [
         ['jobs', 'Jobs', '/jobs', 'fa-clipboard-list', 'jobs.view'],
         ['workshop', 'Production', '/jobs/workshop', 'fa-industry', 'production.view'],
         ['board', 'Production board', '/jobs/board', 'fa-table-columns', 'production.view'],
-        ['design', 'Design', '/jobs/design', 'fa-pen-ruler', 'jobs.view'],
+        ['design', 'Artwork', '/jobs/design', 'fa-pen-ruler', 'jobs.view'],
         ['schedule', 'Schedule', '/jobs/schedule', 'fa-calendar-day', 'production.view'],
         ['installations', 'Installations', '/jobs/installations', 'fa-location-dot', 'installations.view'],
-        ['setup', 'Production setup', '/jobs/setup', 'fa-sliders', 'settings.manage'],
     ]],
     ['label' => 'Inventory', 'links' => [
         ['inventory', 'Inventory', '/inventory', 'fa-warehouse', 'inventory.view'],
@@ -46,6 +47,11 @@ $groups = [
         ['debtors', 'Debtors', '/finance/debtors', 'fa-scale-balanced', 'debtors.view'],
         ['vat', 'VAT summary', '/finance/vat', 'fa-percent', 'finance.vat_report.view'],
     ]],
+    ['label' => 'Automation', 'links' => [
+        ['recipes', 'Recipes', '/recipes', 'fa-flask', 'recipes.view'],
+        ['recipe-test', 'Recipe test', '/recipes/test', 'fa-vial', 'recipes.test'],
+        ['setup', 'Production templates', '/jobs/setup', 'fa-sliders', 'settings.manage'],
+    ]],
     ['label' => 'Reports', 'links' => [
         ['report-executive', 'Executive', '/reports/executive', 'fa-chart-line', 'reports.executive'],
         ['report-sales', 'Sales', '/reports/sales', 'fa-chart-simple', 'reports.sales'],
@@ -64,6 +70,7 @@ $groups = [
         ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],
         ['users', 'Users', '/users', 'fa-user-gear', 'users.manage'],
         ['roles', 'Roles', '/admin/roles', 'fa-user-shield', 'users.manage'],
+        ['portal', 'Portal access', '/admin/portal', 'fa-id-card', 'portal.manage'],
         ['notifications', 'Notifications', '/notifications', 'fa-bell', null],
         ['automations', 'Automations', '/admin/automations', 'fa-robot', 'automations.view'],
         ['audit', 'Audit log', '/admin/audit', 'fa-list-check', 'audit.view'],

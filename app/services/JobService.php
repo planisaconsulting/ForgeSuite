@@ -98,6 +98,12 @@ final class JobService
                 'installation_required' => $installFlag,
                 'notes' => null,
             ]);
+            $snapshot = (new \App\Repositories\RecipeRepository())->snapshotForItem((int) $line['id']);
+            if ($snapshot !== null) {
+                (new RecipeJobGenerator())->apply($jobId, $itemId, $snapshot, $userId);
+                $sort += 10;
+                continue;
+            }
             $productId = (int) ($line['product_id'] ?? 0);
             $billable = (string) ($line['billable_quantity'] ?? '0');
             if ($productId > 0 && Decimal::isNumeric($billable) && Decimal::cmp($billable, '0') > 0) {

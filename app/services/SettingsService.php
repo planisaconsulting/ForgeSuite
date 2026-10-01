@@ -60,6 +60,11 @@ final class SettingsService
         'backup_keep_daily' => 'Backup copies to keep, daily',
         'backup_keep_weekly' => 'Backup copies to keep, weekly',
         'backup_keep_monthly' => 'Backup copies to keep, monthly',
+        'survey_prefix' => 'Site survey prefix',
+        'travel_rate_per_km' => 'Travel rate per kilometre',
+        'quote_acceptance_statement' => 'Quote acceptance statement',
+        'artwork_approval_statement' => 'Artwork approval statement',
+        'portal_link_hours' => 'Portal link lifetime (hours)',
     ];
 
     /** @var array<string, string|null>|null */
@@ -163,7 +168,7 @@ final class SettingsService
         if (!in_array($tz, timezone_identifiers_list(), true)) {
             $errors['timezone'] = 'Choose a timezone from the PHP list, such as Africa/Johannesburg.';
         }
-        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix', 'payment_prefix', 'credit_note_prefix'] as $prefix) {
+        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix', 'payment_prefix', 'credit_note_prefix', 'survey_prefix'] as $prefix) {
             $value = trim((string) ($input[$prefix] ?? ''));
             if (!preg_match('/^[A-Za-z0-9]{1,12}$/', $value)) {
                 $errors[$prefix] = 'Use 1 to 12 letters or numbers.';
@@ -192,6 +197,20 @@ final class SettingsService
             $value = trim((string) ($input[$key] ?? ''));
             if ($value === '' || !ctype_digit($value) || (int) $value < $min || (int) $value > $max) {
                 $errors[$key] = 'Enter a whole number from ' . $min . ' to ' . $max . '.';
+            }
+        }
+        $travel = str_replace(',', '.', trim((string) ($input['travel_rate_per_km'] ?? '0')));
+        if ($travel === '' || !is_numeric($travel) || (float) $travel < 0) {
+            $errors['travel_rate_per_km'] = 'Travel rate must be zero or greater.';
+        }
+        $hours = trim((string) ($input['portal_link_hours'] ?? ''));
+        if ($hours === '' || !ctype_digit($hours) || (int) $hours < 1 || (int) $hours > 168) {
+            $errors['portal_link_hours'] = 'Portal link lifetime must be a whole number of hours from 1 to 168.';
+        }
+        foreach (['quote_acceptance_statement', 'artwork_approval_statement'] as $statement) {
+            $text = trim((string) ($input[$statement] ?? ''));
+            if ($text === '' || strlen($text) > 1000) {
+                $errors[$statement] = 'Enter a statement of up to 1000 characters.';
             }
         }
         $balance = str_replace(',', '.', trim((string) ($input['large_balance_amount'] ?? '')));
