@@ -171,6 +171,7 @@ php tests/reporting_flow.php
 php tests/phase7.php
 php tests/phase8.php
 php tests/acceptance.php http://127.0.0.1:8741
+php tests/phase13.php
 ```
 
 `calculations.php` does not need the database. It checks area, linear, unit, manufacturing waste, roll consumption, the threshold warning, actual / consumed-width / manual modes, sheet actual and full-sheet charging, markup, gross profit, and gross margin. It runs the checks with bcmath and again with the string fallback.
@@ -369,6 +370,26 @@ Email delivery is `off`, `log`, or `smtp`. The SMTP password and the webhook sec
 Repeat customer rate is customers with more than one completed job, divided by customers with at least one completed job. Cost per lead is campaign budget divided by leads that are not spam. Unqualified leads stay in that count. Estimated customer acquisition cost is budget divided by accepted quotes, and only when both numbers exist.
 
 `php tests/phase10.php` covers capture, phone matching, conversion, email success and failure, WhatsApp preparation, follow-up dedupe, attribution, unsubscribe, lead visibility, webhooks, templates, and the public rate limit.
+
+## Phase 13 workflows, approvals, and assistance
+
+Phase 13 adds structured configuration on top of the existing records. It does not add a scripting language. Conditions use a fixed comparison list. Actions use a fixed list and call the existing job, quote, purchasing, and payment services. A workflow cannot run PHP, SQL, or a shell command.
+
+A business event is stored once, with a unique event id. The same event does not create a second approval, follow-up, or purchase request. If a workflow changes a status, and that change would run the same workflow again, the chain stops. Depth is limited to three. Test mode shows which conditions matched and which actions would run. It does not run them. Saving an active workflow keeps the previous definition, who changed it, and an optional reason.
+
+Quote issue uses an approval policy. Margin below 25 percent needs management approval at any value. A total of at least R100,000 needs management approval. A total from R25,000 and below R100,000 needs the sales role. A smaller quote with a healthy margin does not. Escalation after the configured hours notifies someone. It does not approve the request. Delegation stores the original approver, the delegate, the dates, and a reason.
+
+Custom fields are validated on the server. A form submission stays on the form version that was current at the time. Older QC, installation, and dispatch checklists are not rewritten.
+
+Payment links take the amount from the invoice balance. A browser return does not record a payment. A provider webhook must match the signature, the reference, the currency, and the amount. The same provider event records one payment through the existing payment service. Accounting sync failure leaves the invoice issued and queues an integration issue. Payment and accounting issues are not retried automatically.
+
+Assistance is off until a provider is configured. Draft text does not change a price, a status, or a balance, and it is not sent. Extraction is a proposal until a person confirms it, and confirmation still does not change a product cost or create a purchase order. A question about profitability is refused before any provider call when the user cannot open profitability. Document text is data. Instructions inside a document are not commands. Configuration export omits passwords, SMTP secrets, and payment secrets.
+
+`php tests/phase13.php` covers the large-quote approval, the low-margin rule, the workflow loop, custom fields, form versions, payment webhooks, extraction, assistance boundaries, prompt injection, an offline accounting provider, and a secret-free export.
+
+## Upgrading a Phase 12 database
+
+Import `database/migrations/013_workflows_configurability_ai.sql` once. Do not import `schema.sql` over a live database, and do not run this migration on a database created from the current `schema.sql`.
 
 ## Phase 12 planning, forecasting, and integrations
 

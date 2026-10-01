@@ -318,6 +318,11 @@ final class JobService
         if (strtoupper($to) === JobStatus::Completed->value) {
             (new JobCompletionService())->handoff($jobId, $userId);
         }
+        $status = strtoupper($to);
+        BusinessEventDispatcher::emit('JOB_STATUS_CHANGED', 'JOB', $jobId, $userId, ['status' => $status]);
+        if ($status === JobStatus::Completed->value) {
+            BusinessEventDispatcher::emit('JOB_COMPLETED', 'JOB', $jobId, $userId, ['status' => $status]);
+        }
 
         return [];
     }

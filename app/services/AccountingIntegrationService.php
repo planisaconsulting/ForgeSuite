@@ -61,6 +61,22 @@ final class AccountingIntegrationService
                 'message' => mb_substr($e->getMessage(), 0, 255),
                 'completed_at' => date('Y-m-d H:i:s'),
             ]);
+            try {
+                (new \App\Repositories\PlatformRepository())->insertIssue([
+                    'provider' => 'accounting',
+                    'entity_type' => 'INVOICE',
+                    'entity_id' => $invoiceId,
+                    'failure' => mb_substr($e->getMessage(), 0, 255),
+                    'attempts' => 1,
+                    'max_attempts' => 3,
+                    'safe_retry' => 0,
+                    'idempotency_key' => 'accounting:INVOICE:' . $invoiceId,
+                    'status' => 'OPEN',
+                    'next_retry_at' => null,
+                ]);
+            } catch (\Throwable) {
+                // The invoice stays issued even when the issue queue cannot be written.
+            }
         }
     }
 

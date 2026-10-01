@@ -1,5 +1,5 @@
 -- Sign-Forge Management System
--- Current schema (Phases 1 to 12)
+-- Current schema (Phases 1 to 13)
 --
 -- Import this into an EMPTY database, or run database/install.php --force
 -- on a development copy. It drops the Sign-Forge tables first.
@@ -59,6 +59,43 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS message_drafts;
+DROP TABLE IF EXISTS entity_tags;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS saved_views;
+DROP TABLE IF EXISTS dashboard_layouts;
+DROP TABLE IF EXISTS integration_issues;
+DROP TABLE IF EXISTS review_items;
+DROP TABLE IF EXISTS ai_suggestions;
+DROP TABLE IF EXISTS ai_interactions;
+DROP TABLE IF EXISTS ai_prompt_templates;
+DROP TABLE IF EXISTS document_extractions;
+DROP TABLE IF EXISTS payment_requests;
+DROP TABLE IF EXISTS accounting_code_maps;
+DROP TABLE IF EXISTS connector_secrets;
+DROP TABLE IF EXISTS integration_connectors;
+DROP TABLE IF EXISTS status_labels;
+DROP TABLE IF EXISTS feature_flags;
+DROP TABLE IF EXISTS business_rules;
+DROP TABLE IF EXISTS checklist_bindings;
+DROP TABLE IF EXISTS custom_form_submissions;
+DROP TABLE IF EXISTS custom_form_fields;
+DROP TABLE IF EXISTS custom_forms;
+DROP TABLE IF EXISTS custom_field_values;
+DROP TABLE IF EXISTS custom_field_definitions;
+DROP TABLE IF EXISTS approval_delegations;
+DROP TABLE IF EXISTS approval_steps;
+DROP TABLE IF EXISTS approval_requests;
+DROP TABLE IF EXISTS approval_policy_rules;
+DROP TABLE IF EXISTS approval_policies;
+DROP TABLE IF EXISTS workflow_action_executions;
+DROP TABLE IF EXISTS workflow_executions;
+DROP TABLE IF EXISTS workflow_actions;
+DROP TABLE IF EXISTS workflow_conditions;
+DROP TABLE IF EXISTS workflow_definition_versions;
+DROP TABLE IF EXISTS workflow_definitions;
+DROP TABLE IF EXISTS business_event_consumers;
+DROP TABLE IF EXISTS business_events;
 DROP TABLE IF EXISTS purchase_recommendation_sources;
 DROP TABLE IF EXISTS purchase_recommendations;
 DROP TABLE IF EXISTS webhook_deliveries;
@@ -3883,4 +3920,583 @@ CREATE TABLE operational_commitments (
     PRIMARY KEY (id),
     KEY idx_operational_commitments_due (due_date),
     CONSTRAINT fk_operational_commitments_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Phase 13 workflows, approvals, configuration, and assistance.
+
+CREATE TABLE business_events (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    event_uuid CHAR(36) NOT NULL,
+    event_type VARCHAR(60) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    actor_user_id INT UNSIGNED NULL,
+    occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    payload_summary_json JSON NULL,
+    processed_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_business_events_uuid (event_uuid),
+    KEY idx_business_events_type (event_type, entity_type, occurred_at),
+    KEY idx_business_events_entity (entity_type, entity_id),
+    CONSTRAINT fk_business_events_actor FOREIGN KEY (actor_user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE business_event_consumers (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    event_id INT UNSIGNED NOT NULL,
+    consumer_key VARCHAR(80) NOT NULL,
+    processed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_business_event_consumers (event_id, consumer_key),
+    CONSTRAINT fk_business_event_consumers_event FOREIGN KEY (event_id) REFERENCES business_events (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE workflow_definitions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    description VARCHAR(255) NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    trigger_event VARCHAR(60) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 0,
+    priority INT NOT NULL DEFAULT 100,
+    stop_on_match TINYINT(1) NOT NULL DEFAULT 0,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_workflow_definitions_trigger (active, trigger_event, entity_type),
+    KEY idx_workflow_definitions_priority (priority),
+    CONSTRAINT fk_workflow_definitions_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE workflow_definition_versions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    workflow_id INT UNSIGNED NOT NULL,
+    version_number INT UNSIGNED NOT NULL,
+    snapshot_json JSON NOT NULL,
+    changed_by INT UNSIGNED NULL,
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reason VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    KEY idx_workflow_versions_workflow (workflow_id, version_number),
+    CONSTRAINT fk_workflow_versions_workflow FOREIGN KEY (workflow_id) REFERENCES workflow_definitions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_workflow_versions_user FOREIGN KEY (changed_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE workflow_conditions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    workflow_id INT UNSIGNED NOT NULL,
+    field_key VARCHAR(64) NOT NULL,
+    operator VARCHAR(32) NOT NULL,
+    comparison_value VARCHAR(255) NULL,
+    condition_group INT NOT NULL DEFAULT 1,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_workflow_conditions_workflow (workflow_id, condition_group, sort_order),
+    CONSTRAINT fk_workflow_conditions_workflow FOREIGN KEY (workflow_id) REFERENCES workflow_definitions (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE workflow_actions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    workflow_id INT UNSIGNED NOT NULL,
+    action_type VARCHAR(40) NOT NULL,
+    configuration_json JSON NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_workflow_actions_workflow (workflow_id, sort_order),
+    CONSTRAINT fk_workflow_actions_workflow FOREIGN KEY (workflow_id) REFERENCES workflow_definitions (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE workflow_executions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    workflow_id INT UNSIGNED NOT NULL,
+    trigger_event VARCHAR(60) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    event_uuid CHAR(36) NULL,
+    origin_workflow_id INT UNSIGNED NULL,
+    execution_depth INT UNSIGNED NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    error_message VARCHAR(255) NULL,
+    context_snapshot_json JSON NULL,
+    idempotency_key VARCHAR(80) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_workflow_executions_idempotency (idempotency_key),
+    KEY idx_workflow_executions_event (workflow_id, event_uuid),
+    KEY idx_workflow_executions_entity (entity_type, entity_id),
+    KEY idx_workflow_executions_status (status, started_at),
+    CONSTRAINT fk_workflow_executions_workflow FOREIGN KEY (workflow_id) REFERENCES workflow_definitions (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE workflow_action_executions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    workflow_execution_id INT UNSIGNED NOT NULL,
+    workflow_action_id INT UNSIGNED NULL,
+    status VARCHAR(20) NOT NULL,
+    result_summary VARCHAR(255) NULL,
+    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_workflow_action_executions_run (workflow_execution_id),
+    CONSTRAINT fk_workflow_action_executions_run FOREIGN KEY (workflow_execution_id) REFERENCES workflow_executions (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE approval_policies (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    action_key VARCHAR(60) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    priority INT NOT NULL DEFAULT 100,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_approval_policies_lookup (active, entity_type, action_key, priority),
+    CONSTRAINT fk_approval_policies_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE approval_policy_rules (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    policy_id INT UNSIGNED NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    match_mode VARCHAR(8) NOT NULL DEFAULT 'ALL',
+    conditions_json JSON NOT NULL,
+    steps_json JSON NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_approval_rules_policy (policy_id, sort_order),
+    CONSTRAINT fk_approval_rules_policy FOREIGN KEY (policy_id) REFERENCES approval_policies (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE approval_requests (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    policy_id INT UNSIGNED NULL,
+    policy_version INT UNSIGNED NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    action_key VARCHAR(60) NOT NULL,
+    requested_by INT UNSIGNED NULL,
+    requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    current_step INT UNSIGNED NOT NULL DEFAULT 1,
+    resolved_at TIMESTAMP NULL DEFAULT NULL,
+    reason VARCHAR(255) NULL,
+    context_json JSON NULL,
+    open_key VARCHAR(40) NOT NULL DEFAULT 'OPEN',
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_approval_requests_open (entity_type, entity_id, action_key, open_key),
+    KEY idx_approval_requests_status (status, requested_at),
+    KEY idx_approval_requests_entity (entity_type, entity_id),
+    CONSTRAINT fk_approval_requests_policy FOREIGN KEY (policy_id) REFERENCES approval_policies (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_approval_requests_user FOREIGN KEY (requested_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE approval_steps (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    approval_request_id INT UNSIGNED NOT NULL,
+    sequence INT UNSIGNED NOT NULL,
+    approver_type VARCHAR(20) NOT NULL,
+    approver_id INT UNSIGNED NULL,
+    role_code VARCHAR(40) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    decision_by INT UNSIGNED NULL,
+    delegated_from_user_id INT UNSIGNED NULL,
+    decision_at TIMESTAMP NULL DEFAULT NULL,
+    comment VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    KEY idx_approval_steps_request (approval_request_id, sequence),
+    CONSTRAINT fk_approval_steps_request FOREIGN KEY (approval_request_id) REFERENCES approval_requests (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_approval_steps_user FOREIGN KEY (decision_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE approval_delegations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    original_user_id INT UNSIGNED NOT NULL,
+    delegate_user_id INT UNSIGNED NOT NULL,
+    starts_at DATETIME NOT NULL,
+    ends_at DATETIME NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_approval_delegations_window (original_user_id, starts_at, ends_at),
+    CONSTRAINT fk_approval_delegations_original FOREIGN KEY (original_user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_approval_delegations_delegate FOREIGN KEY (delegate_user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE custom_field_definitions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    entity_type VARCHAR(40) NOT NULL,
+    field_key VARCHAR(64) NOT NULL,
+    label VARCHAR(120) NOT NULL,
+    field_type VARCHAR(20) NOT NULL,
+    required TINYINT(1) NOT NULL DEFAULT 0,
+    options_json JSON NULL,
+    validation_json JSON NULL,
+    default_value VARCHAR(255) NULL,
+    expose_documents TINYINT(1) NOT NULL DEFAULT 0,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_custom_fields_entity_key (entity_type, field_key),
+    KEY idx_custom_fields_entity (entity_type, active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE custom_field_values (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    field_definition_id INT UNSIGNED NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    value_text VARCHAR(255) NULL,
+    value_number DECIMAL(14,4) NULL,
+    value_date DATETIME NULL,
+    value_json JSON NULL,
+    updated_by INT UNSIGNED NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_custom_field_values_entity (field_definition_id, entity_type, entity_id),
+    KEY idx_custom_field_values_entity (entity_type, entity_id),
+    CONSTRAINT fk_custom_field_values_field FOREIGN KEY (field_definition_id) REFERENCES custom_field_definitions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_custom_field_values_user FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE custom_forms (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    purpose VARCHAR(60) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    current_version INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_custom_forms_purpose (purpose, active),
+    CONSTRAINT fk_custom_forms_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE custom_form_fields (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    form_id INT UNSIGNED NOT NULL,
+    form_version INT UNSIGNED NOT NULL,
+    field_source VARCHAR(20) NOT NULL,
+    field_key VARCHAR(64) NOT NULL,
+    label VARCHAR(180) NOT NULL,
+    field_type VARCHAR(20) NOT NULL,
+    required TINYINT(1) NOT NULL DEFAULT 0,
+    options_json JSON NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_custom_form_fields_version (form_id, form_version, sort_order),
+    CONSTRAINT fk_custom_form_fields_form FOREIGN KEY (form_id) REFERENCES custom_forms (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE custom_form_submissions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    form_id INT UNSIGNED NOT NULL,
+    form_version INT UNSIGNED NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    submitted_by INT UNSIGNED NULL,
+    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    values_json JSON NOT NULL,
+    signature_name VARCHAR(120) NULL,
+    signature_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_custom_form_submissions_form (form_id, form_version),
+    KEY idx_custom_form_submissions_entity (entity_type, entity_id),
+    CONSTRAINT fk_custom_form_submissions_form FOREIGN KEY (form_id) REFERENCES custom_forms (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_custom_form_submissions_user FOREIGN KEY (submitted_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE checklist_bindings (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    area VARCHAR(40) NOT NULL,
+    form_id INT UNSIGNED NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_checklist_bindings_area (area, active),
+    CONSTRAINT fk_checklist_bindings_form FOREIGN KEY (form_id) REFERENCES custom_forms (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE business_rules (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    rule_key VARCHAR(60) NOT NULL,
+    scope_type VARCHAR(20) NOT NULL,
+    scope_id INT UNSIGNED NOT NULL DEFAULT 0,
+    value_text VARCHAR(255) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    updated_by INT UNSIGNED NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_business_rules_scope (rule_key, scope_type, scope_id),
+    KEY idx_business_rules_key (rule_key, active),
+    CONSTRAINT fk_business_rules_user FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE feature_flags (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    feature_key VARCHAR(60) NOT NULL,
+    enabled TINYINT(1) NOT NULL DEFAULT 0,
+    configuration_json JSON NULL,
+    updated_by INT UNSIGNED NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_feature_flags_key (feature_key),
+    CONSTRAINT fk_feature_flags_user FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE status_labels (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    entity_type VARCHAR(40) NOT NULL,
+    status_code VARCHAR(40) NOT NULL,
+    label VARCHAR(80) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    locked TINYINT(1) NOT NULL DEFAULT 1,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_status_labels (entity_type, status_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE integration_connectors (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    connector_key VARCHAR(60) NOT NULL,
+    connector_type VARCHAR(20) NOT NULL,
+    provider VARCHAR(40) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 0,
+    configuration_json JSON NULL,
+    tested_at TIMESTAMP NULL DEFAULT NULL,
+    health_status VARCHAR(20) NOT NULL DEFAULT 'UNCONFIGURED',
+    last_success_at TIMESTAMP NULL DEFAULT NULL,
+    last_error VARCHAR(255) NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_integration_connectors_key (connector_key),
+    KEY idx_integration_connectors_type (connector_type, active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE connector_secrets (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    connector_id INT UNSIGNED NOT NULL,
+    secret_key VARCHAR(40) NOT NULL,
+    secret_value TEXT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_connector_secrets (connector_id, secret_key),
+    CONSTRAINT fk_connector_secrets_connector FOREIGN KEY (connector_id) REFERENCES integration_connectors (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE accounting_code_maps (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    map_type VARCHAR(20) NOT NULL,
+    local_code VARCHAR(40) NOT NULL,
+    external_code VARCHAR(40) NOT NULL,
+    description VARCHAR(180) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_accounting_code_maps (map_type, local_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE payment_requests (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    invoice_id INT UNSIGNED NOT NULL,
+    provider VARCHAR(40) NOT NULL,
+    public_token CHAR(32) NOT NULL,
+    external_reference VARCHAR(80) NULL,
+    provider_event_id VARCHAR(80) NULL,
+    amount DECIMAL(14,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'ZAR',
+    amount_basis VARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'CREATED',
+    payment_url VARCHAR(255) NULL,
+    payment_id INT UNSIGNED NULL,
+    expires_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_payment_requests_token (public_token),
+    UNIQUE KEY uq_payment_requests_external (external_reference),
+    UNIQUE KEY uq_payment_requests_event (provider_event_id),
+    KEY idx_payment_requests_invoice (invoice_id, status),
+    CONSTRAINT fk_payment_requests_invoice FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE document_extractions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    document_type VARCHAR(40) NOT NULL,
+    source_label VARCHAR(180) NOT NULL,
+    original_text MEDIUMTEXT NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PROPOSED',
+    proposed_json JSON NULL,
+    confirmed_json JSON NULL,
+    confidence DECIMAL(5,2) NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_by INT UNSIGNED NULL,
+    reviewed_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_document_extractions_status (status, created_at),
+    CONSTRAINT fk_document_extractions_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ai_prompt_templates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    feature VARCHAR(60) NOT NULL,
+    version_number INT UNSIGNED NOT NULL,
+    body VARCHAR(500) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_ai_prompt_templates (feature, version_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ai_interactions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NULL,
+    feature VARCHAR(60) NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    provider VARCHAR(40) NULL,
+    model VARCHAR(60) NULL,
+    prompt_version INT UNSIGNED NULL,
+    input_summary VARCHAR(500) NOT NULL,
+    output_summary VARCHAR(500) NULL,
+    status VARCHAR(20) NOT NULL,
+    tokens_input INT UNSIGNED NULL,
+    tokens_output INT UNSIGNED NULL,
+    estimated_cost DECIMAL(12,4) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ai_interactions_user (user_id, created_at),
+    KEY idx_ai_interactions_feature (feature, created_at),
+    CONSTRAINT fk_ai_interactions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ai_suggestions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    interaction_id INT UNSIGNED NULL,
+    feature VARCHAR(60) NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    suggestion_type VARCHAR(40) NOT NULL,
+    content VARCHAR(2000) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ai_suggestions_entity (entity_type, entity_id),
+    CONSTRAINT fk_ai_suggestions_interaction FOREIGN KEY (interaction_id) REFERENCES ai_interactions (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE review_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    item_type VARCHAR(40) NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    proposed_action VARCHAR(180) NOT NULL,
+    source VARCHAR(60) NOT NULL,
+    reason VARCHAR(255) NULL,
+    assigned_to INT UNSIGNED NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_by INT UNSIGNED NULL,
+    resolved_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_review_items_status (status, created_at),
+    KEY idx_review_items_entity (entity_type, entity_id),
+    CONSTRAINT fk_review_items_assignee FOREIGN KEY (assigned_to) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_review_items_resolver FOREIGN KEY (resolved_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE integration_issues (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    provider VARCHAR(40) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    failure VARCHAR(255) NOT NULL,
+    attempts INT UNSIGNED NOT NULL DEFAULT 1,
+    max_attempts INT UNSIGNED NOT NULL DEFAULT 5,
+    safe_retry TINYINT(1) NOT NULL DEFAULT 0,
+    idempotency_key VARCHAR(80) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+    last_attempt_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    next_retry_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_integration_issues_status (status, next_retry_at),
+    KEY idx_integration_issues_entity (provider, entity_type, entity_id),
+    UNIQUE KEY uq_integration_issues_idempotency (idempotency_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE dashboard_layouts (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    role_id INT UNSIGNED NULL,
+    user_id INT UNSIGNED NULL,
+    layout_json JSON NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_dashboard_layouts_role (role_id),
+    UNIQUE KEY uq_dashboard_layouts_user (user_id),
+    CONSTRAINT fk_dashboard_layouts_role FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_dashboard_layouts_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE saved_views (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    filter_json JSON NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_saved_views_user (user_id, entity_type),
+    CONSTRAINT fk_saved_views_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tags (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(40) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_tags_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE entity_tags (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag_id INT UNSIGNED NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_entity_tags (tag_id, entity_type, entity_id),
+    KEY idx_entity_tags_entity (entity_type, entity_id),
+    CONSTRAINT fk_entity_tags_tag FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_entity_tags_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE message_drafts (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    channel VARCHAR(20) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    recipient VARCHAR(180) NULL,
+    subject VARCHAR(180) NULL,
+    body VARCHAR(2000) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_message_drafts_entity (entity_type, entity_id),
+    CONSTRAINT fk_message_drafts_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

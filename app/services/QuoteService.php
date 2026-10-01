@@ -68,6 +68,7 @@ final class QuoteService
             $this->markOpportunityQuoted($header['opportunity_id']);
             (new AttributionService())->copyToQuote($id);
         });
+        BusinessEventDispatcher::emit('QUOTE_CREATED', 'QUOTE', $id, $userId, ['status' => 'DRAFT']);
 
         return ['errors' => [], 'id' => $id];
     }
@@ -598,6 +599,13 @@ final class QuoteService
         $status = strtoupper($status);
         if (!in_array($status, QuoteStatus::values(), true)) {
             return ['_form' => 'That status is not valid.'];
+        }
+        if ($status === 'SENT') {
+            $facts = (new WorkflowFactReader())->read('QUOTE', $quoteId);
+            $gate = (new ApprovalService())->gate('QUOTE', $quoteId, 'QUOTE_ISSUE', $userId, $facts, 'Quote issue');
+            if ($gate['blocked']) {
+                return ['_form' => 'This quotation needs approval before it can be sent.'];
+            }
         }
         try {
             Database::transaction(function () use ($quoteId, $status, $version, $userId, $notes): void {

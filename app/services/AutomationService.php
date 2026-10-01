@@ -66,6 +66,7 @@ final class AutomationService
 
     public function fire(string $trigger, string $entityType, int $entityId, int $actorId): void
     {
+        BusinessEventDispatcher::emit($trigger, $entityType, $entityId, $actorId, []);
         foreach ($this->rules->active($trigger) as $rule) {
             try {
                 $this->act($rule, $entityType, $entityId, $actorId);

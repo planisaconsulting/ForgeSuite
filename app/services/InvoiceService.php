@@ -251,6 +251,7 @@ final class InvoiceService
         } catch (\Throwable) {
             // The invoice is already issued. Sync failure stays in the integration log.
         }
+        BusinessEventDispatcher::emit('INVOICE_ISSUED', 'INVOICE', $id, $userId, []);
 
         return [];
     }

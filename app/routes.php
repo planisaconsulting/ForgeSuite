@@ -50,6 +50,7 @@ use App\Controllers\PortalAdminController;
 use App\Controllers\PlanningController;
 use App\Controllers\BusinessPlanningController;
 use App\Controllers\ApiV1Controller;
+use App\Controllers\PlatformController;
 use App\Controllers\PortalController;
 use App\Controllers\RecipeController;
 use App\Controllers\SiteSurveyController;
@@ -1450,6 +1451,100 @@ $router->get('/admin/integrations', static function (): void {
 $router->post('/admin/integrations', static function (): void {
     (new IntegrationController())->save();
 }, true, true, 'integrations.manage');
+
+$router->get('/workflows', static function (): void {
+    (new PlatformController())->workflows();
+}, true, 'workflows.view');
+$router->get('/workflows/new', static function (): void {
+    (new PlatformController())->workflowForm();
+}, true, 'workflows.manage');
+$router->post('/workflows', static function (): void {
+    (new PlatformController())->saveWorkflow();
+}, true, true, 'workflows.manage');
+$router->get('/workflows/history', static function (): void {
+    (new PlatformController())->history();
+}, true, 'workflows.view');
+$router->get('/workflows/{id}', static function (string $id): void {
+    (new PlatformController())->workflowForm($id);
+}, true, 'workflows.view');
+$router->post('/workflows/{id}', static function (string $id): void {
+    (new PlatformController())->saveWorkflow($id);
+}, true, true, 'workflows.manage');
+$router->post('/workflows/{id}/test', static function (string $id): void {
+    (new PlatformController())->testWorkflow($id);
+}, true, true, 'workflows.test');
+$router->get('/approvals', static function (): void {
+    (new PlatformController())->approvals();
+}, true, 'approvals.view');
+$router->get('/approvals/{id}', static function (string $id): void {
+    (new PlatformController())->showApproval($id);
+}, true, 'approvals.view');
+$router->post('/approvals/{id}', static function (string $id): void {
+    (new PlatformController())->decide($id);
+}, true, true, 'approvals.decide');
+$router->get('/reviews', static function (): void {
+    (new PlatformController())->reviews();
+}, true, 'review_queue.view');
+$router->post('/reviews/{id}', static function (string $id): void {
+    (new PlatformController())->resolveReview($id);
+}, true, true, 'review_queue.resolve');
+$router->get('/admin/configuration', static function (): void {
+    (new PlatformController())->configuration();
+}, true, 'configuration.manage');
+$router->get('/admin/configuration/export', static function (): void {
+    (new PlatformController())->exportConfig();
+}, true, 'configuration.manage');
+$router->get('/admin/approval-policies', static function (): void {
+    (new PlatformController())->policies();
+}, true, 'approvals.view');
+$router->get('/admin/custom-fields', static function (): void {
+    (new PlatformController())->fields();
+}, true, 'custom_fields.manage');
+$router->post('/admin/custom-fields', static function (): void {
+    (new PlatformController())->saveField();
+}, true, true, 'custom_fields.manage');
+$router->get('/admin/custom-forms', static function (): void {
+    (new PlatformController())->forms();
+}, true, 'custom_forms.manage');
+$router->get('/admin/feature-flags', static function (): void {
+    (new PlatformController())->flags();
+}, true, 'feature_flags.manage');
+$router->post('/admin/feature-flags', static function (): void {
+    (new PlatformController())->saveFlag();
+}, true, true, 'feature_flags.manage');
+$router->get('/admin/ai', static function (): void {
+    (new PlatformController())->ai();
+}, true, 'ai.admin');
+$router->get('/admin/dictionary', static function (): void {
+    (new PlatformController())->dictionary();
+}, true, 'configuration.manage');
+$router->get('/command', static function (): void {
+    (new PlatformController())->command();
+}, true, 'dashboard.view');
+$router->get('/integrations', static function (): void {
+    (new PlatformController())->integrations();
+}, true, 'integrations.view');
+$router->get('/integrations/issues', static function (): void {
+    (new PlatformController())->issues();
+}, true, 'integration_logs.view');
+$router->post('/integrations/issues/{id}', static function (string $id): void {
+    (new PlatformController())->retryIssue($id);
+}, true, true, 'integrations.retry');
+$router->get('/finance/payment-links', static function (): void {
+    (new PlatformController())->payments();
+}, true, 'payment_links.manage');
+$router->get('/pay/return/{token}', static function (string $token): void {
+    (new PlatformController())->payReturn($token);
+}, false);
+$router->post('/payments/webhook/{provider}', static function (string $provider): void {
+    (new PlatformController())->webhook($provider);
+}, false, false);
+$router->get('/my/dashboard', static function (): void {
+    (new PlatformController())->dashboard();
+}, true, 'dashboard.view');
+$router->get('/reports/workflow-performance', static function (): void {
+    (new PlatformController())->performance();
+}, true, 'workflows.view');
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

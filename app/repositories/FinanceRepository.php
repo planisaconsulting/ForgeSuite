@@ -375,6 +375,18 @@ final class FinanceRepository extends Repository
         return $this->insertId();
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findPaymentByExternal(string $reference): ?array
+    {
+        if ($reference === '') {
+            return null;
+        }
+
+        return $this->one('SELECT * FROM payments WHERE external_reference = ? ORDER BY id ASC LIMIT 1', [$reference]);
+    }
+
     public function lockPayment(int $id): ?array
     {
         return $this->one('SELECT * FROM payments WHERE id = ? LIMIT 1 FOR UPDATE', [$id]);

@@ -80,7 +80,75 @@ final class PaymentService
             return ['errors' => $e->errors, 'id' => null];
         }
 
+        BusinessEventDispatcher::emit('PAYMENT_RECEIVED', 'PAYMENT', $id, $userId, []);
+
         return ['errors' => [], 'id' => $id];
+    }
+
+    /**
+     * A verified provider webhook is the caller. Browser redirects must not use this.
+     *
+     * @param array<string, mixed> $input
+     * @return array{errors: array<string, string>, id: int|null, duplicate: bool}
+     */
+    public function recordVerified(array $input, int $userId): array
+    {
+        $reference = trim((string) ($input['external_reference'] ?? ''));
+        if ($reference === '') {
+            return ['errors' => ['external_reference' => 'The provider reference is missing.'], 'id' => null, 'duplicate' => false];
+        }
+        $existing = $this->finance->findPaymentByExternal($reference);
+        if ($existing !== null) {
+            return ['errors' => [], 'id' => (int) $existing['id'], 'duplicate' => true];
+        }
+        $customerId = (int) ($input['customer_id'] ?? 0);
+        if ($this->customers->find($customerId) === null) {
+            return ['errors' => ['customer_id' => 'Choose a customer.'], 'id' => null, 'duplicate' => false];
+        }
+        $amount = $this->money($input['amount'] ?? '');
+        if ($amount === null || Decimal::cmp($amount, '0') <= 0) {
+            return ['errors' => ['amount' => 'Enter the amount received.'], 'id' => null, 'duplicate' => false];
+        }
+        $method = PaymentMethod::tryFrom(strtoupper(trim((string) ($input['payment_method'] ?? 'EFT'))));
+        if ($method === null) {
+            $method = PaymentMethod::Eft;
+        }
+        $date = date('Y-m-d');
+        try {
+            $id = Database::transaction(function () use ($customerId, $amount, $method, $date, $input, $userId, $reference): int {
+                $again = $this->finance->findPaymentByExternal($reference);
+                if ($again !== null) {
+                    return (int) $again['id'];
+                }
+                $id = $this->finance->insertPayment([
+                    'payment_reference' => $this->numbers->payment(),
+                    'customer_id' => $customerId,
+                    'payment_date' => $date,
+                    'amount' => Decimal::money($amount),
+                    'payment_method' => $method->value,
+                    'external_reference' => $reference,
+                    'bank_reference' => blank_to_null($input['bank_reference'] ?? null),
+                    'notes' => 'Confirmed by a verified payment provider webhook.',
+                    'status' => PaymentStatus::Recorded->value,
+                    'recorded_by' => $userId,
+                ]);
+                $this->audit->record('payment', $id, 'PAYMENT_RECORDED', null, [
+                    'customer_id' => $customerId,
+                    'amount' => Decimal::money($amount),
+                    'source' => 'provider_webhook',
+                ], $userId);
+                $allocations = $input['allocations'] ?? [];
+                if (is_array($allocations) && $allocations !== []) {
+                    $this->allocateInside($id, $allocations, $userId);
+                }
+
+                return $id;
+            });
+        } catch (FinanceRejected $e) {
+            return ['errors' => $e->errors, 'id' => null, 'duplicate' => false];
+        }
+
+        return ['errors' => [], 'id' => $id, 'duplicate' => false];
     }
 
     /**
