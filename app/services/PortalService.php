@@ -48,6 +48,7 @@ final class PortalService
             'signed_documents' => (new \App\Repositories\WorkshopRepository())->customerDocuments($customerId),
             'balance' => $this->portal->balance($customerId),
             'customer' => $this->portal->customerLabel($customerId),
+            'assets' => (new \App\Repositories\AssetRepository())->forCustomer($customerId, 8),
         ];
     }
 

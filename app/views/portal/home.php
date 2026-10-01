@@ -6,6 +6,13 @@
     <div class="mt-3"><a class="btn btn-outline-light" href="<?= e(url('/portal/statement')) ?>">Download statement</a></div>
 </div></section>
 <section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Assets</h2></div>
+    <?php if (($data['assets'] ?? []) === []): ?><div class="sf-empty"><p>No installed assets on this account yet.</p></div><?php else: ?>
+        <ul class="sf-feed"><?php foreach ($data['assets'] as $row): ?><li><a href="<?= e(url('/portal/assets/' . $row['id'])) ?>"><?= e((string) $row['name']) ?></a><small><?= e((string) ($row['site_name'] ?? '')) ?> · <?= e((string) $row['status']) ?></small></li><?php endforeach; ?></ul>
+    <?php endif; ?>
+    <p class="px-3"><a href="<?= e(url('/portal/assets')) ?>">All assets</a></p>
+</section>
+<section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Quotes</h2></div>
     <?php if ($data['quotes'] === []): ?><div class="sf-empty"><p>No quotations yet.</p></div><?php else: ?>
         <ul class="sf-feed"><?php foreach ($data['quotes'] as $row): ?><li><a href="<?= e(url('/portal/quotes/' . $row['id'])) ?>"><?= e((string) $row['quote_number']) ?></a><small>Rev <?= e((string) $row['revision_number']) ?> · <?= e((string) $row['status']) ?> · <?= e(money((string) $row['total'])) ?></small></li><?php endforeach; ?></ul>

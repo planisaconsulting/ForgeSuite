@@ -40,6 +40,26 @@ final class NumberingService
         return $this->next('job', 'job_prefix', 'SFJ');
     }
 
+    public function asset(): string
+    {
+        return $this->next('asset', 'asset_prefix', 'SFA');
+    }
+
+    public function serviceRequest(): string
+    {
+        return $this->next('service_request', 'service_request_prefix', 'SFSR');
+    }
+
+    public function warrantyClaim(): string
+    {
+        return $this->next('warranty_claim', 'warranty_claim_prefix', 'SFWC');
+    }
+
+    public function agreement(): string
+    {
+        return $this->next('service_agreement', 'service_agreement_prefix', 'SFM');
+    }
+
     public function invoice(): string
     {
         return $this->next('invoice', 'invoice_prefix', 'SFI');

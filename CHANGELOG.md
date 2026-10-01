@@ -8,6 +8,8 @@ A project can hold many sites, and a site can hold many jobs. Jobs still own art
 
 Project numbers are `SFP-YYYY-####`. Commercial value comes from accepted project lines and approved changes. Allocations of a contract do not get added again. Payments stay cash collected. Health is calculated separately from status and includes the reasons.
 
+v1.1 Phase 2 adds customer assets (`SFA`), warranties, warranty claims (`SFWC`), and service requests (`SFSR`). Service work stays on the existing job number. Jobs that are not `STANDARD` stay out of project commercial value and project actual cost. A product creates an asset only when that product is marked to do so, and only when a person confirms it.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

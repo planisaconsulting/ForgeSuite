@@ -36,6 +36,9 @@ final class NotificationService
         'INSTALLATION_TOMORROW',
         'SCHEDULE_CHANGED',
         'JOB_AT_RISK',
+        'SERVICE_REQUEST',
+        'WARRANTY_ALERT',
+        'MAINTENANCE_DUE',
         'SYSTEM',
     ];
 

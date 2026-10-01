@@ -10,7 +10,7 @@ Products store the current cost and sell rules. A quote copies those figures ont
 
 ## Numbering
 
-Prefixes live in settings. The next number is a locked counter, so two people saving at once do not get the same quote, job, invoice, or purchase order number.
+Prefixes live in settings. The next number is a locked counter, so two people saving at once do not get the same quote, job, invoice, purchase order, asset (`asset_prefix`, SFA), service request (`service_request_prefix`, SFSR), warranty claim (`warranty_claim_prefix`, SFWC), or service agreement (`service_agreement_prefix`, SFM) number. `asset_label_contact` is the wording on the asset label. `warranty_alert_days` is the internal expiring window used on the asset screen. The cron also notifies at 90, 30, and 7 days.
 
 ## Templates and documents
 

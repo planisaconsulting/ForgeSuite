@@ -268,6 +268,12 @@ $activityValue = static function (string $key, string $default = '') use ($activ
                 <?php endforeach; ?>
             </ul>
             <?php if (can('projects.create')): ?><p><a href="<?= e(url('/projects/new?customer_id=' . $customer['id'])) ?>">New project</a></p><?php endif; ?>
+            <?php if (can('assets.view')): ?>
+                <h3 class="mt-3">Assets</h3>
+                <?php $assetRows = (new \App\Repositories\AssetRepository())->forCustomer((int) $customer['id'], 20); ?>
+                <?php if ($assetRows === []): ?><p>No assets yet.</p><?php endif; ?>
+                <ul class="sf-feed"><?php foreach ($assetRows as $asset): ?><li><a href="<?= e(url('/assets/' . $asset['id'])) ?>"><?= e((string) $asset['asset_number']) ?></a><small><?= e((string) $asset['name']) ?> · <?= e((string) $asset['status']) ?></small></li><?php endforeach; ?></ul>
+            <?php endif; ?>
         </section>
     </div>
     <div class="col-12 col-lg-4">

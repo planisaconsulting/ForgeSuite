@@ -66,6 +66,55 @@ final class PortalController
         ], 'layouts/portal');
     }
 
+    public function assets(): void
+    {
+        $user = $this->user();
+        View::render('portal/assets', [
+            'title' => 'Your assets',
+            'rows' => (new \App\Repositories\AssetRepository())->forCustomer((int) $user['customer_id']),
+            'user' => $user,
+        ], 'layouts/portal');
+    }
+
+    public function asset(string $id): void
+    {
+        $user = $this->user();
+        $asset = (new \App\Repositories\AssetRepository())->find(route_id($id));
+        if ($asset === null || !\App\Services\AssetAccess::portalOwns((int) $user['customer_id'], $asset)) {
+            $this->denied();
+        }
+        View::render('portal/asset', [
+            'title' => (string) $asset['asset_number'],
+            'asset' => $asset,
+            'warranties' => (new \App\Repositories\AssetRepository())->warranties((int) $asset['id']),
+            'events' => (new \App\Repositories\AssetRepository())->events((int) $asset['id'], 40),
+            'user' => $user,
+        ], 'layouts/portal');
+    }
+
+    public function reportAsset(string $id): void
+    {
+        $user = $this->user();
+        $asset = (new \App\Repositories\AssetRepository())->find(route_id($id));
+        if ($asset === null || !\App\Services\AssetAccess::portalOwns((int) $user['customer_id'], $asset)) {
+            $this->denied();
+        }
+        $result = (new \App\Services\ServiceRequestService())->create([
+            'asset_id' => (int) $asset['id'],
+            'customer_id' => (int) $user['customer_id'],
+            'description' => (string) ($_POST['description'] ?? ''),
+            'source' => 'CUSTOMER_PORTAL',
+            'reported_by' => (string) ($user['name'] ?? 'Customer'),
+            'priority' => 'NORMAL',
+        ], 0, true);
+        if ($result['id'] === null) {
+            flash('error', implode(' ', $result['errors']));
+        } else {
+            flash('success', 'Problem reported. Warranty is not approved until Sign-Forge reviews it.');
+        }
+        redirect('/portal/assets/' . $asset['id']);
+    }
+
     public function quote(string $id): void
     {
         $user = $this->user();

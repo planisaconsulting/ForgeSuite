@@ -65,6 +65,161 @@ final class ApiV1Controller
         });
     }
 
+    public function assets(): void
+    {
+        $auth = $this->gate('assets.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\AssetRepository())->search([
+            'q' => trim((string) ($_GET['q'] ?? '')),
+            'customer_id' => (int) ($_GET['customer_id'] ?? 0),
+        ], 50, max(0, (int) ($_GET['offset'] ?? 0)));
+        $money = (new ApiClientService())->allows($auth['scopes'], 'assets.financials');
+        $data = [];
+        foreach ($rows as $row) {
+            $data[] = $this->assetPayload($row, $money);
+        }
+        $this->finish($auth, 200, true, ['assets' => $data], [], 'customer_asset', null);
+    }
+
+    public function assetRecord(string $id): void
+    {
+        $this->read('assets.read', 'customer_asset', (int) $id, function (int $id): ?array {
+            $row = (new \App\Repositories\AssetRepository())->find($id);
+
+            return $row === null ? null : $this->assetPayload($row, false);
+        });
+    }
+
+    public function assetComponents(string $id): void
+    {
+        $this->read('assets.read', 'customer_asset', (int) $id, static function (int $id): ?array {
+            $repo = new \App\Repositories\AssetRepository();
+            if ($repo->find($id) === null) {
+                return null;
+            }
+
+            return ['components' => $repo->components($id)];
+        });
+    }
+
+    public function assetWarranties(string $id): void
+    {
+        $this->read('assets.read', 'customer_asset', (int) $id, static function (int $id): ?array {
+            $repo = new \App\Repositories\AssetRepository();
+            if ($repo->find($id) === null) {
+                return null;
+            }
+
+            return ['warranties' => $repo->warranties($id)];
+        });
+    }
+
+    public function assetHistory(string $id): void
+    {
+        $this->read('assets.read', 'customer_asset', (int) $id, static function (int $id): ?array {
+            $repo = new \App\Repositories\AssetRepository();
+            if ($repo->find($id) === null) {
+                return null;
+            }
+
+            return ['history' => $repo->events($id)];
+        });
+    }
+
+    public function serviceRequests(): void
+    {
+        $auth = $this->gate('service.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\AssetRepository())->requests([
+            'q' => trim((string) ($_GET['q'] ?? '')),
+            'status' => strtoupper(trim((string) ($_GET['status'] ?? ''))),
+        ]);
+        $data = [];
+        foreach ($rows as $row) {
+            $data[] = [
+                'id' => (int) $row['id'],
+                'request_number' => (string) $row['request_number'],
+                'status' => (string) $row['status'],
+                'priority' => (string) $row['priority'],
+                'asset_number' => (string) ($row['asset_number'] ?? ''),
+            ];
+        }
+        $this->finish($auth, 200, true, ['service_requests' => $data], [], 'service_request', null);
+    }
+
+    public function serviceRequest(string $id): void
+    {
+        $this->read('service.read', 'service_request', (int) $id, static function (int $id): ?array {
+            $row = (new \App\Repositories\AssetRepository())->request($id);
+            if ($row === null) {
+                return null;
+            }
+
+            return [
+                'id' => (int) $row['id'],
+                'request_number' => (string) $row['request_number'],
+                'status' => (string) $row['status'],
+                'description' => (string) $row['description'],
+                'warranty_candidate' => (int) $row['warranty_candidate'],
+            ];
+        });
+    }
+
+    public function warrantyClaims(): void
+    {
+        $this->read('service.read', 'warranty_claim', 1, static function (int $id): array {
+            unset($id);
+
+            return ['claims' => (new \App\Repositories\AssetRepository())->rowsForReport(
+                'SELECT id, claim_number, asset_id, status, reported_date FROM warranty_claims ORDER BY id DESC LIMIT 50'
+            )];
+        });
+    }
+
+    public function maintenanceDue(): void
+    {
+        $auth = $this->gate('service.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Services\AssetMaintenanceService())->forecast(30);
+        $data = [];
+        foreach ($rows as $row) {
+            $data[] = [
+                'asset_number' => (string) $row['asset_number'],
+                'plan' => (string) $row['plan_name'],
+                'next_due_on' => (string) $row['next_due_on'],
+            ];
+        }
+        $this->finish($auth, 200, true, ['due' => $data], [], 'maintenance', null);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function assetPayload(array $row, bool $money): array
+    {
+        $payload = [
+            'id' => (int) $row['id'],
+            'asset_number' => (string) $row['asset_number'],
+            'name' => (string) $row['name'],
+            'status' => (string) $row['status'],
+            'customer_id' => (int) $row['customer_id'],
+            'site' => (string) ($row['site_name'] ?? ''),
+        ];
+        if ($money) {
+            $payload['original_commercial_value'] = $row['original_commercial_value'];
+            $payload['original_internal_cost'] = $row['original_internal_cost'];
+        }
+
+        return $payload;
+    }
+
     public function createLead(): void
     {
         $auth = $this->gate('leads.write');

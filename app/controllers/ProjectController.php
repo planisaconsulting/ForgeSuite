@@ -139,6 +139,8 @@ final class ProjectController
             'canComplete' => can('projects.complete'),
             'canHandover' => can('projects.generate_handover'),
             'canTeam' => can('projects.manage_team'),
+            'assetCount' => can('assets.view') ? (new \App\Repositories\AssetRepository())->countForProject($projectId) : 0,
+            'assets' => can('assets.view') ? (new \App\Repositories\AssetRepository())->forProject($projectId, 30) : [],
             ...$data,
         ]);
     }

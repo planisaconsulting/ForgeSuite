@@ -38,6 +38,7 @@ $base = '/projects/' . $project['id'];
         <?php
         $cards = [
             ['Sites', (int) $counts['sites'] . ' / ' . (int) $counts['sites_complete'] . ' complete'],
+            ['Assets', (string) (int) ($assetCount ?? 0)],
             ['Jobs', (int) $counts['jobs']],
             ['Late sites', (int) $counts['sites_late']],
             ['In production', (int) $counts['jobs_production']],
@@ -63,6 +64,12 @@ $base = '/projects/' . $project['id'];
                 <p>Next milestone: <?= e((string) ($next['name'] ?? 'None scheduled')) ?><?php if (!empty($next['current_due_date'])): ?> · <?= e((string) $next['current_due_date']) ?><?php endif; ?></p>
                 <p class="sf-muted"><?= e($progress['explanation']) ?></p>
             </section>
+            <?php if (($assets ?? []) !== []): ?>
+            <section class="sf-panel mt-3">
+                <h2>Assets</h2>
+                <ul class="sf-feed"><?php foreach ($assets as $asset): ?><li><a href="<?= e(url('/assets/' . $asset['id'])) ?>"><?= e((string) $asset['asset_number']) ?></a> <?= e((string) $asset['name']) ?><small><?= e((string) ($asset['site_name'] ?? '')) ?></small></li><?php endforeach; ?></ul>
+            </section>
+            <?php endif; ?>
             <?php if ($canEdit): ?>
             <section class="sf-panel mt-3">
                 <h2>Move the current target</h2>

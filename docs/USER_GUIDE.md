@@ -30,6 +30,16 @@ Create draft jobs from the sites when the package is agreed. Those jobs stay New
 
 The overview shows how many sites are complete, which are late, the next milestone, open snags, and, if you are allowed, commercial value, actual cost, gross profit, margin, invoiced, and cash collected. Moving the current target keeps the original date and stores the reason.
 
+## How to record an installed sign
+
+Open Assets after the job item is complete. If the product is marked to create a customer asset, the job can suggest one. Confirm it. A box of stickers does not become a list of assets. Twenty identical signs can be one asset with quantity 20, or twenty assets if you need to track each one.
+
+The asset page shows the site, components, warranties, and service history. Print the label when the sign needs a QR code. Scanning it as staff opens the asset. Scanning it without a login opens a short report-a-problem page.
+
+## How to log a service call
+
+Open Service, or use Report a problem on the asset. Choose the problem and a priority. Normal is the usual choice. If a warranty date covers the day of the report, the request is marked as a candidate. It is not approved. From the request you can open a quote and a service job. Warranty work can be charged at zero and still record the parts, hours, and travel you used.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

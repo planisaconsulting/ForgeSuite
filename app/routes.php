@@ -51,6 +51,7 @@ use App\Controllers\PortalAdminController;
 use App\Controllers\PlanningController;
 use App\Controllers\BusinessPlanningController;
 use App\Controllers\ApiV1Controller;
+use App\Controllers\AssetController;
 use App\Controllers\PlatformController;
 use App\Controllers\PortalController;
 use App\Controllers\RecipeController;
@@ -982,6 +983,15 @@ $router->post('/portal/logout', static function (): void {
 $router->get('/portal', static function (): void {
     (new PortalController())->home();
 }, false);
+$router->get('/portal/assets', static function (): void {
+    (new PortalController())->assets();
+}, false);
+$router->get('/portal/assets/{id}', static function (string $id): void {
+    (new PortalController())->asset($id);
+}, false);
+$router->post('/portal/assets/{id}/report', static function (string $id): void {
+    (new PortalController())->reportAsset($id);
+}, false);
 $router->get('/portal/quotes/{id}', static function (string $id): void {
     (new PortalController())->quote($id);
 }, false);
@@ -1765,6 +1775,124 @@ $router->get('/api/v1/projects/{id}/summary', static function (string $id): void
 }, false);
 $router->get('/api/v1/project-sites/{id}', static function (string $id): void {
     (new ApiV1Controller())->projectSite($id);
+}, false);
+
+$router->get('/assets', static function (): void {
+    (new AssetController())->index();
+}, true, 'assets.view');
+$router->get('/assets/new', static function (): void {
+    (new AssetController())->createForm();
+}, true, 'assets.create');
+$router->post('/assets', static function (): void {
+    (new AssetController())->store();
+}, true, true, 'assets.create');
+$router->get('/assets/import', static function (): void {
+    (new AssetController())->importForm();
+}, true, 'assets.import');
+$router->post('/assets/import', static function (): void {
+    (new AssetController())->import();
+}, true, true, 'assets.import');
+$router->get('/assets/scan', static function (): void {
+    (new AssetController())->scan();
+}, true, 'assets.view');
+$router->get('/assets/{id}', static function (string $id): void {
+    (new AssetController())->show($id);
+}, true, 'assets.view');
+$router->post('/assets/{id}', static function (string $id): void {
+    (new AssetController())->update($id);
+}, true, true, 'assets.edit');
+$router->post('/assets/{id}/components', static function (string $id): void {
+    (new AssetController())->addComponent($id);
+}, true, true, 'assets.manage_components');
+$router->post('/assets/{id}/components/replace', static function (string $id): void {
+    (new AssetController())->replaceComponent($id);
+}, true, true, 'assets.manage_components');
+$router->post('/assets/{id}/warranties', static function (string $id): void {
+    (new AssetController())->addWarranty($id);
+}, true, true, 'assets.manage_warranties');
+$router->post('/assets/{id}/claims', static function (string $id): void {
+    (new AssetController())->addClaim($id);
+}, true, true, 'warranty_claims.manage');
+$router->get('/assets/{id}/label', static function (string $id): void {
+    (new AssetController())->label($id);
+}, true, 'assets.generate_labels');
+$router->post('/assets/{id}/transfer', static function (string $id): void {
+    (new AssetController())->transfer($id);
+}, true, true, 'assets.edit');
+$router->post('/assets/{id}/remove', static function (string $id): void {
+    (new AssetController())->remove($id);
+}, true, true, 'assets.edit');
+$router->get('/service', static function (): void {
+    (new AssetController())->serviceIndex();
+}, true, 'service_requests.view');
+$router->post('/service', static function (): void {
+    (new AssetController())->serviceCreate();
+}, true, true, 'service_requests.create');
+$router->get('/service/maintenance', static function (): void {
+    (new AssetController())->maintenance();
+}, true, 'service_requests.view');
+$router->post('/service/maintenance', static function (): void {
+    (new AssetController())->savePlan();
+}, true, true, 'maintenance.manage');
+$router->get('/service/warranties', static function (): void {
+    (new AssetController())->warranties();
+}, true, 'warranty_claims.view');
+$router->get('/service/reports/{slug}', static function (string $slug): void {
+    (new AssetController())->report($slug);
+}, true, 'service_requests.view');
+$router->get('/service/asset/{token}', static function (string $token): void {
+    (new AssetController())->publicShow($token);
+}, false);
+$router->post('/service/asset/{token}', static function (string $token): void {
+    (new AssetController())->publicReport($token);
+}, false, true);
+$router->get('/service/{id}', static function (string $id): void {
+    (new AssetController())->serviceShow($id);
+}, true, 'service_requests.view');
+$router->post('/service/{id}', static function (string $id): void {
+    (new AssetController())->serviceUpdate($id);
+}, true, true, 'service_requests.manage');
+$router->post('/service/{id}/job', static function (string $id): void {
+    (new AssetController())->serviceJob($id);
+}, true, true, 'service_jobs.manage');
+$router->post('/service/{id}/sign', static function (string $id): void {
+    (new AssetController())->serviceSign($id);
+}, true, true, 'inspections.perform');
+$router->get('/service/{id}/report', static function (string $id): void {
+    (new AssetController())->serviceReport($id);
+}, true, 'service_requests.view');
+$router->get('/m/service', static function (): void {
+    (new AssetController())->mobile();
+}, true, 'service_requests.view');
+$router->get('/m/service/{id}', static function (string $id): void {
+    (new AssetController())->mobileAsset($id);
+}, true, 'assets.view');
+$router->get('/api/v1/assets', static function (): void {
+    (new ApiV1Controller())->assets();
+}, false);
+$router->get('/api/v1/assets/{id}', static function (string $id): void {
+    (new ApiV1Controller())->assetRecord($id);
+}, false);
+$router->get('/api/v1/assets/{id}/components', static function (string $id): void {
+    (new ApiV1Controller())->assetComponents($id);
+}, false);
+$router->get('/api/v1/assets/{id}/warranties', static function (string $id): void {
+    (new ApiV1Controller())->assetWarranties($id);
+}, false);
+$router->get('/api/v1/assets/{id}/service-history', static function (string $id): void {
+    (new ApiV1Controller())->assetHistory($id);
+}, false);
+$router->get('/api/v1/service-requests', static function (): void {
+    (new ApiV1Controller())->serviceRequests();
+}, false);
+$router->get('/api/v1/service-requests/{id}', static function (string $id): void {
+    (new ApiV1Controller())->serviceRequest($id);
+}, false);
+$router->get('/api/v1/warranty-claims', static function (): void {
+    (new ApiV1Controller())->warrantyClaims();
+}, false);
+$router->get('/api/v1/maintenance/due', static function (): void {
+    (new ApiV1Controller())->maintenanceDue();
 }, false);
 
 $soon = static function (string $slug): void {

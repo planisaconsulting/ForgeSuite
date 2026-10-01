@@ -18,4 +18,8 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - A changed phone clock can extend local viewing of a field pack until the next online sign-in.
 - The 1 October 2026 restore drill validated a SQL copy. It did not boot a second web server on that copy.
 - Physical label printers, iPhone Home Screen, and a workshop TV were not exercised in the build environment.
+- Asset QR symbols are generated in PHP as SVG. A phone camera was not used in the build environment.
+- There is no separate customer-site address book. An asset uses the project site plus a location description.
+- Service agreements do not create subscription invoices.
+- Warranty expiry notices are internal. They do not message the customer.
 - PageController still contains early “later phase” notes for modules that now exist. Those routes are not the live quote and job screens. Cleaning that copy is backlog, not a behaviour change.

@@ -1530,3 +1530,98 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('project_closeout_block_open_invoices', '0'),
 ('project_date_reason_required', '0');
 
+-- v1.1 Phase 2 asset and service reference data.
+INSERT INTO asset_types (code, name) VALUES
+('PYLON', 'Pylon'),
+('LIGHTBOX', 'Lightbox'),
+('CHANNEL_LETTERS', 'Channel letters'),
+('FASCIA_SIGN', 'Fascia sign'),
+('ACM_SIGN', 'ACM sign'),
+('CHROMADEK_SIGN', 'Chromadek sign'),
+('WAYFINDING', 'Wayfinding'),
+('WINDOW_GRAPHICS', 'Window graphics'),
+('VEHICLE_BRANDING', 'Vehicle branding'),
+('BILLBOARD', 'Billboard'),
+('LED_DISPLAY', 'LED display'),
+('NEON_SIGN', 'Neon sign'),
+('SAFETY_SIGNAGE', 'Safety signage'),
+('DIRECTORY_BOARD', 'Directory board'),
+('CUSTOM', 'Custom');
+
+INSERT INTO service_problem_categories (code, name) VALUES
+('LIGHTING_FAILURE', 'Lighting failure'),
+('POWER_SUPPLY', 'Power supply'),
+('STRUCTURAL', 'Structural'),
+('FACE_DAMAGE', 'Face damage'),
+('VINYL_FAILURE', 'Vinyl failure'),
+('PEELING', 'Peeling'),
+('FADING', 'Fading'),
+('WATER_INGRESS', 'Water ingress'),
+('ELECTRICAL', 'Electrical'),
+('MOUNTING', 'Mounting'),
+('STORM_DAMAGE', 'Storm damage'),
+('VANDALISM', 'Vandalism'),
+('VEHICLE_DAMAGE', 'Vehicle damage'),
+('ARTWORK', 'Artwork'),
+('OTHER', 'Other');
+
+INSERT INTO maintenance_plans (name, interval_months, checklist_name, auto_request) VALUES
+('Annual inspection', 12, 'Structure, face, lighting, electrical enclosure', 0),
+('Six-month clean', 6, 'Clean face and check fasteners', 0);
+
+INSERT INTO permissions (code, name, module) VALUES
+('assets.view', 'View customer assets', 'assets'),
+('assets.create', 'Create customer assets', 'assets'),
+('assets.edit', 'Edit customer assets', 'assets'),
+('assets.archive', 'Archive customer assets', 'assets'),
+('assets.view_costs', 'View asset and service costs', 'assets'),
+('assets.manage_components', 'Manage asset components', 'assets'),
+('assets.manage_warranties', 'Manage warranties', 'assets'),
+('assets.generate_labels', 'Print asset labels', 'assets'),
+('assets.import', 'Import assets', 'assets'),
+('service_requests.view', 'View service requests', 'service'),
+('service_requests.create', 'Create service requests', 'service'),
+('service_requests.assign', 'Assign service requests', 'service'),
+('service_requests.manage', 'Manage service requests', 'service'),
+('service_jobs.manage', 'Create service jobs', 'service'),
+('service.view_costs', 'View service costs', 'service'),
+('warranty_claims.view', 'View warranty claims', 'service'),
+('warranty_claims.manage', 'Manage warranty claims', 'service'),
+('inspections.perform', 'Record inspections', 'service'),
+('inspections.manage', 'Manage inspections', 'service'),
+('service_reports.generate', 'Generate service reports', 'service');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.module IN ('assets', 'service');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN (
+    'assets.view', 'assets.create', 'service_requests.view', 'service_requests.create', 'warranty_claims.view'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN (
+    'assets.view', 'assets.view_costs', 'service.view_costs', 'warranty_claims.view', 'service_requests.view'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('DESIGN', 'PRODUCTION') AND p.code = 'assets.view';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'INSTALLER' AND p.code IN (
+    'assets.view', 'service_requests.view', 'inspections.perform'
+);
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('asset_prefix', 'SFA'),
+('service_request_prefix', 'SFSR'),
+('warranty_claim_prefix', 'SFWC'),
+('service_agreement_prefix', 'SFM'),
+('warranty_alert_days', '30'),
+('asset_label_contact', 'Sign-Forge service'),
+('service_manager_user_id', '');

@@ -17,7 +17,7 @@ final class AttachmentService
     private const MAX_BYTES = 8388608;
 
     /** @var list<string> */
-    private const ENTITIES = ['customer', 'quote', 'opportunity', 'job', 'job_item', 'artwork', 'installation', 'site_survey', 'invoice', 'project', 'project_site'];
+    private const ENTITIES = ['customer', 'quote', 'opportunity', 'job', 'job_item', 'artwork', 'installation', 'site_survey', 'invoice', 'project', 'project_site', 'customer_asset', 'service_request', 'asset_inspection'];
 
     /** @var array<string, list<string>> */
     private const ALLOWED = [

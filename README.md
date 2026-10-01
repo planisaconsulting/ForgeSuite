@@ -4,7 +4,7 @@ Staff application for **Sign-Forge Signs**. Phases 1 to 6 cover customers, quota
 
 The application name in the interface is Sign-Forge Management System. The release name is Sign-Forge ERP v1.1.0. The company name (Sign-Forge Signs) comes from settings and can be changed without editing code.
 
-Guides for install, deploy, backup, restore, security, and go-live are in `docs/`. v1.0.0 closed the original phase roadmap. v1.1 Phase 1 adds projects and multi-site rollouts. A job still does not have to belong to a project. See `docs/PROJECTS_AND_ROLLOUTS.md`.
+Guides for install, deploy, backup, restore, security, and go-live are in `docs/`. v1.0.0 closed the original phase roadmap. v1.1 Phase 1 adds projects and multi-site rollouts. A job still does not have to belong to a project. See `docs/PROJECTS_AND_ROLLOUTS.md`. v1.1 Phase 2 adds the customer asset, warranty, service request, inspection, and maintenance records. See `docs/ASSET_MANAGEMENT.md`.
 
 ## Requirements
 

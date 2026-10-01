@@ -63,6 +63,20 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Open the handover pack and confirm it has no costs, margin, or internal risks
 - [ ] Sign in as an installer and confirm the project financial page is refused
 
+## Assets and service
+
+- [ ] Create ABC Motors, site Klerksdorp, and the illuminated pylon job
+- [ ] Create asset SFA with LED modules, three PSUs, and a timer
+- [ ] Add a 24-month workmanship warranty from 1 January 2027 and confirm it ends 31 December 2028
+- [ ] Add a 5-year PSU warranty and confirm that after 36 months workmanship is expired and the PSU warranty is still active
+- [ ] Report “one side dark”, confirm the request links the asset, and confirm no warranty claim was approved automatically
+- [ ] Open the warranty service job, fit a replacement PSU, and confirm stock moved once
+- [ ] Confirm the old PSU row remains and is replaced, and the new PSU is active
+- [ ] Sign the service report and read the asset history
+- [ ] On a 25-site project with 120 assets, filter by site, open a warranty, and see maintenance due
+- [ ] Sign in as customer A and confirm customer B’s asset URL is refused
+- [ ] Open the public QR page and confirm it has no prices or internal notes
+
 ## Admin
 
 - [ ] Create a user and force a password change

@@ -584,7 +584,7 @@ final class ProjectRepository extends Repository
     {
         $row = $this->one(
             'SELECT COALESCE(SUM(quoted_revenue_snapshot), 0) AS total FROM jobs
-             WHERE project_id = ? AND archived = 0 AND value_treatment = \'ADDITIONAL\'',
+             WHERE project_id = ? AND archived = 0 AND job_type = \'STANDARD\' AND value_treatment = \'ADDITIONAL\'',
             [$projectId]
         );
 
@@ -597,7 +597,7 @@ final class ProjectRepository extends Repository
             'SELECT COALESCE(SUM(v.total), 0) AS total
              FROM job_variations v
              JOIN jobs j ON j.id = v.job_id
-             WHERE j.project_id = ? AND j.archived = 0 AND (v.status = \'APPROVED\' OR v.customer_approved = 1)
+             WHERE j.project_id = ? AND j.archived = 0 AND j.job_type = \'STANDARD\' AND (v.status = \'APPROVED\' OR v.customer_approved = 1)
                AND NOT EXISTS (
                     SELECT 1 FROM project_commercial_lines l
                     WHERE l.source_type = \'JOB_VARIATION\' AND l.source_id = v.id AND l.superseded = 0
@@ -611,7 +611,7 @@ final class ProjectRepository extends Repository
     public function jobCostSum(int $projectId): string
     {
         $row = $this->one(
-            'SELECT COALESCE(SUM(actual_total_cost), 0) AS total FROM jobs WHERE project_id = ? AND archived = 0',
+            'SELECT COALESCE(SUM(actual_total_cost), 0) AS total FROM jobs WHERE project_id = ? AND archived = 0 AND job_type = \'STANDARD\'',
             [$projectId]
         );
 
@@ -621,7 +621,7 @@ final class ProjectRepository extends Repository
     public function estimatedJobCost(int $projectId): string
     {
         $row = $this->one(
-            'SELECT COALESCE(SUM(quoted_cost_snapshot), 0) AS total FROM jobs WHERE project_id = ? AND archived = 0',
+            'SELECT COALESCE(SUM(quoted_cost_snapshot), 0) AS total FROM jobs WHERE project_id = ? AND archived = 0 AND job_type = \'STANDARD\'',
             [$projectId]
         );
 
