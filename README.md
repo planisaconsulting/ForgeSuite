@@ -164,6 +164,8 @@ php tests/sales_flow.php
 php tests/jobs_flow.php
 php tests/inventory_math.php
 php tests/inventory_flow.php
+php tests/finance_math.php
+php tests/finance_flow.php
 php tests/acceptance.php http://127.0.0.1:8741
 ```
 

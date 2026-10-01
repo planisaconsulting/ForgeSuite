@@ -118,6 +118,9 @@
                         <a class="btn btn-sf" href="<?= e(url('/jobs/' . $job['id'])) ?>">Job <?= e((string) $job['job_number']) ?></a>
                     <?php elseif ($canConvert && (string) $quote['status'] === 'ACCEPTED'): ?>
                         <a class="btn btn-sf" href="<?= e(url('/quotes/' . $quote['id'] . '/convert')) ?>">Convert to job</a>
+                        <?php if (can('invoices.create')): ?>
+                            <a class="btn btn-outline-light" href="<?= e(url('/invoices/new?quote_id=' . $quote['id'])) ?>">Create invoice</a>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </section>

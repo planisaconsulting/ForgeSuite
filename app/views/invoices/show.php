@@ -123,6 +123,20 @@ $number = (string) ($invoice['invoice_number'] ?: 'Draft ' . $invoice['id']);
             </form>
         </section>
         <?php endif; ?>
+        <?php if (!$draft && (can('invoices.issue') || can('debtors.view'))): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Collection note</h2></div>
+            <form class="p-3" method="post" action="<?= e(url('/invoices/' . $invoice['id'] . '/flag')) ?>">
+                <?= csrf_field() ?>
+                <select class="form-select form-select-lg mb-2" name="collection_flag">
+                    <option value="">None</option>
+                    <option value="DISPUTED" <?= ($invoice['collection_flag'] ?? '') === 'DISPUTED' ? 'selected' : '' ?>>Disputed</option>
+                    <option value="COLLECTIONS" <?= ($invoice['collection_flag'] ?? '') === 'COLLECTIONS' ? 'selected' : '' ?>>Collections</option>
+                </select>
+                <button class="btn btn-outline-light btn-lg w-100" type="submit">Save note</button>
+            </form>
+        </section>
+        <?php endif; ?>
         <?php if (!$draft): ?>
         <section class="sf-panel mb-3">
             <div class="sf-panel-head"><h2>Reminder text</h2></div>
