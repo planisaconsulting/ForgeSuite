@@ -32,7 +32,12 @@ use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
 use App\Controllers\CustomerController;
+use App\Controllers\CommunicationCentreController;
 use App\Controllers\DashboardController;
+use App\Controllers\IntegrationController;
+use App\Controllers\LeadController;
+use App\Controllers\MarketingController;
+use App\Controllers\PublicLeadController;
 use App\Controllers\EstimatingController;
 use App\Controllers\PageController;
 use App\Controllers\PricingLevelController;
@@ -1096,6 +1101,118 @@ $router->get('/reports/capacity-demand', static function (): void {
 $router->get('/reports/late-jobs', static function (): void {
     (new PlanningController())->lateJobs();
 }, true, 'reports.operations');
+
+$router->post('/api/public/leads', static function (): void {
+    (new PublicLeadController())->store();
+}, false, false);
+$router->post('/api/integrations/{provider}/events', static function (string $provider): void {
+    (new IntegrationController())->webhook($provider);
+}, false, false);
+
+$router->get('/leads', static function (): void {
+    (new LeadController())->index();
+}, true, 'leads.view');
+$router->get('/leads/new', static function (): void {
+    (new LeadController())->create();
+}, true, 'leads.create');
+$router->post('/leads', static function (): void {
+    (new LeadController())->store();
+}, true, true, 'leads.create');
+$router->get('/leads/{id}', static function (string $id): void {
+    (new LeadController())->show($id);
+}, true, 'leads.view');
+$router->post('/leads/{id}/assign', static function (string $id): void {
+    (new LeadController())->assign($id);
+}, true, true, 'leads.assign');
+$router->post('/leads/{id}/call', static function (string $id): void {
+    (new LeadController())->call($id);
+}, true, true, 'communications.create');
+$router->post('/leads/{id}/whatsapp', static function (string $id): void {
+    (new LeadController())->whatsapp($id);
+}, true, true, 'communications.whatsapp');
+$router->post('/leads/{id}/note', static function (string $id): void {
+    (new LeadController())->note($id);
+}, true, true, 'communications.create');
+$router->post('/leads/{id}/follow-up', static function (string $id): void {
+    (new LeadController())->followUp($id);
+}, true, true, 'leads.view');
+$router->post('/leads/{id}/lost', static function (string $id): void {
+    (new LeadController())->lost($id);
+}, true, true, 'leads.mark_lost');
+$router->post('/leads/{id}/spam', static function (string $id): void {
+    (new LeadController())->spam($id);
+}, true, true, 'leads.mark_lost');
+$router->post('/leads/{id}/convert', static function (string $id): void {
+    (new LeadController())->convert($id);
+}, true, true, 'leads.convert');
+$router->get('/follow-ups', static function (): void {
+    (new LeadController())->followUps();
+}, true, 'leads.view');
+$router->get('/sales/desk', static function (): void {
+    (new LeadController())->desk();
+}, true, 'leads.view');
+
+$router->get('/communications', static function (): void {
+    (new CommunicationCentreController())->index();
+}, true, 'communications.view');
+$router->get('/communications/templates', static function (): void {
+    (new CommunicationCentreController())->templates();
+}, true, 'communication_templates.view');
+$router->post('/communications/templates', static function (): void {
+    (new CommunicationCentreController())->saveTemplate();
+}, true, true, 'communication_templates.manage');
+$router->post('/quotes/{id}/email-preview', static function (string $id): void {
+    (new CommunicationCentreController())->quotePreview($id);
+}, true, true, 'communications.send_email');
+$router->post('/quotes/{id}/email', static function (string $id): void {
+    (new CommunicationCentreController())->quoteSend($id);
+}, true, true, 'communications.send_email');
+$router->get('/customers/{id}/contacts/{contactId}/preferences', static function (string $id, string $contactId): void {
+    (new CommunicationCentreController())->preferences($id, $contactId);
+}, true, 'customers.view');
+$router->post('/customers/{id}/contacts/{contactId}/preferences', static function (string $id, string $contactId): void {
+    (new CommunicationCentreController())->savePreferences($id, $contactId);
+}, true, true, 'customers.manage');
+$router->post('/customers/{id}/contacts/{contactId}/unsubscribe', static function (string $id, string $contactId): void {
+    (new CommunicationCentreController())->unsubscribe($id, $contactId);
+}, true, true, 'customers.manage');
+
+$router->get('/marketing/campaigns', static function (): void {
+    (new MarketingController())->campaigns();
+}, true, 'campaigns.view');
+$router->post('/marketing/campaigns', static function (): void {
+    (new MarketingController())->storeCampaign();
+}, true, true, 'campaigns.manage');
+$router->get('/marketing/campaigns/{id}', static function (string $id): void {
+    (new MarketingController())->showCampaign($id);
+}, true, 'campaigns.view');
+$router->get('/marketing/sources', static function (): void {
+    (new MarketingController())->sources();
+}, true, 'marketing_reports.view');
+$router->get('/marketing/retention', static function (): void {
+    (new MarketingController())->retention();
+}, true, 'customer_retention.view');
+$router->get('/marketing/lists', static function (): void {
+    (new MarketingController())->bulkPreview();
+}, true, 'bulk_communications.send');
+$router->get('/reports/communication-activity', static function (): void {
+    (new MarketingController())->activity();
+}, true, 'marketing_reports.view');
+$router->get('/feedback', static function (): void {
+    (new MarketingController())->feedback();
+}, true, 'feedback.view');
+$router->post('/feedback', static function (): void {
+    (new MarketingController())->storeFeedback();
+}, true, true, 'feedback.manage');
+$router->post('/feedback/review', static function (): void {
+    (new MarketingController())->review();
+}, true, true, 'feedback.manage');
+$router->get('/admin/integrations', static function (): void {
+    (new IntegrationController())->index();
+}, true, 'integrations.view');
+$router->post('/admin/integrations', static function (): void {
+    (new IntegrationController())->save();
+}, true, true, 'integrations.manage');
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

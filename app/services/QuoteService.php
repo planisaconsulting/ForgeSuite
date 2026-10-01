@@ -66,6 +66,7 @@ final class QuoteService
                 'customer_id' => $header['customer_id'],
             ], $userId);
             $this->markOpportunityQuoted($header['opportunity_id']);
+            (new AttributionService())->copyToQuote($id);
         });
 
         return ['errors' => [], 'id' => $id];
@@ -632,6 +633,7 @@ final class QuoteService
         if ($status === 'SENT') {
             try {
                 (new AutomationService())->fire('QUOTE_SENT', 'quote', $quoteId, $userId);
+                (new FollowUpService())->scheduleQuote($quoteId, $userId);
             } catch (\Throwable $e) {
                 error_log('Quote follow-up automation failed: ' . $e->getMessage());
             }

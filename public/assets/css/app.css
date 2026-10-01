@@ -896,3 +896,21 @@ code {
     height: 100%;
     background: #d7a15f;
 }
+
+.sf-lead-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    position: sticky;
+    bottom: 0.75rem;
+    z-index: 3;
+}
+
+@media (max-width: 991.98px) {
+    .sf-lead-actions {
+        position: sticky;
+        top: 0.5rem;
+        padding: 0.5rem 0;
+        background: var(--bs-body-bg, #121416);
+    }
+}

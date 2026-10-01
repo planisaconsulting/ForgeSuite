@@ -549,7 +549,7 @@ foreach ((new RoleRepository())->all() as $role) {
 $users = new UserRepository();
 $productionId = $users->insert([
     'name' => 'Production ' . $stamp,
-    'email' => 'production-' . $stamp . '@signforge.local',
+    'email' => 'inventory-production-' . $stamp . '@signforge.local',
     'password_hash' => password_hash('Produce#2026', PASSWORD_DEFAULT),
     'role_id' => $roles['PRODUCTION'],
     'active' => 1,

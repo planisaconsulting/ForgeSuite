@@ -14,6 +14,8 @@ enum OpportunitySource: string
     case Email = 'EMAIL';
     case Whatsapp = 'WHATSAPP';
     case Facebook = 'FACEBOOK';
+    case Instagram = 'INSTAGRAM';
+    case Google = 'GOOGLE';
     case Website = 'WEBSITE';
     case Referral = 'REFERRAL';
     case ReturnCustomer = 'RETURN_CUSTOMER';
@@ -27,6 +29,8 @@ enum OpportunitySource: string
             self::Email => 'Email',
             self::Whatsapp => 'WhatsApp',
             self::Facebook => 'Facebook',
+            self::Instagram => 'Instagram',
+            self::Google => 'Google',
             self::Website => 'Website',
             self::Referral => 'Referral',
             self::ReturnCustomer => 'Return customer',

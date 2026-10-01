@@ -19,7 +19,8 @@ INSERT INTO roles (code, name, description) VALUES
 ('PRODUCTION', 'Production', 'View the catalogue.'),
 ('ACCOUNTS', 'Accounts', 'View customers, products, suppliers, and pricing levels.'),
 ('INSTALLER', 'Installer', 'View customers.'),
-('MANAGEMENT', 'Management', 'Dashboards, reports, and audit visibility. Not every operational edit.');
+('MANAGEMENT', 'Management', 'Dashboards, reports, and audit visibility. Not every operational edit.'),
+('MARKETING', 'Marketing', 'Campaigns, lead sources, templates, and retention reports.');
 
 INSERT INTO permissions (code, name, module) VALUES
 ('dashboard.view', 'View dashboard', 'dashboard'),
@@ -157,7 +158,27 @@ INSERT INTO permissions (code, name, module) VALUES
 ('pricing_recommendations.review', 'Review a pricing recommendation', 'estimating'),
 ('pricing_recommendations.apply', 'Apply a pricing recommendation to a new recipe version', 'estimating'),
 ('quote_risk.override', 'Issue a quote below the margin rule with a reason', 'estimating'),
-('historical_costing.view', 'View historical estimate and actual cost', 'estimating');
+('historical_costing.view', 'View historical estimate and actual cost', 'estimating'),
+('leads.view', 'View leads', 'crm'),
+('leads.create', 'Create leads', 'crm'),
+('leads.assign', 'Assign leads', 'crm'),
+('leads.convert', 'Convert leads', 'crm'),
+('leads.mark_lost', 'Mark a lead lost or spam', 'crm'),
+('communications.view', 'View communications', 'crm'),
+('communications.create', 'Log communications', 'crm'),
+('communications.send_email', 'Send email', 'crm'),
+('communications.whatsapp', 'Prepare WhatsApp messages', 'crm'),
+('communication_templates.view', 'View communication templates', 'crm'),
+('communication_templates.manage', 'Manage communication templates', 'crm'),
+('campaigns.view', 'View campaigns', 'marketing'),
+('campaigns.manage', 'Manage campaigns', 'marketing'),
+('marketing_reports.view', 'View marketing reports', 'marketing'),
+('customer_retention.view', 'View customer retention', 'marketing'),
+('feedback.view', 'View customer feedback', 'marketing'),
+('feedback.manage', 'Record customer feedback', 'marketing'),
+('integrations.view', 'View integrations', 'admin'),
+('integrations.manage', 'Manage integrations', 'admin'),
+('bulk_communications.send', 'Send a checked customer list', 'marketing');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
@@ -189,7 +210,10 @@ WHERE r.code = 'SALES'
     'portal.access_manage',
     'schedule.view', 'capacity.view',
     'estimates.view', 'estimates.create', 'estimates.edit', 'estimates.view_cost',
-    'yield.view', 'yield.override', 'pricing_intelligence.view'
+    'yield.view', 'yield.override', 'pricing_intelligence.view',
+    'leads.view', 'leads.create', 'leads.assign', 'leads.convert', 'leads.mark_lost',
+    'communications.view', 'communications.create', 'communications.send_email', 'communications.whatsapp',
+    'communication_templates.view', 'feedback.view', 'customer_retention.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -203,7 +227,7 @@ WHERE r.code = 'DESIGN'
     'products.view', 'calculator.use',
     'jobs.view', 'artwork.upload', 'artwork.approve_record', 'production.view', 'time.record', 'attachments.manage',
     'site_surveys.view', 'recipes.view', 'templates.view',
-    'schedule.view'
+    'schedule.view', 'communications.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -218,7 +242,8 @@ WHERE r.code = 'PRODUCTION'
     'inventory.view', 'inventory.consume', 'inventory.transfer',
     'reports.operations',
     'site_surveys.view', 'recipes.view',
-    'schedule.view', 'resources.view', 'maintenance.view'
+    'schedule.view', 'resources.view', 'maintenance.view',
+    'communications.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -238,7 +263,8 @@ WHERE r.code = 'ACCOUNTS'
     'statements.view', 'statements.generate', 'debtors.view', 'finance.costing.view', 'finance.vat_report.view',
     'reports.finance', 'reports.export', 'reports.profitability',
     'subcontractors.view', 'subcontractors.manage', 'resource_cost.view',
-    'estimates.view', 'estimates.view_cost', 'historical_costing.view'
+    'estimates.view', 'estimates.view_cost', 'historical_costing.view',
+    'communications.view', 'communications.create', 'communications.send_email'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -259,7 +285,10 @@ WHERE r.code = 'MANAGEMENT'
     'resources.view', 'capacity.view', 'maintenance.view', 'vehicles.view',
     'recurring_jobs.view', 'subcontractors.view', 'resource_cost.view',
     'estimates.view', 'estimates.view_cost', 'yield.view', 'pricing_intelligence.view',
-    'pricing_recommendations.review', 'historical_costing.view', 'quote_risk.override'
+    'pricing_recommendations.review', 'historical_costing.view', 'quote_risk.override',
+    'leads.view', 'communications.view', 'communication_templates.view',
+    'campaigns.view', 'marketing_reports.view', 'customer_retention.view',
+    'feedback.view', 'integrations.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -859,3 +888,72 @@ SELECT v.code, v.name, v.equipment_cost, v.notes FROM (
     UNION ALL SELECT 'OTHER', 'Other', 0.00, 'Enter the equipment cost on the estimate.'
 ) AS v
 WHERE NOT EXISTS (SELECT 1 FROM installation_height_categories h WHERE h.code = v.code);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'MARKETING' AND p.code IN (
+    'dashboard.view', 'leads.view', 'communications.view',
+    'communication_templates.view', 'communication_templates.manage',
+    'campaigns.view', 'campaigns.manage', 'marketing_reports.view',
+    'customer_retention.view', 'feedback.view', 'bulk_communications.send'
+);
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('lead_prefix', 'SFL'),
+('stale_lead_business_hours', '4'),
+('quote_followup_business_days', '3'),
+('stale_quote_business_days', '5'),
+('dormant_customer_months', '12'),
+('post_job_followup_days', '2'),
+('review_request_url', ''),
+('lead_response_hours', '4'),
+('website_lead_min_seconds', '3'),
+('website_lead_rate_per_hour', '8'),
+('automation_outbound_enabled', '0'),
+('email_delivery_mode', 'off'),
+('smtp_host', ''),
+('smtp_port', '587'),
+('smtp_encryption', 'tls'),
+('smtp_username', ''),
+('smtp_from_email', ''),
+('smtp_from_name', ''),
+('smtp_reply_to', '');
+
+INSERT IGNORE INTO lead_sources (code, label, response_hours, active) VALUES
+('WEBSITE', 'Website', 2, 1),
+('WHATSAPP', 'WhatsApp', 1, 1),
+('EMAIL', 'Email', 4, 1),
+('PHONE', 'Phone', 4, 1),
+('WALK_IN', 'Walk-in', 4, 1),
+('FACEBOOK', 'Facebook', 4, 1),
+('INSTAGRAM', 'Instagram', 4, 1),
+('REFERRAL', 'Referral', 4, 1),
+('RETURN_CUSTOMER', 'Return customer', 4, 1),
+('GOOGLE', 'Google', 2, 1),
+('OTHER', 'Other', 4, 1);
+
+INSERT IGNORE INTO call_outcomes (code, label, active) VALUES
+('ANSWERED', 'Answered', 1),
+('NO_ANSWER', 'No answer', 1),
+('VOICEMAIL', 'Voicemail', 1),
+('CALL_BACK', 'Call back', 1),
+('INTERESTED', 'Interested', 1),
+('NOT_INTERESTED', 'Not interested', 1),
+('FOLLOW_UP', 'Follow up', 1),
+('OTHER', 'Other', 1);
+
+INSERT INTO communication_templates (name, channel, category, subject_template, body_template, active)
+SELECT 'Quote ready', 'EMAIL', 'QUOTE_SEND', 'Quotation {{quote_number}}', 'Hello {{contact_name}},\n\nYour quotation {{quote_number}} for {{company_name}} totals {{quote_total}} and is valid until {{quote_expiry}}.\n\n{{portal_link}}', 1
+WHERE NOT EXISTS (SELECT 1 FROM communication_templates WHERE category = 'QUOTE_SEND' AND channel = 'EMAIL');
+
+INSERT INTO communication_templates (name, channel, category, subject_template, body_template, active)
+SELECT 'Quote follow-up', 'EMAIL', 'QUOTE_FOLLOW_UP', 'Following up on {{quote_number}}', 'Hello {{contact_name}},\n\nI am following up on quotation {{quote_number}} ({{quote_total}}).', 1
+WHERE NOT EXISTS (SELECT 1 FROM communication_templates WHERE category = 'QUOTE_FOLLOW_UP' AND channel = 'EMAIL');
+
+INSERT INTO communication_templates (name, channel, category, subject_template, body_template, active)
+SELECT 'Review request', 'EMAIL', 'REVIEW_REQUEST', 'How did we do?', 'Hello {{contact_name}},\n\nIf you have a moment, you can leave a public review here: {{portal_link}}', 1
+WHERE NOT EXISTS (SELECT 1 FROM communication_templates WHERE category = 'REVIEW_REQUEST' AND channel = 'EMAIL');
+
+INSERT INTO communication_templates (name, channel, category, subject_template, body_template, active)
+SELECT 'WhatsApp quote', 'WHATSAPP', 'QUOTE_SEND', NULL, 'Hello {{contact_name}}, quotation {{quote_number}} is ready. Total {{quote_total}}.', 1
+WHERE NOT EXISTS (SELECT 1 FROM communication_templates WHERE category = 'QUOTE_SEND' AND channel = 'WHATSAPP');

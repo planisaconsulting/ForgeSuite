@@ -1,5 +1,5 @@
 <?php require base_path('app/views/partials/flashes.php'); ?>
-<div class="sf-page-head"><h1>Automations</h1><p class="sf-muted mb-0">Rules create reminders or notifications. They do not run custom code, and they do not email customers.</p></div>
+<div class="sf-page-head"><h1>Automations</h1><p class="sf-muted mb-0">Rules create reminders, notifications, or drafts. They do not run custom code. Customer email stays off unless automation outbound email is explicitly enabled, and even then a rule does not send a message on its own.</p></div>
 <section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Rules</h2></div>
     <div class="table-responsive">

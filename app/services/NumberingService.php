@@ -95,6 +95,11 @@ final class NumberingService
         return $this->next('estimate', 'estimate_prefix', 'SFE');
     }
 
+    public function lead(): string
+    {
+        return $this->next('lead', 'lead_prefix', 'SFL');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

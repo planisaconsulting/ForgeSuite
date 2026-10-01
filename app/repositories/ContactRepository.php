@@ -22,6 +22,11 @@ final class ContactRepository extends Repository
     /**
      * @return array<string, mixed>|null
      */
+    public function find(int $contactId): ?array
+    {
+        return $this->one('SELECT * FROM customer_contacts WHERE id = ? LIMIT 1', [$contactId]);
+    }
+
     public function findForCustomer(int $customerId, int $contactId): ?array
     {
         return $this->one(

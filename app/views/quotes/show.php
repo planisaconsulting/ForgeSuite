@@ -114,6 +114,13 @@
                         <form method="post" action="<?= e(url('/quotes/' . $quote['id'] . '/status')) ?>"><?= csrf_field() ?><input type="hidden" name="version_number" value="<?= e((string) $quote['version_number']) ?>"><input type="hidden" name="status" value="READY"><button class="btn btn-outline-light w-100" type="submit">Mark ready</button></form>
                         <form method="post" action="<?= e(url('/quotes/' . $quote['id'] . '/status')) ?>"><?= csrf_field() ?><input type="hidden" name="version_number" value="<?= e((string) $quote['version_number']) ?>"><input type="hidden" name="status" value="SENT"><button class="btn btn-sf w-100" type="submit">Mark sent</button></form>
                     <?php endif; ?>
+                    <?php if (can('communications.send_email')): ?>
+                        <form method="post" action="<?= e(url('/quotes/' . $quote['id'] . '/email-preview')) ?>" class="d-grid gap-2">
+                            <?= csrf_field() ?>
+                            <input class="form-control" type="email" name="to" value="<?= e((string) ($quote['contact_email'] ?? $quote['customer_email'] ?? '')) ?>" placeholder="Recipient" required>
+                            <button class="btn btn-outline-light" type="submit">Preview email</button>
+                        </form>
+                    <?php endif; ?>
                     <?php if ($canManage && in_array((string) $quote['status'], ['SENT', 'VIEWED'], true)): ?>
                         <form method="post" action="<?= e(url('/quotes/' . $quote['id'] . '/status')) ?>"><?= csrf_field() ?><input type="hidden" name="version_number" value="<?= e((string) $quote['version_number']) ?>"><input type="hidden" name="status" value="VIEWED"><button class="btn btn-outline-light w-100" type="submit">Mark viewed</button></form>
                     <?php endif; ?>

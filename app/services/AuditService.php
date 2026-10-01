@@ -22,6 +22,9 @@ final class AuditService
         'new_password',
         'confirm_password',
         'password_confirm',
+        'smtp_password',
+        'webhook_secret',
+        'secret_value',
     ];
 
     public function __construct(private readonly AuditRepository $audit = new AuditRepository())

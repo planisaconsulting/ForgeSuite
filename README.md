@@ -358,6 +358,24 @@ A recurring template creates one follow-up for a due period. It does not create 
 
 `php tests/phase8.php` checks an overlapping printer, leave, 80% and 120% utilisation, a print-before-laminate dependency, a material shortage, a machine breakdown that does not move work, a shared vehicle, one monthly follow-up, a subcontract cost posted once, a customer date that survives an internal change, and schedule permissions on the action and the URL.
 
+## Phase 10 leads and communications
+
+A website enquiry, a phone call, and a walk-in all become a lead (`SFL-2026-0001`). The lead is kept after conversion. Conversion creates or links a customer, a contact, and an opportunity in one transaction. The opportunity keeps the first-touch source and campaign. Quotes, jobs, and invoices copy that attribution once and do not replace it. This is first-touch attribution, not multi-touch.
+
+Public submissions use `POST /api/public/leads`. The notes in `docs/website-leads.md` show the fields. A honeypot, a minimum form time, a per-address hourly limit, and a one-day duplicate message check sit in front of the insert. The response does not include a database id.
+
+Email delivery is `off`, `log`, or `smtp`. The SMTP password and the webhook secret are stored outside the normal settings form and are not shown again. WhatsApp is manual: a `wa.me` link is logged as prepared, not delivered. Automation can create reminders and drafts. It does not email a customer unless `automation_outbound_enabled` is `1`, and even then a rule does not send by itself.
+
+Repeat customer rate is customers with more than one completed job, divided by customers with at least one completed job. Cost per lead is campaign budget divided by leads that are not spam. Unqualified leads stay in that count. Estimated customer acquisition cost is budget divided by accepted quotes, and only when both numbers exist.
+
+`php tests/phase10.php` covers capture, phone matching, conversion, email success and failure, WhatsApp preparation, follow-up dedupe, attribution, unsubscribe, lead visibility, webhooks, templates, and the public rate limit.
+
+## Upgrading a Phase 9 database
+
+Back up the database first. Then import `database/migrations/010_communications_leads.sql` once. It adds leads, campaigns, consent, and permissions. It does not delete customers or rewrite quote totals. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `010` on a database created from the current `schema.sql`.
+
 ## Phase 9 estimating and yield
 
 An estimate is internal. A quote remains the customer document. Historical quote prices are not rewritten when a recipe, a cost, or a recommendation changes.

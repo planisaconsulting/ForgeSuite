@@ -424,7 +424,7 @@ foreach ((new RoleRepository())->all() as $role) {
 }
 $installerId = (new UserRepository())->insert([
     'name' => 'Installer ' . $stamp,
-    'email' => 'installer-' . $stamp . '@signforge.local',
+    'email' => 'finance-installer-' . $stamp . '@signforge.local',
     'password_hash' => password_hash('Install#2026', PASSWORD_DEFAULT),
     'role_id' => $roles['INSTALLER'],
     'active' => 1,

@@ -82,6 +82,7 @@ final class InvoiceService
                     'customer_id' => $built['header']['customer_id'],
                     'invoice_type' => $built['header']['invoice_type'],
                 ], $userId);
+                (new AttributionService())->copyToInvoice($id);
 
                 return $id;
             });

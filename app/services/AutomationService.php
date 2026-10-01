@@ -15,10 +15,29 @@ use App\Repositories\QuoteRepository;
 final class AutomationService
 {
     /** @var list<string> */
-    public const TRIGGERS = ['QUOTE_SENT'];
+    public const TRIGGERS = [
+        'QUOTE_SENT',
+        'LEAD_CREATED',
+        'LEAD_ASSIGNED',
+        'LEAD_NOT_CONTACTED',
+        'QUOTE_FOLLOWUP_DUE',
+        'QUOTE_EXPIRING',
+        'QUOTE_ACCEPTED',
+        'JOB_COMPLETED',
+        'INVOICE_OVERDUE',
+        'CUSTOMER_DORMANT',
+        'FEEDBACK_RECEIVED',
+    ];
 
     /** @var list<string> */
-    public const ACTIONS = ['CREATE_REMINDER'];
+    public const ACTIONS = [
+        'CREATE_REMINDER',
+        'CREATE_NOTIFICATION',
+        'CREATE_TASK',
+        'CREATE_DRAFT_COMMUNICATION',
+        'ASSIGN_LEAD',
+        'SEND_EMAIL',
+    ];
 
     public function __construct(
         private readonly AutomationRepository $rules = new AutomationRepository(),
@@ -45,6 +64,48 @@ final class AutomationService
     private function act(array $rule, string $entityType, int $entityId, int $actorId): void
     {
         $action = (string) $rule['action_type'];
+        if ($action === 'SEND_EMAIL') {
+            $this->rules->log(
+                (int) $rule['id'],
+                $entityType,
+                $entityId,
+                'SKIPPED',
+                SettingsService::get('automation_outbound_enabled', '0') === '1'
+                    ? 'Automated sending still requires a reviewed template. No message was sent.'
+                    : 'Automated outbound email is disabled.'
+            );
+
+            return;
+        }
+        if ($action === 'CREATE_NOTIFICATION' || $action === 'CREATE_TASK' || $action === 'CREATE_DRAFT_COMMUNICATION') {
+            $this->notifications->insert([
+                'user_id' => $actorId,
+                'role_id' => null,
+                'type' => $action,
+                'title' => (string) $rule['name'],
+                'message' => $action === 'CREATE_DRAFT_COMMUNICATION'
+                    ? 'Draft only. The customer was not emailed.'
+                    : 'Created by an automation rule.',
+                'entity_type' => $entityType,
+                'entity_id' => $entityId,
+                'priority' => 'NORMAL',
+                'dedupe_key' => 'rule:' . $rule['id'] . ':' . $entityType . ':' . $entityId . ':' . $action,
+                'expires_at' => null,
+            ]);
+            $this->rules->log((int) $rule['id'], $entityType, $entityId, 'DONE', $action);
+
+            return;
+        }
+        if ($action === 'ASSIGN_LEAD' && $entityType === 'lead') {
+            $config = json_decode((string) ($rule['action_config_json'] ?? '{}'), true);
+            $assignee = is_array($config) ? (int) ($config['user_id'] ?? 0) : 0;
+            if ($assignee > 0) {
+                (new \App\Repositories\LeadRepository())->assign($entityId, $assignee);
+            }
+            $this->rules->log((int) $rule['id'], $entityType, $entityId, $assignee > 0 ? 'DONE' : 'SKIPPED', 'Lead assignment');
+
+            return;
+        }
         if ($action !== 'CREATE_REMINDER' || $entityType !== 'quote') {
             $this->rules->log((int) $rule['id'], $entityType, $entityId, 'SKIPPED', 'Unsupported action for this record.');
 

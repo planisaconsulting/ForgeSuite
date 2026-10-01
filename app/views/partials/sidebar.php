@@ -7,10 +7,18 @@ $groups = [
         ['my-work', 'My work', '/work', 'fa-list-check', 'schedule.view'],
     ]],
     ['label' => 'CRM', 'links' => [
+        ['leads', 'Lead inbox', '/leads', 'fa-inbox', 'leads.view'],
         ['customers', 'Customers', '/customers', 'fa-users', 'customers.view'],
         ['activities', 'Activities', '/activities', 'fa-comments', 'activities.view'],
         ['opportunities', 'Opportunities', '/opportunities', 'fa-bullseye', 'opportunities.view'],
+        ['follow-ups', 'Follow-ups', '/follow-ups', 'fa-clock', 'leads.view'],
+        ['my-sales', 'My sales', '/sales/desk', 'fa-user-check', 'leads.view'],
         ['surveys', 'Site surveys', '/surveys', 'fa-ruler-combined', 'site_surveys.view'],
+    ]],
+    ['label' => 'Communications', 'links' => [
+        ['communications', 'Communication centre', '/communications', 'fa-comments', 'communications.view'],
+        ['message-templates', 'Templates', '/communications/templates', 'fa-envelope', 'communication_templates.view'],
+        ['feedback', 'Customer feedback', '/feedback', 'fa-star', 'feedback.view'],
     ]],
     ['label' => 'Sales', 'links' => [
         ['calculator', 'Calculator', '/calculator', 'fa-calculator', 'calculator.use'],
@@ -72,6 +80,12 @@ $groups = [
         ['recipe-test', 'Recipe test', '/recipes/test', 'fa-vial', 'recipes.test'],
         ['setup', 'Production templates', '/jobs/setup', 'fa-sliders', 'settings.manage'],
     ]],
+    ['label' => 'Marketing', 'links' => [
+        ['campaigns', 'Campaigns', '/marketing/campaigns', 'fa-bullhorn', 'campaigns.view'],
+        ['lead-sources', 'Lead sources', '/marketing/sources', 'fa-share-nodes', 'marketing_reports.view'],
+        ['retention', 'Customer retention', '/marketing/retention', 'fa-rotate', 'customer_retention.view'],
+        ['bulk', 'Checked lists', '/marketing/lists', 'fa-list', 'bulk_communications.send'],
+    ]],
     ['label' => 'Reports', 'links' => [
         ['report-executive', 'Executive', '/reports/executive', 'fa-chart-line', 'reports.executive'],
         ['report-sales', 'Sales', '/reports/sales', 'fa-chart-simple', 'reports.sales'],
@@ -93,6 +107,7 @@ $groups = [
         ['report-finance', 'Finance', '/reports/finance', 'fa-coins', 'reports.finance'],
         ['report-debtors', 'Debtors', '/reports/debtors', 'fa-scale-balanced', 'reports.finance'],
         ['documents', 'Documents', '/documents', 'fa-folder-open', 'dashboard.view'],
+        ['report-activity', 'Communication activity', '/reports/communication-activity', 'fa-comments', 'marketing_reports.view'],
     ]],
     ['label' => 'Administration', 'links' => [
         ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],
@@ -107,6 +122,7 @@ $groups = [
         ['logs', 'Error log', '/admin/logs', 'fa-bug', 'system.logs'],
         ['targets', 'KPI targets', '/admin/targets', 'fa-bullseye', 'settings.manage'],
         ['export', 'Data export', '/admin/export', 'fa-file-export', 'reports.export'],
+        ['integrations', 'Integrations', '/admin/integrations', 'fa-plug', 'integrations.view'],
         ['settings', 'Settings', '/settings', 'fa-gear', 'settings.manage'],
     ]],
 ];

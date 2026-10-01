@@ -132,6 +132,7 @@ final class JobService
             'quoted_revenue' => $summary['revenue'],
             'quoted_cost' => $summary['cost'],
         ], $userId);
+        (new AttributionService())->copyToJob($jobId);
     }
 
     /**

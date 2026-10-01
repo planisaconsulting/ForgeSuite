@@ -9,5 +9,5 @@ namespace App;
  */
 final class Version
 {
-    public const NUMBER = '9.0.0';
+    public const NUMBER = '10.0.0';
 }

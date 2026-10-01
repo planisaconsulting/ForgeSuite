@@ -224,12 +224,36 @@ final class SystemRepository extends Repository
     public function insertCommunication(array $data): int
     {
         $this->run(
-            'INSERT INTO communications
-                (customer_id, contact_id, entity_type, entity_id, channel, direction, subject, message_summary, status, sent_by, sent_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'LOGGED\', ?, NOW())',
+            'INSERT INTO communications (
+                customer_id, contact_id, lead_id, opportunity_id, quote_id, job_id, invoice_id,
+                entity_type, entity_id, channel, direction, subject, message_summary, message_body,
+                status, failure_reason, sent_by, sent_at, received_at, external_reference,
+                external_message_id, thread_id, template_id
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
-                $data['customer_id'], $data['contact_id'], $data['entity_type'], $data['entity_id'],
-                $data['channel'], $data['direction'], $data['subject'], $data['message_summary'], $data['sent_by'],
+                $data['customer_id'] ?? null,
+                $data['contact_id'] ?? null,
+                $data['lead_id'] ?? null,
+                $data['opportunity_id'] ?? null,
+                $data['quote_id'] ?? null,
+                $data['job_id'] ?? null,
+                $data['invoice_id'] ?? null,
+                $data['entity_type'] ?? null,
+                $data['entity_id'] ?? null,
+                $data['channel'],
+                $data['direction'] ?? 'OUTBOUND',
+                $data['subject'],
+                $data['message_summary'] ?? null,
+                $data['message_body'] ?? null,
+                $data['status'] ?? 'LOGGED',
+                $data['failure_reason'] ?? null,
+                $data['sent_by'] ?? null,
+                $data['sent_at'] ?? date('Y-m-d H:i:s'),
+                $data['received_at'] ?? null,
+                $data['external_reference'] ?? null,
+                $data['external_message_id'] ?? null,
+                $data['thread_id'] ?? null,
+                $data['template_id'] ?? null,
             ]
         );
 

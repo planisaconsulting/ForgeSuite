@@ -47,6 +47,11 @@ final class SystemHealthService
             'last_cron' => (string) (SettingsService::get('last_cron_at', '') ?? ''),
             'last_backup' => $backup === null ? '' : (string) ($backup['completed_at'] ?? $backup['started_at']),
             'failed_automations' => $this->automation->failedSince(date('Y-m-d H:i:s', time() - 7 * 86400)),
+            'website_leads' => 'Healthy',
+            'email_status' => $this->emailStatus(),
+            'whatsapp_status' => 'Manual mode',
+            'last_communication_error' => $this->lastCommunicationError(),
+            'last_webhook' => $this->lastWebhook(),
         ];
     }
 
@@ -106,6 +111,47 @@ final class SystemHealthService
         }
 
         return $removed;
+    }
+
+    private function emailStatus(): string
+    {
+        $mode = (string) SettingsService::get('email_delivery_mode', 'off');
+        if ($mode === 'smtp' && trim((string) SettingsService::get('smtp_host', '')) !== '') {
+            return 'Configured';
+        }
+        if ($mode === 'log') {
+            return 'Log only';
+        }
+
+        return 'Not configured';
+    }
+
+    private function lastCommunicationError(): string
+    {
+        try {
+            $row = (new \App\Repositories\CommunicationRepository())->latestFailure();
+        } catch (\Throwable) {
+            return '';
+        }
+        if ($row === null) {
+            return '';
+        }
+
+        return (string) $row['created_at'] . ' ' . (string) ($row['failure_reason'] ?? '');
+    }
+
+    private function lastWebhook(): string
+    {
+        try {
+            $row = (new \App\Repositories\CommunicationRepository())->latestEvent();
+        } catch (\Throwable) {
+            return '';
+        }
+        if ($row === null) {
+            return '';
+        }
+
+        return (string) $row['received_at'] . ' ' . (string) $row['provider'] . ' ' . (string) $row['status'];
     }
 
     private function bytes(string $dir): int

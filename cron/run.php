@@ -22,12 +22,14 @@ require dirname(__DIR__) . '/app/bootstrap.php';
 use App\Repositories\SettingRepository;
 use App\Services\AlertService;
 use App\Services\AutomationService;
+use App\Services\LeadAlertService;
 use App\Services\RecurringJobService;
 use App\Services\ScheduleAlertService;
 use App\Services\SettingsService;
 use App\Services\SystemHealthService;
 
 $alerts = (new AlertService())->evaluate();
+$leadAlerts = (new LeadAlertService())->evaluate();
 $scheduleAlerts = (new ScheduleAlertService())->evaluate();
 $recurring = (new RecurringJobService())->run();
 $reports = (new AutomationService())->deliverScheduledReports();
@@ -35,4 +37,4 @@ $removed = (new SystemHealthService())->cleanupTemporary();
 (new SettingRepository())->put('last_cron_at', date('Y-m-d H:i:s'));
 SettingsService::forget();
 
-fwrite(STDOUT, "alerts_created={$alerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} temp_removed={$removed}\n");
+fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} temp_removed={$removed}\n");

@@ -3,6 +3,9 @@
 /storage/logs/*
 !/storage/logs/.gitkeep
 !/storage/logs/.htaccess
+/storage/mail/*
+!/storage/mail/.gitkeep
+!/storage/mail/.htaccess
 /storage/quotes/*
 !/storage/quotes/.gitkeep
 /storage/uploads/*

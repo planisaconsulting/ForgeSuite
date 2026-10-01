@@ -11,5 +11,10 @@
         <div><dt>Last cron</dt><dd><?= e((string) ($health['last_cron'] !== '' ? $health['last_cron'] : 'Not recorded')) ?></dd></div>
         <div><dt>Last successful backup</dt><dd><?= e((string) ($health['last_backup'] !== '' ? $health['last_backup'] : 'None')) ?></dd></div>
         <div><dt>Failed automations, 7 days</dt><dd><?= e((string) $health['failed_automations']) ?></dd></div>
+        <div><dt>Website lead endpoint</dt><dd><?= e((string) ($health['website_leads'] ?? '')) ?></dd></div>
+        <div><dt>Email</dt><dd><?= e((string) ($health['email_status'] ?? '')) ?></dd></div>
+        <div><dt>WhatsApp</dt><dd><?= e((string) ($health['whatsapp_status'] ?? '')) ?></dd></div>
+        <div><dt>Last communication error</dt><dd><?= e((string) (($health['last_communication_error'] ?? '') !== '' ? $health['last_communication_error'] : 'None')) ?></dd></div>
+        <div><dt>Last webhook event</dt><dd><?= e((string) (($health['last_webhook'] ?? '') !== '' ? $health['last_webhook'] : 'None')) ?></dd></div>
     </dl>
 </section>
