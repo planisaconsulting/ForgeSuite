@@ -204,7 +204,20 @@ The built-in server uses `public/router.php`. Apache uses `public/.htaccess` and
 5. Copy `config.example.php` to `config.local.php` on the server and fill in the database details. Turn debug off.
 6. Confirm `storage/logs` and `storage/quotes` are writable.
 7. Open the site over HTTPS, sign in, and change the administrator password.
-8. Confirm `https://your-domain/app/config/config.example.php` is **not** downloadable. If it is, the document root is wrong or `.htaccess` is being ignored.
+8. Confirm `https://your-domain/app/config/config.example.php` and `https://your-domain/database/seed.sql` are **not** downloadable. `app/`, `database/`, `storage/`, `templates/`, and `tests/` each contain an `.htaccess` that denies web access. The root `.htaccess` does the same when the document root is the project folder.
+
+To upload over SFTP (Xneelo accepts SFTP on port 22 with the FTP username; `pip install paramiko` once on the machine that uploads):
+
+```bash
+export SF_FTP_HOST=ftp.example.co.za
+export SF_FTP_USER=ftp-user
+export SF_FTP_PASS='ftp-password'
+export SF_FTP_PATH=public_html
+export SF_CONFIG_LOCAL=/path/to/production-config.local.php
+python3 deploy/upload.py
+```
+
+`deploy/upload.py` does not upload your local `config.local.php`. Point `SF_CONFIG_LOCAL` at the production file. Do not commit that file.
 
 ## Default administrator
 
