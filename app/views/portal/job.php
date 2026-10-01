@@ -2,6 +2,7 @@
     <p class="sf-kicker mb-1"><?= e((string) $job['job_number']) ?></p>
     <h1><?= e((string) $job['title']) ?></h1>
     <p><?= e((string) $job['customer_status']) ?></p>
+    <?php if (!empty($job['customer_promised_date'])): ?><p>Expected completion <?= e((string) $job['customer_promised_date']) ?></p><?php endif; ?>
 </div>
 <section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Progress</h2></div>

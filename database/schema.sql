@@ -298,6 +298,8 @@ CREATE TABLE suppliers (
     address TEXT NULL,
     notes TEXT NULL,
     active TINYINT(1) NOT NULL DEFAULT 1,
+    is_subcontractor TINYINT(1) NOT NULL DEFAULT 0,
+    capabilities VARCHAR(255) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -696,6 +698,8 @@ CREATE TABLE jobs (
     assigned_to INT UNSIGNED NULL,
     project_manager_id INT UNSIGNED NULL,
     target_date DATE NULL,
+    original_target_date DATE NULL,
+    customer_promised_date DATE NULL,
     production_due_date DATE NULL,
     installation_date DATE NULL,
     delivery_method VARCHAR(20) NOT NULL DEFAULT 'INSTALLATION',
@@ -793,6 +797,7 @@ CREATE TABLE teams (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     code VARCHAR(40) NOT NULL,
     name VARCHAR(80) NOT NULL,
+    team_type VARCHAR(30) NOT NULL DEFAULT 'GENERAL',
     active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -909,6 +914,9 @@ CREATE TABLE job_production_stages (
     sort_order INT NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'NOT_STARTED',
     assigned_to INT UNSIGNED NULL,
+    required_resource_type VARCHAR(30) NULL,
+    estimated_minutes INT UNSIGNED NULL,
+    actual_minutes INT UNSIGNED NULL,
     started_at TIMESTAMP NULL DEFAULT NULL,
     completed_at TIMESTAMP NULL DEFAULT NULL,
     notes VARCHAR(255) NULL,
@@ -2304,3 +2312,410 @@ ALTER TABLE attachments
     ADD CONSTRAINT fk_attachments_measurement FOREIGN KEY (measurement_id) REFERENCES site_survey_measurements (id) ON DELETE SET NULL ON UPDATE CASCADE,
     ADD CONSTRAINT fk_attachments_portal_user FOREIGN KEY (portal_user_id) REFERENCES portal_users (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
+-- Phase 8 resource planning and scheduling.
+
+CREATE TABLE resources (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    resource_type VARCHAR(30) NOT NULL,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    capacity_type VARCHAR(20) NOT NULL DEFAULT 'MINUTES',
+    default_daily_capacity DECIMAL(12,2) NOT NULL DEFAULT 480.00,
+    concurrent_capacity INT UNSIGNED NOT NULL DEFAULT 1,
+    internal_hourly_cost DECIMAL(14,4) NULL,
+    internal_cost_per_km DECIMAL(14,4) NULL,
+    linked_user_id INT UNSIGNED NULL,
+    linked_team_id INT UNSIGNED NULL,
+    linked_supplier_id INT UNSIGNED NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'AVAILABLE',
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_resources_code (code),
+    KEY idx_resources_type (resource_type, active),
+    KEY idx_resources_user (linked_user_id),
+    KEY idx_resources_team (linked_team_id),
+    KEY idx_resources_supplier (linked_supplier_id),
+    CONSTRAINT fk_resources_user FOREIGN KEY (linked_user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_resources_team FOREIGN KEY (linked_team_id) REFERENCES teams (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_resources_supplier FOREIGN KEY (linked_supplier_id) REFERENCES suppliers (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE work_schedules (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(120) NOT NULL,
+    monday_start TIME NULL,
+    monday_end TIME NULL,
+    tuesday_start TIME NULL,
+    tuesday_end TIME NULL,
+    wednesday_start TIME NULL,
+    wednesday_end TIME NULL,
+    thursday_start TIME NULL,
+    thursday_end TIME NULL,
+    friday_start TIME NULL,
+    friday_end TIME NULL,
+    saturday_start TIME NULL,
+    saturday_end TIME NULL,
+    sunday_start TIME NULL,
+    sunday_end TIME NULL,
+    break_minutes INT UNSIGNED NOT NULL DEFAULT 0,
+    is_default TINYINT(1) NOT NULL DEFAULT 0,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_work_schedules_default (is_default, active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE resource_work_schedules (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    resource_id INT UNSIGNED NOT NULL,
+    work_schedule_id INT UNSIGNED NOT NULL,
+    effective_from DATE NOT NULL,
+    effective_to DATE NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_resource_schedules_resource (resource_id, effective_from),
+    CONSTRAINT fk_resource_schedules_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_resource_schedules_schedule FOREIGN KEY (work_schedule_id) REFERENCES work_schedules (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE resource_unavailability (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    resource_id INT UNSIGNED NOT NULL,
+    start_datetime DATETIME NOT NULL,
+    end_datetime DATETIME NOT NULL,
+    reason_type VARCHAR(30) NOT NULL,
+    description VARCHAR(255) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_unavailability_resource (resource_id),
+    KEY idx_unavailability_start (start_datetime),
+    KEY idx_unavailability_end (end_datetime),
+    CONSTRAINT fk_unavailability_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_unavailability_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE calendar_exceptions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    exception_date DATE NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    exception_type VARCHAR(30) NOT NULL DEFAULT 'PUBLIC_HOLIDAY',
+    working_day_override TINYINT(1) NOT NULL DEFAULT 0,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_calendar_exceptions_date (exception_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE schedule_entries (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    entity_type VARCHAR(30) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    job_id INT UNSIGNED NULL,
+    resource_id INT UNSIGNED NOT NULL,
+    start_datetime DATETIME NOT NULL,
+    end_datetime DATETIME NOT NULL,
+    estimated_minutes INT UNSIGNED NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'PLANNED',
+    locked TINYINT(1) NOT NULL DEFAULT 0,
+    customer_visible TINYINT(1) NOT NULL DEFAULT 0,
+    notes VARCHAR(255) NULL,
+    override_reason VARCHAR(255) NULL,
+    override_by INT UNSIGNED NULL,
+    override_at DATETIME NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_schedule_resource (resource_id),
+    KEY idx_schedule_start (start_datetime),
+    KEY idx_schedule_end (end_datetime),
+    KEY idx_schedule_job (job_id),
+    KEY idx_schedule_status (status),
+    KEY idx_schedule_entity (entity_type, entity_id),
+    CONSTRAINT fk_schedule_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_schedule_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_schedule_override_by FOREIGN KEY (override_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_schedule_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE schedule_entry_resources (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    schedule_entry_id INT UNSIGNED NOT NULL,
+    resource_id INT UNSIGNED NOT NULL,
+    role VARCHAR(40) NOT NULL DEFAULT 'ASSIGNED',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_schedule_entry_resource (schedule_entry_id, resource_id),
+    KEY idx_schedule_entry_resources_resource (resource_id),
+    CONSTRAINT fk_schedule_entry_resources_entry FOREIGN KEY (schedule_entry_id) REFERENCES schedule_entries (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_schedule_entry_resources_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE schedule_history (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    schedule_entry_id INT UNSIGNED NOT NULL,
+    old_start DATETIME NULL,
+    old_end DATETIME NULL,
+    new_start DATETIME NULL,
+    new_end DATETIME NULL,
+    changed_by INT UNSIGNED NULL,
+    reason VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_schedule_history_entry (schedule_entry_id, created_at),
+    CONSTRAINT fk_schedule_history_entry FOREIGN KEY (schedule_entry_id) REFERENCES schedule_entries (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_schedule_history_user FOREIGN KEY (changed_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE task_dependencies (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    predecessor_task_id INT UNSIGNED NULL,
+    successor_task_id INT UNSIGNED NULL,
+    predecessor_stage_id INT UNSIGNED NULL,
+    successor_stage_id INT UNSIGNED NULL,
+    dependency_type VARCHAR(30) NOT NULL DEFAULT 'FINISH_TO_START',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_dependencies_pred_task (predecessor_task_id),
+    KEY idx_dependencies_succ_task (successor_task_id),
+    KEY idx_dependencies_pred_stage (predecessor_stage_id),
+    KEY idx_dependencies_succ_stage (successor_stage_id),
+    CONSTRAINT fk_dependencies_pred_task FOREIGN KEY (predecessor_task_id) REFERENCES job_tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_dependencies_succ_task FOREIGN KEY (successor_task_id) REFERENCES job_tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_dependencies_pred_stage FOREIGN KEY (predecessor_stage_id) REFERENCES job_production_stages (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_dependencies_succ_stage FOREIGN KEY (successor_stage_id) REFERENCES job_production_stages (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE stage_resource_requirements (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_production_stage_id INT UNSIGNED NULL,
+    production_stage_id INT UNSIGNED NULL,
+    resource_type VARCHAR(30) NOT NULL,
+    resource_id INT UNSIGNED NULL,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_stage_requirements_job_stage (job_production_stage_id),
+    CONSTRAINT fk_stage_requirements_job_stage FOREIGN KEY (job_production_stage_id) REFERENCES job_production_stages (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_stage_requirements_stage FOREIGN KEY (production_stage_id) REFERENCES production_stages (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_stage_requirements_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE machine_details (
+    resource_id INT UNSIGNED NOT NULL,
+    manufacturer VARCHAR(120) NULL,
+    model VARCHAR(120) NULL,
+    serial_number VARCHAR(120) NULL,
+    purchase_date DATE NULL,
+    service_interval_days INT UNSIGNED NULL,
+    service_interval_hours DECIMAL(12,2) NULL,
+    last_service_date DATE NULL,
+    next_service_date DATE NULL,
+    meter_hours DECIMAL(12,2) NULL,
+    notes TEXT NULL,
+    PRIMARY KEY (resource_id),
+    CONSTRAINT fk_machine_details_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE maintenance_records (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    resource_id INT UNSIGNED NOT NULL,
+    maintenance_type VARCHAR(30) NOT NULL,
+    scheduled_date DATE NULL,
+    completed_date DATE NULL,
+    downtime_start DATETIME NULL,
+    downtime_end DATETIME NULL,
+    description VARCHAR(255) NOT NULL,
+    supplier_id INT UNSIGNED NULL,
+    cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    meter_reading DECIMAL(14,2) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PLANNED',
+    notes TEXT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_maintenance_resource (resource_id),
+    KEY idx_maintenance_scheduled (scheduled_date),
+    CONSTRAINT fk_maintenance_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_maintenance_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_maintenance_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE resource_downtime (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    resource_id INT UNSIGNED NOT NULL,
+    maintenance_record_id INT UNSIGNED NULL,
+    started_at DATETIME NOT NULL,
+    ended_at DATETIME NULL,
+    reason VARCHAR(255) NOT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_downtime_resource (resource_id, started_at),
+    CONSTRAINT fk_downtime_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_downtime_maintenance FOREIGN KEY (maintenance_record_id) REFERENCES maintenance_records (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_downtime_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE vehicle_details (
+    resource_id INT UNSIGNED NOT NULL,
+    registration_number VARCHAR(40) NOT NULL,
+    make VARCHAR(80) NULL,
+    model VARCHAR(80) NULL,
+    year SMALLINT UNSIGNED NULL,
+    vin VARCHAR(40) NULL,
+    odometer DECIMAL(12,1) NOT NULL DEFAULT 0.0,
+    service_interval_km DECIMAL(12,1) NULL,
+    service_interval_days INT UNSIGNED NULL,
+    last_service_date DATE NULL,
+    last_service_odometer DECIMAL(12,1) NULL,
+    next_service_date DATE NULL,
+    next_service_odometer DECIMAL(12,1) NULL,
+    licence_expiry DATE NULL,
+    notes TEXT NULL,
+    PRIMARY KEY (resource_id),
+    UNIQUE KEY uq_vehicle_registration (registration_number),
+    CONSTRAINT fk_vehicle_details_resource FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE vehicle_usage (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    vehicle_resource_id INT UNSIGNED NOT NULL,
+    job_id INT UNSIGNED NULL,
+    user_id INT UNSIGNED NOT NULL,
+    start_odometer DECIMAL(12,1) NOT NULL,
+    end_odometer DECIMAL(12,1) NOT NULL,
+    distance_km DECIMAL(12,1) NOT NULL,
+    rate_per_km_snapshot DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    travel_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    other_cost_id INT UNSIGNED NULL,
+    usage_date DATE NOT NULL,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_vehicle_usage_vehicle (vehicle_resource_id),
+    KEY idx_vehicle_usage_date (usage_date),
+    KEY idx_vehicle_usage_job (job_id),
+    CONSTRAINT fk_vehicle_usage_vehicle FOREIGN KEY (vehicle_resource_id) REFERENCES resources (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_vehicle_usage_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_vehicle_usage_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_vehicle_usage_other FOREIGN KEY (other_cost_id) REFERENCES job_other_costs (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recurring_job_templates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    frequency_type VARCHAR(30) NOT NULL,
+    interval_value INT UNSIGNED NOT NULL DEFAULT 1,
+    next_run_date DATE NOT NULL,
+    generation_mode VARCHAR(20) NOT NULL DEFAULT 'FOLLOW_UP',
+    default_recipe_id INT UNSIGNED NULL,
+    anchor_job_id INT UNSIGNED NULL,
+    assigned_to INT UNSIGNED NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_recurring_next (active, next_run_date),
+    KEY idx_recurring_customer (customer_id),
+    CONSTRAINT fk_recurring_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_recurring_recipe FOREIGN KEY (default_recipe_id) REFERENCES recipes (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_recurring_job FOREIGN KEY (anchor_job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_recurring_user FOREIGN KEY (assigned_to) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_recurring_created FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recurring_followups (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    template_id INT UNSIGNED NOT NULL,
+    customer_id INT UNSIGNED NOT NULL,
+    title VARCHAR(180) NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+    job_task_id INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_followups_template (template_id),
+    CONSTRAINT fk_followups_template FOREIGN KEY (template_id) REFERENCES recurring_job_templates (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_followups_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_followups_task FOREIGN KEY (job_task_id) REFERENCES job_tasks (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE recurring_job_runs (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    template_id INT UNSIGNED NOT NULL,
+    period_key VARCHAR(40) NOT NULL,
+    followup_id INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_recurring_period (template_id, period_key),
+    CONSTRAINT fk_recurring_runs_template FOREIGN KEY (template_id) REFERENCES recurring_job_templates (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_recurring_runs_followup FOREIGN KEY (followup_id) REFERENCES recurring_followups (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE subcontract_orders (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_number VARCHAR(40) NOT NULL,
+    job_id INT UNSIGNED NOT NULL,
+    supplier_id INT UNSIGNED NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    required_date DATE NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    estimated_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    actual_cost DECIMAL(14,2) NULL,
+    supplier_reference VARCHAR(80) NULL,
+    other_cost_id INT UNSIGNED NULL,
+    notes TEXT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_subcontract_number (order_number),
+    KEY idx_subcontract_job (job_id),
+    KEY idx_subcontract_supplier (supplier_id),
+    KEY idx_subcontract_status (status),
+    CONSTRAINT fk_subcontract_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_subcontract_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_subcontract_other FOREIGN KEY (other_cost_id) REFERENCES job_other_costs (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_subcontract_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE block_reasons (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_block_reasons_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE work_blocks (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    task_id INT UNSIGNED NULL,
+    stage_id INT UNSIGNED NULL,
+    reason_id INT UNSIGNED NOT NULL,
+    reason_text VARCHAR(255) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    cleared_at DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_work_blocks_job (job_id, status),
+    CONSTRAINT fk_work_blocks_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_work_blocks_task FOREIGN KEY (task_id) REFERENCES job_tasks (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_work_blocks_stage FOREIGN KEY (stage_id) REFERENCES job_production_stages (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_work_blocks_reason FOREIGN KEY (reason_id) REFERENCES block_reasons (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_work_blocks_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

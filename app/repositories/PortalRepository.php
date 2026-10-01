@@ -93,7 +93,7 @@ final class PortalRepository extends Repository
     public function job(int $customerId, int $jobId): ?array
     {
         return $this->one(
-            'SELECT id, job_number, title, status, target_date, installation_date, quote_id FROM jobs
+            'SELECT id, job_number, title, status, customer_promised_date, quote_id FROM jobs
              WHERE id = ? AND customer_id = ? LIMIT 1',
             [$jobId, $customerId]
         );

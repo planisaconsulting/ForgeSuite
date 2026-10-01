@@ -184,7 +184,48 @@ final class JobService
                         ? blank_to_null($input['internal_notes'] ?? null)
                         : $job['internal_notes'],
                 ];
+                $oldTarget = $job['target_date'] !== null ? (string) $job['target_date'] : null;
+                $newTarget = $data['target_date'];
+                $targetReason = trim((string) ($input['target_change_reason'] ?? ''));
+                if ($newTarget !== $oldTarget) {
+                    if ($targetReason === '' && ($this->ops->productionHasStarted($jobId) || $job['original_target_date'] !== null)) {
+                        throw new JobRejected(['target_change_reason' => 'Changing the internal target date needs a reason.']);
+                    }
+                }
+                $promised = array_key_exists('customer_promised_date', $job) ? $job['customer_promised_date'] : null;
+                if (array_key_exists('customer_promised_date', $input)) {
+                    $postedPromise = $this->dateOrNull($input['customer_promised_date']);
+                    $currentPromise = $promised !== null ? (string) $promised : null;
+                    if ($postedPromise !== $currentPromise) {
+                        $promiseReason = trim((string) ($input['promise_reason'] ?? ''));
+                        if ($promiseReason === '') {
+                            $promiseReason = $targetReason;
+                        }
+                        if ($promiseReason === '') {
+                            throw new JobRejected(['promise_reason' => 'Changing the customer promised date needs a reason.']);
+                        }
+                        $promised = $postedPromise;
+                        $this->audit->record('job', $jobId, 'CUSTOMER_PROMISE_CHANGED', [
+                            'customer_promised_date' => $currentPromise,
+                        ], [
+                            'customer_promised_date' => $postedPromise,
+                            'reason' => $promiseReason,
+                        ], $userId);
+                    }
+                }
+                $original = $job['original_target_date'] ?? $oldTarget ?? $newTarget;
                 $this->jobs->updateOverview($jobId, $data, $version);
+                $this->jobs->updatePlanningDates(
+                    $jobId,
+                    $original !== null ? (string) $original : null,
+                    $promised !== null ? (string) $promised : null
+                );
+                if ($newTarget !== $oldTarget) {
+                    $this->audit->record('job', $jobId, 'INTERNAL_TARGET_CHANGED', ['target_date' => $oldTarget], [
+                        'target_date' => $newTarget,
+                        'reason' => $targetReason,
+                    ], $userId);
+                }
                 if ((int) ($job['assigned_to'] ?? 0) !== (int) ($assigned ?? 0)) {
                     $this->audit->record('job', $jobId, 'JOB_ASSIGNED', ['assigned_to' => $job['assigned_to']], [
                         'assigned_to' => $assigned,

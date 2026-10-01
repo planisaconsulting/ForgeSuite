@@ -47,8 +47,16 @@ $locked = (string) $job['status'] === 'CANCELLED' && !can('jobs.reopen');
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" for="target_date">Target date</label>
+                        <label class="form-label" for="target_date">Internal target date</label>
                         <input class="form-control" type="date" id="target_date" name="target_date" value="<?= e((string) ($job['target_date'] ?? '')) ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="customer_promised_date">Customer promised date</label>
+                        <input class="form-control" type="date" id="customer_promised_date" name="customer_promised_date" value="<?= e((string) ($job['customer_promised_date'] ?? '')) ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="target_change_reason">Reason if a date changes</label>
+                        <input class="form-control" id="target_change_reason" name="target_change_reason" value="">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label" for="production_due_date">Production due</label>

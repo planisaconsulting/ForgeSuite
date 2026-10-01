@@ -61,11 +61,12 @@ final class SupplierRepository extends Repository
     public function insert(array $data): int
     {
         $this->run(
-            'INSERT INTO suppliers (name, contact_name, email, phone, website, account_number, address, notes, active)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO suppliers (name, contact_name, email, phone, website, account_number, address, notes, active, is_subcontractor, capabilities)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $data['name'], $data['contact_name'], $data['email'], $data['phone'],
                 $data['website'], $data['account_number'], $data['address'], $data['notes'], $data['active'],
+                $data['is_subcontractor'] ?? 0, $data['capabilities'] ?? null,
             ]
         );
 
@@ -80,12 +81,12 @@ final class SupplierRepository extends Repository
         $this->run(
             'UPDATE suppliers
              SET name = ?, contact_name = ?, email = ?, phone = ?, website = ?,
-                 account_number = ?, address = ?, notes = ?, active = ?
+                 account_number = ?, address = ?, notes = ?, active = ?, is_subcontractor = ?, capabilities = ?
              WHERE id = ?',
             [
                 $data['name'], $data['contact_name'], $data['email'], $data['phone'],
                 $data['website'], $data['account_number'], $data['address'], $data['notes'],
-                $data['active'], $id,
+                $data['active'], $data['is_subcontractor'] ?? 0, $data['capabilities'] ?? null, $id,
             ]
         );
     }

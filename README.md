@@ -169,6 +169,7 @@ php tests/finance_flow.php
 php tests/reporting.php
 php tests/reporting_flow.php
 php tests/phase7.php
+php tests/phase8.php
 php tests/acceptance.php http://127.0.0.1:8741
 ```
 
@@ -338,6 +339,32 @@ Saving a recipe writes a version. A quotation stores that version, the inputs, t
 The customer portal is `/portal`. It uses portal users, not staff accounts. Administration → Portal access uses `portal.access_manage`. Searching portal contacts uses `portal.manage`. A magic link stores only the hash of a random token, expires, and a login link works once. Every portal query uses the customer id from the session. Internal cost, markup, profit, suppliers, waste, and internal notes are not on those pages. Quote acceptance and artwork approval need an unticked confirmation, store the statement text, and notify the assigned person. A change request does not edit the quote or replace the artwork file. The next artwork upload is a new revision. Customer job status comes from `portal_status_map`. Quality-control failures are not shown as customer status. Uploaded files use the same type checks as staff uploads and are stored outside the public folder. Email templates exist and stay inactive until a sender is configured. WhatsApp is a `wa.me` link with text to copy. It is not a WhatsApp Business connection.
 
 `php tests/phase7.php` checks the formula engine, the 2.88 m² / 5.76 m² example, recipe versions on old and new quotations, job generation from the snapshot, stock suggestions that do not consume stock, a survey linked to a later quote, portal access between two customers, quote acceptance, artwork approval and change requests, and rejected uploads.
+
+## Phase 8 scheduling and capacity
+
+Phase 8 does not create a second task list. It puts a time and a resource on the jobs, job tasks, production stages, installations, and surveys that already exist.
+
+Utilisation is scheduled productive minutes divided by available working minutes, times 100. Available minutes come from the work schedule for that resource, or the company default when the resource has none. Leave, maintenance, breakdowns, and calendar exceptions are removed. A closed calendar date contributes nothing. Over-capacity is the scheduled minutes that do not fit. The board does not squeeze them into the day.
+
+A resource with concurrent capacity of 1 cannot be booked twice for the same time. That conflict cannot be overridden. Leave, a public holiday, hours outside the work schedule, an unfinished previous stage, missing artwork approval, and a material shortage can be overridden by someone with `schedule.override_conflict`, and the reason is stored. Planned work may stay on the board while materials are short. Confirming it, or starting it, warns until the shortage is resolved or overridden.
+
+Recipe expected labour fills a stage estimate when the description matches the stage name. Completing the stage stores actual minutes beside that estimate. The estimate is left as it was.
+
+The customer promised date and the internal target are separate. Moving a schedule entry does not change the promised date. The portal shows the promised date, and a schedule entry only when that entry is marked customer visible.
+
+Machine hourly cost stays off the job while `machine_cost_in_job` is 0, because a recipe may already include the machine in labour or overhead. Vehicle travel uses `travel_rate_per_km`, stores that rate on the trip, and posts one travel cost. A completed subcontract posts its actual cost once. The order keeps the other-cost id so a second completion does not add it again.
+
+A recurring template creates one follow-up for a due period. It does not create an invoice. Run it from Automation → Recurring jobs, or from `cron/run.php`.
+
+`php tests/phase8.php` checks an overlapping printer, leave, 80% and 120% utilisation, a print-before-laminate dependency, a material shortage, a machine breakdown that does not move work, a shared vehicle, one monthly follow-up, a subcontract cost posted once, a customer date that survives an internal change, and schedule permissions on the action and the URL.
+
+## Upgrading a Phase 7 database
+
+Back up the database first. Export it from the host panel and keep that file off the server. Confirm the export contains `users`, `quotes`, `jobs`, and `invoices` before you change anything.
+
+Then import `database/migrations/008_resource_planning.sql` once. It adds resources, schedules, and the new permissions. Existing jobs, tasks, and installations stay where they are. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `008` on a database created from the current `schema.sql`.
 
 ## Upgrading a Phase 6 database
 

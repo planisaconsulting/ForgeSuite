@@ -86,6 +86,8 @@ final class JobController
             'errors' => [],
             'staff' => (new UserRepository())->listAll(),
             'items' => $ops->items($jobId),
+            'scheduleHealth' => (new \App\Services\JobReadinessService())->jobHealth($jobId),
+            'earliest' => (new \App\Services\ScheduleService())->earliestCompletion($jobId),
         ];
         if ($tab === 'finance') {
             $data['finance'] = (new \App\Services\JobFinancialService())->report($jobId);

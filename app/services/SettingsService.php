@@ -65,6 +65,9 @@ final class SettingsService
         'quote_acceptance_statement' => 'Quote acceptance statement',
         'artwork_approval_statement' => 'Artwork approval statement',
         'portal_link_hours' => 'Portal link lifetime (hours)',
+        'subcontract_prefix' => 'Subcontract order prefix',
+        'schedule_change_notify_minutes' => 'Minutes a schedule must move before the assigned person is notified',
+        'machine_cost_in_job' => 'Add machine hourly cost to the job (1) or keep it off the job because the recipe already includes it (0)',
     ];
 
     /** @var array<string, string|null>|null */
@@ -168,7 +171,7 @@ final class SettingsService
         if (!in_array($tz, timezone_identifiers_list(), true)) {
             $errors['timezone'] = 'Choose a timezone from the PHP list, such as Africa/Johannesburg.';
         }
-        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix', 'payment_prefix', 'credit_note_prefix', 'survey_prefix'] as $prefix) {
+        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix', 'payment_prefix', 'credit_note_prefix', 'survey_prefix', 'subcontract_prefix'] as $prefix) {
             $value = trim((string) ($input[$prefix] ?? ''));
             if (!preg_match('/^[A-Za-z0-9]{1,12}$/', $value)) {
                 $errors[$prefix] = 'Use 1 to 12 letters or numbers.';

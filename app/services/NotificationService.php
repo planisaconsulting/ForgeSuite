@@ -29,6 +29,13 @@ final class NotificationService
         'LARGE_BALANCE',
         'UNALLOCATED_PAYMENT',
         'SCHEDULED_REPORT',
+        'TASK_STARTING_SOON',
+        'RESOURCE_CONFLICT',
+        'MACHINE_MAINTENANCE_DUE',
+        'VEHICLE_SERVICE_DUE',
+        'INSTALLATION_TOMORROW',
+        'SCHEDULE_CHANGED',
+        'JOB_AT_RISK',
         'SYSTEM',
     ];
 

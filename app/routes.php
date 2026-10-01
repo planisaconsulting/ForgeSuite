@@ -41,6 +41,7 @@ use App\Controllers\SettingsController;
 use App\Controllers\SupplierController;
 use App\Controllers\UserController;
 use App\Controllers\PortalAdminController;
+use App\Controllers\PlanningController;
 use App\Controllers\PortalController;
 use App\Controllers\RecipeController;
 use App\Controllers\SiteSurveyController;
@@ -384,8 +385,8 @@ $router->get('/jobs/installations', static function (): void {
     (new JobController())->installations();
 }, true, 'installations.view');
 $router->get('/jobs/schedule', static function (): void {
-    (new JobController())->schedule();
-}, true, 'production.view');
+    redirect('/schedule');
+}, true, 'schedule.view');
 $router->get('/jobs/setup', static function (): void {
     (new JobController())->setup();
 }, true, 'settings.manage');
@@ -930,6 +931,103 @@ $router->get('/portal/files/{id}', static function (string $id): void {
 $router->post('/portal/messages', static function (): void {
     (new PortalController())->message();
 }, false, true);
+
+$router->get('/work', static function (): void {
+    (new PlanningController())->myWork();
+}, true, 'schedule.view');
+$router->post('/work/start', static function (): void {
+    (new PlanningController())->startTask();
+}, true, true, 'schedule.view');
+$router->post('/work/complete', static function (): void {
+    (new PlanningController())->completeTask();
+}, true, true, 'schedule.view');
+$router->post('/work/block', static function (): void {
+    (new PlanningController())->blockTask();
+}, true, true, 'schedule.view');
+$router->get('/today', static function (): void {
+    (new PlanningController())->today();
+}, true, 'schedule.view');
+$router->get('/schedule', static function (): void {
+    (new PlanningController())->schedule();
+}, true, 'schedule.view');
+$router->post('/schedule/entries', static function (): void {
+    (new PlanningController())->storeEntry();
+}, true, true, 'schedule.manage');
+$router->post('/schedule/move', static function (): void {
+    (new PlanningController())->moveEntry();
+}, true, true, 'schedule.manage');
+$router->get('/capacity', static function (): void {
+    (new PlanningController())->capacity();
+}, true, 'capacity.view');
+$router->get('/resources', static function (): void {
+    (new PlanningController())->resources();
+}, true, 'resources.view');
+$router->get('/resources/new', static function (): void {
+    (new PlanningController())->resourceForm();
+}, true, 'resources.manage');
+$router->post('/resources', static function (): void {
+    (new PlanningController())->resourceSave();
+}, true, true, 'resources.manage');
+$router->post('/resources/unavailability', static function (): void {
+    (new PlanningController())->unavailableSave();
+}, true, true, 'staff_availability.manage');
+$router->get('/resources/calendar', static function (): void {
+    (new PlanningController())->exceptions();
+}, true, 'resources.view');
+$router->post('/resources/calendar', static function (): void {
+    (new PlanningController())->exceptionSave();
+}, true, true, 'resources.manage');
+$router->get('/maintenance', static function (): void {
+    (new PlanningController())->maintenance();
+}, true, 'maintenance.view');
+$router->post('/maintenance', static function (): void {
+    (new PlanningController())->maintenanceSave();
+}, true, true, 'maintenance.manage');
+$router->get('/vehicles', static function (): void {
+    (new PlanningController())->vehicles();
+}, true, 'vehicles.view');
+$router->post('/vehicles/mileage', static function (): void {
+    (new PlanningController())->mileageSave();
+}, true, true, 'vehicles.view');
+$router->get('/installations/planner', static function (): void {
+    (new PlanningController())->installations();
+}, true, 'installations.view');
+$router->get('/field/{id}', static function (string $id): void {
+    (new PlanningController())->field($id);
+}, true, 'installations.view');
+$router->post('/field/{id}', static function (string $id): void {
+    (new PlanningController())->fieldAct($id);
+}, true, true, 'installations.view');
+$router->get('/recurring', static function (): void {
+    (new PlanningController())->recurring();
+}, true, 'recurring_jobs.view');
+$router->post('/recurring', static function (): void {
+    (new PlanningController())->recurringSave();
+}, true, true, 'recurring_jobs.manage');
+$router->post('/recurring/run', static function (): void {
+    (new PlanningController())->recurringRun();
+}, true, true, 'recurring_jobs.manage');
+$router->get('/subcontracts', static function (): void {
+    (new PlanningController())->subcontracts();
+}, true, 'subcontractors.view');
+$router->post('/subcontracts', static function (): void {
+    (new PlanningController())->subcontractSave();
+}, true, true, 'subcontractors.manage');
+$router->post('/subcontracts/complete', static function (): void {
+    (new PlanningController())->subcontractComplete();
+}, true, true, 'subcontractors.manage');
+$router->get('/reports/utilisation', static function (): void {
+    (new PlanningController())->utilisation();
+}, true, 'capacity.view');
+$router->get('/reports/downtime', static function (): void {
+    (new PlanningController())->downtime();
+}, true, 'maintenance.view');
+$router->get('/reports/capacity-demand', static function (): void {
+    (new PlanningController())->demand();
+}, true, 'capacity.view');
+$router->get('/reports/late-jobs', static function (): void {
+    (new PlanningController())->lateJobs();
+}, true, 'reports.operations');
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

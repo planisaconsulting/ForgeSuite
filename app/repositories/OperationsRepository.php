@@ -502,7 +502,7 @@ final class OperationsRepository extends Repository
     /**
      * @param array<string, mixed> $data
      */
-    public function insertOther(array $data): void
+    public function insertOther(array $data): int
     {
         $this->run(
             'INSERT INTO job_other_costs (job_id, cost_type, description, supplier_id, quantity, unit_cost, total_cost, reference, created_by)
@@ -512,6 +512,26 @@ final class OperationsRepository extends Repository
                 $data['quantity'], $data['unit_cost'], $data['total_cost'], $data['reference'], $data['created_by'],
             ]
         );
+
+        return $this->insertId();
+    }
+
+    public function otherCostByReference(int $jobId, string $reference): ?array
+    {
+        return $this->one(
+            'SELECT * FROM job_other_costs WHERE job_id = ? AND reference = ? ORDER BY id DESC LIMIT 1',
+            [$jobId, $reference]
+        );
+    }
+
+    public function productionHasStarted(int $jobId): bool
+    {
+        $row = $this->one(
+            'SELECT COUNT(*) AS n FROM job_production_stages WHERE job_id = ? AND status <> \'NOT_STARTED\'',
+            [$jobId]
+        );
+
+        return (int) ($row['n'] ?? 0) > 0;
     }
 
     /**

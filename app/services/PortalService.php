@@ -313,6 +313,7 @@ final class PortalService
             return null;
         }
         $job['customer_status'] = $this->portal->labelForStatus((string) $job['status']);
+        $job['visible_schedule'] = (new \App\Repositories\PlanningRepository())->customerVisibleEntries($jobId);
         $job['timeline'] = $this->timeline($job);
 
         return $job;
@@ -374,8 +375,11 @@ final class PortalService
                 $events[] = ['label' => 'Artwork sent', 'at' => (string) $art['uploaded_at']];
             }
         }
-        if (!empty($job['installation_date'])) {
-            $events[] = ['label' => 'Installation scheduled', 'at' => (string) $job['installation_date']];
+        if (!empty($job['customer_promised_date'])) {
+            $events[] = ['label' => 'Expected completion', 'at' => (string) $job['customer_promised_date']];
+        }
+        foreach ($job['visible_schedule'] ?? [] as $entry) {
+            $events[] = ['label' => 'Scheduled', 'at' => (string) $entry['start_datetime']];
         }
         if ((string) $job['status'] === 'COMPLETED') {
             $events[] = ['label' => 'Completed', 'at' => ''];

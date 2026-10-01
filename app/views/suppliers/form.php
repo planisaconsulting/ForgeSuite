@@ -49,6 +49,14 @@ $value = static function (string $key, string $default = '') use ($old): string 
             <input type="hidden" name="active" value="0">
             <label class="form-check"><input class="form-check-input" type="checkbox" name="active" value="1" <?= is_checked($value('active', '1')) ?>> Active</label>
         </div>
+        <div class="col-12">
+            <input type="hidden" name="is_subcontractor" value="0">
+            <label class="form-check"><input class="form-check-input" type="checkbox" name="is_subcontractor" value="1" <?= is_checked($value('is_subcontractor', '0')) ?>> Subcontractor</label>
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="capabilities">Subcontractor capabilities</label>
+            <input class="form-control" id="capabilities" name="capabilities" value="<?= e($value('capabilities')) ?>" placeholder="Installation, electrical, crane hire">
+        </div>
     </div>
     <div class="sf-form-actions">
         <button class="btn btn-sf" type="submit">Save supplier</button>

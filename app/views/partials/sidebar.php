@@ -4,6 +4,7 @@ $activeNav = $activeNav ?? '';
 $groups = [
     ['label' => null, 'links' => [
         ['dashboard', 'Dashboard', '/', 'fa-gauge-high', 'dashboard.view'],
+        ['my-work', 'My work', '/work', 'fa-list-check', 'schedule.view'],
     ]],
     ['label' => 'CRM', 'links' => [
         ['customers', 'Customers', '/customers', 'fa-users', 'customers.view'],
@@ -18,11 +19,18 @@ $groups = [
     ]],
     ['label' => 'Operations', 'links' => [
         ['jobs', 'Jobs', '/jobs', 'fa-clipboard-list', 'jobs.view'],
+        ['today', 'Today', '/today', 'fa-sun', 'schedule.view'],
         ['workshop', 'Production', '/jobs/workshop', 'fa-industry', 'production.view'],
-        ['board', 'Production board', '/jobs/board', 'fa-table-columns', 'production.view'],
+        ['schedule', 'Schedule', '/schedule', 'fa-calendar-day', 'schedule.view'],
+        ['capacity', 'Capacity', '/capacity', 'fa-chart-bar', 'capacity.view'],
+        ['installations', 'Installations', '/installations/planner', 'fa-location-dot', 'installations.view'],
         ['design', 'Artwork', '/jobs/design', 'fa-pen-ruler', 'jobs.view'],
-        ['schedule', 'Schedule', '/jobs/schedule', 'fa-calendar-day', 'production.view'],
-        ['installations', 'Installations', '/jobs/installations', 'fa-location-dot', 'installations.view'],
+    ]],
+    ['label' => 'Resources', 'links' => [
+        ['resources', 'Staff and resources', '/resources', 'fa-people-group', 'resources.view'],
+        ['maintenance', 'Maintenance', '/maintenance', 'fa-screwdriver-wrench', 'maintenance.view'],
+        ['vehicles', 'Vehicles', '/vehicles', 'fa-truck', 'vehicles.view'],
+        ['calendar', 'Calendar', '/resources/calendar', 'fa-calendar', 'resources.view'],
     ]],
     ['label' => 'Inventory', 'links' => [
         ['inventory', 'Inventory', '/inventory', 'fa-warehouse', 'inventory.view'],
@@ -49,6 +57,8 @@ $groups = [
     ]],
     ['label' => 'Automation', 'links' => [
         ['recipes', 'Recipes', '/recipes', 'fa-flask', 'recipes.view'],
+        ['recurring', 'Recurring jobs', '/recurring', 'fa-rotate', 'recurring_jobs.view'],
+        ['subcontracts', 'Subcontractors', '/subcontracts', 'fa-handshake', 'subcontractors.view'],
         ['recipe-test', 'Recipe test', '/recipes/test', 'fa-vial', 'recipes.test'],
         ['setup', 'Production templates', '/jobs/setup', 'fa-sliders', 'settings.manage'],
     ]],
@@ -59,6 +69,10 @@ $groups = [
         ['report-jobs', 'Jobs', '/reports/jobs', 'fa-clipboard-list', 'reports.operations'],
         ['report-profitability', 'Profitability', '/reports/profitability', 'fa-chart-pie', 'reports.profitability'],
         ['report-production', 'Production', '/reports/production', 'fa-industry', 'reports.operations'],
+        ['report-utilisation', 'Resource utilisation', '/reports/utilisation', 'fa-chart-bar', 'capacity.view'],
+        ['report-capacity', 'Capacity and demand', '/reports/capacity-demand', 'fa-scale-balanced', 'capacity.view'],
+        ['report-downtime', 'Downtime', '/reports/downtime', 'fa-screwdriver-wrench', 'maintenance.view'],
+        ['report-late', 'Late jobs', '/reports/late-jobs', 'fa-clock', 'reports.operations'],
         ['report-waste', 'Materials and waste', '/reports/waste', 'fa-recycle', 'reports.operations'],
         ['report-inventory', 'Inventory', '/reports/inventory', 'fa-warehouse', 'reports.inventory'],
         ['report-purchasing', 'Purchasing', '/reports/purchasing', 'fa-truck', 'reports.inventory'],

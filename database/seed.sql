@@ -128,7 +128,24 @@ INSERT INTO permissions (code, name, module) VALUES
 ('site_surveys.edit', 'Edit site surveys', 'crm'),
 ('site_surveys.complete', 'Complete site surveys', 'crm'),
 ('portal.manage', 'Manage the customer portal', 'admin'),
-('portal.access_manage', 'Issue customer portal access', 'admin');
+('portal.access_manage', 'Issue customer portal access', 'admin'),
+('schedule.view', 'View the production schedule', 'operations'),
+('schedule.manage', 'Create and move scheduled work', 'operations'),
+('schedule.override_conflict', 'Override a scheduling warning with a reason', 'operations'),
+('resources.view', 'View resources', 'operations'),
+('resources.manage', 'Manage resources and work areas', 'operations'),
+('staff_availability.manage', 'Record leave and other staff unavailability', 'operations'),
+('machines.manage', 'Manage machines and equipment', 'operations'),
+('maintenance.view', 'View maintenance', 'operations'),
+('maintenance.manage', 'Record maintenance and downtime', 'operations'),
+('vehicles.view', 'View vehicles', 'operations'),
+('vehicles.manage', 'Manage vehicles and mileage', 'operations'),
+('recurring_jobs.view', 'View recurring job templates', 'operations'),
+('recurring_jobs.manage', 'Manage recurring job templates', 'operations'),
+('subcontractors.view', 'View subcontract orders', 'operations'),
+('subcontractors.manage', 'Manage subcontract orders', 'operations'),
+('capacity.view', 'View capacity and utilisation', 'operations'),
+('resource_cost.view', 'View internal resource costs', 'operations');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
@@ -157,7 +174,8 @@ WHERE r.code = 'SALES'
     'recipes.view', 'recipes.test', 'recipes.view_cost',
     'templates.view', 'templates.manage',
     'site_surveys.view', 'site_surveys.create', 'site_surveys.edit', 'site_surveys.complete',
-    'portal.access_manage'
+    'portal.access_manage',
+    'schedule.view', 'capacity.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -170,7 +188,8 @@ WHERE r.code = 'DESIGN'
     'customers.view', 'activities.view',
     'products.view', 'calculator.use',
     'jobs.view', 'artwork.upload', 'artwork.approve_record', 'production.view', 'time.record', 'attachments.manage',
-    'site_surveys.view', 'recipes.view', 'templates.view'
+    'site_surveys.view', 'recipes.view', 'templates.view',
+    'schedule.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -184,7 +203,8 @@ WHERE r.code = 'PRODUCTION'
     'materials.view', 'materials.record_usage', 'time.record', 'attachments.manage',
     'inventory.view', 'inventory.consume', 'inventory.transfer',
     'reports.operations',
-    'site_surveys.view', 'recipes.view'
+    'site_surveys.view', 'recipes.view',
+    'schedule.view', 'resources.view', 'maintenance.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -202,7 +222,8 @@ WHERE r.code = 'ACCOUNTS'
     'payments.view', 'payments.record', 'payments.allocate', 'payments.reverse',
     'credit_notes.view', 'credit_notes.create', 'credit_notes.issue',
     'statements.view', 'statements.generate', 'debtors.view', 'finance.costing.view', 'finance.vat_report.view',
-    'reports.finance', 'reports.export', 'reports.profitability'
+    'reports.finance', 'reports.export', 'reports.profitability',
+    'subcontractors.view', 'subcontractors.manage', 'resource_cost.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -218,7 +239,10 @@ WHERE r.code = 'MANAGEMENT'
     'reports.executive', 'reports.sales', 'reports.operations', 'reports.finance',
     'reports.inventory', 'reports.profitability', 'reports.export',
     'audit.view', 'automations.view', 'notifications.manage',
-    'recipes.view', 'recipes.view_cost', 'recipes.test', 'templates.view', 'site_surveys.view'
+    'recipes.view', 'recipes.view_cost', 'recipes.test', 'templates.view', 'site_surveys.view',
+    'schedule.view', 'schedule.manage', 'schedule.override_conflict',
+    'resources.view', 'capacity.view', 'maintenance.view', 'vehicles.view',
+    'recurring_jobs.view', 'subcontractors.view', 'resource_cost.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -230,7 +254,8 @@ WHERE r.code = 'INSTALLER'
     'dashboard.view', 'customers.view',
     'jobs.view', 'installations.view', 'installations.complete', 'time.record', 'attachments.manage',
     'inventory.view',
-    'site_surveys.view', 'site_surveys.create', 'site_surveys.edit'
+    'site_surveys.view', 'site_surveys.create', 'site_surveys.edit',
+    'schedule.view', 'vehicles.view'
   );
 
 INSERT INTO users (name, email, password_hash, role_id, active, must_change_password)
@@ -291,7 +316,10 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('travel_rate_per_km', '0'),
 ('quote_acceptance_statement', 'I accept this quotation, including the revision, total, VAT, terms, and expiry shown above.'),
 ('artwork_approval_statement', 'Please check spelling, contact details, colours, dimensions and layout carefully before approving. I approve this artwork revision for production.'),
-('portal_link_hours', '72');
+('portal_link_hours', '72'),
+('subcontract_prefix', 'SFSUB'),
+('schedule_change_notify_minutes', '30'),
+('machine_cost_in_job', '0');
 
 INSERT INTO kpi_targets (kpi_code, name, target_value, comparison_type, period_type, active) VALUES
 ('TARGET_GROSS_MARGIN', 'Target gross margin %', 35, 'MINIMUM', 'MONTH', 1),
@@ -731,3 +759,58 @@ SELECT v.code, v.name, v.subject, v.body, 0 FROM (
     UNION ALL SELECT 'INSTALLATION_SCHEDULED', 'Installation scheduled', 'Your installation is scheduled', 'An installation date is on your job in the portal.'
 ) AS v
 WHERE NOT EXISTS (SELECT 1 FROM email_templates t WHERE t.code = v.code);
+
+-- Phase 8 default hours, work areas, block reasons, and stored holidays.
+INSERT INTO work_schedules (
+    name, monday_start, monday_end, tuesday_start, tuesday_end, wednesday_start, wednesday_end,
+    thursday_start, thursday_end, friday_start, friday_end, break_minutes, is_default, active
+)
+SELECT 'Company hours', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '08:00:00', '17:00:00',
+    '08:00:00', '17:00:00', '08:00:00', '17:00:00', 60, 1, 1
+WHERE NOT EXISTS (SELECT 1 FROM work_schedules WHERE is_default = 1);
+
+INSERT INTO resources (resource_type, code, name, description, capacity_type, default_daily_capacity, concurrent_capacity, status, active)
+SELECT 'WORK_AREA', v.code, v.name, v.description, 'MINUTES', 480.00, 8, 'AVAILABLE', 1
+FROM (
+    SELECT 'WA-DESIGN' AS code, 'Design' AS name, 'Artwork and design' AS description
+    UNION ALL SELECT 'WA-PRINT', 'Print room', 'Large-format printing'
+    UNION ALL SELECT 'WA-LAM', 'Lamination', 'Laminating'
+    UNION ALL SELECT 'WA-CNC', 'CNC', 'Routing and cutting'
+    UNION ALL SELECT 'WA-FAB', 'Fabrication', 'Metal and general fabrication'
+    UNION ALL SELECT 'WA-PAINT', 'Painting', 'Paint and finishing'
+    UNION ALL SELECT 'WA-ASSY', 'Assembly', 'Assembly'
+    UNION ALL SELECT 'WA-ELEC', 'Electrical', 'Electrical work'
+    UNION ALL SELECT 'WA-PACK', 'Packing', 'Packing'
+    UNION ALL SELECT 'WA-INST', 'Installation', 'Site installation'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM resources r WHERE r.code = v.code);
+
+INSERT INTO block_reasons (code, name, active)
+SELECT v.code, v.name, 1 FROM (
+    SELECT 'WAITING_MATERIAL' AS code, 'Waiting for material' AS name
+    UNION ALL SELECT 'WAITING_ARTWORK', 'Waiting for artwork'
+    UNION ALL SELECT 'MACHINE_BREAKDOWN', 'Machine breakdown'
+    UNION ALL SELECT 'CUSTOMER_QUERY', 'Customer query'
+    UNION ALL SELECT 'SITE_UNAVAILABLE', 'Site unavailable'
+    UNION ALL SELECT 'WEATHER_DELAY', 'Weather delay'
+    UNION ALL SELECT 'OTHER', 'Other'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM block_reasons b WHERE b.code = v.code);
+
+INSERT INTO calendar_exceptions (exception_date, name, exception_type, working_day_override, notes)
+SELECT v.exception_date, v.name, 'PUBLIC_HOLIDAY', 0, 'Stored holiday. Edit or replace this date. It is not hard-coded in the scheduler.'
+FROM (
+    SELECT '2026-01-01' AS exception_date, 'New Year''s Day' AS name
+    UNION ALL SELECT '2026-03-21', 'Human Rights Day'
+    UNION ALL SELECT '2026-04-03', 'Good Friday'
+    UNION ALL SELECT '2026-04-06', 'Family Day'
+    UNION ALL SELECT '2026-04-27', 'Freedom Day'
+    UNION ALL SELECT '2026-05-01', 'Workers'' Day'
+    UNION ALL SELECT '2026-06-16', 'Youth Day'
+    UNION ALL SELECT '2026-08-10', 'National Women''s Day observed'
+    UNION ALL SELECT '2026-09-24', 'Heritage Day'
+    UNION ALL SELECT '2026-12-16', 'Day of Reconciliation'
+    UNION ALL SELECT '2026-12-25', 'Christmas Day'
+    UNION ALL SELECT '2026-12-28', 'Day of Goodwill observed'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM calendar_exceptions c WHERE c.exception_date = v.exception_date);

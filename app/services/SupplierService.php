@@ -47,6 +47,10 @@ final class SupplierService
             'address' => blank_to_null($input['address'] ?? null),
             'notes' => blank_to_null($input['notes'] ?? null),
             'active' => posted_flag($input, 'active', 1),
+            'is_subcontractor' => array_key_exists('is_subcontractor', $input)
+                ? posted_flag($input, 'is_subcontractor', 0)
+                : (int) ($existing['is_subcontractor'] ?? 0),
+            'capabilities' => blank_to_null($input['capabilities'] ?? ($existing['capabilities'] ?? null)),
         ];
         $saved = $id ?? 0;
         Database::transaction(function () use ($id, $data, $existing, &$saved): void {

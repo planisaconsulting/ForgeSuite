@@ -219,6 +219,14 @@ final class JobRepository extends Repository
     /**
      * @param array<string, mixed> $data
      */
+    public function updatePlanningDates(int $id, ?string $originalTarget, ?string $customerPromised): void
+    {
+        $this->run(
+            'UPDATE jobs SET original_target_date = ?, customer_promised_date = ? WHERE id = ?',
+            [$originalTarget, $customerPromised, $id]
+        );
+    }
+
     public function updateOverview(int $id, array $data, int $version): void
     {
         $this->run(
