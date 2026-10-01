@@ -356,6 +356,12 @@ CREATE TABLE products (
     default_waste_policy ENUM('ACTUAL', 'CONSUMED_WIDTH', 'FULL_SHEET', 'MANUAL') NOT NULL DEFAULT 'ACTUAL',
     allow_rotation TINYINT(1) NOT NULL DEFAULT 0,
     allow_nesting TINYINT(1) NOT NULL DEFAULT 0,
+    direction_sensitive TINYINT(1) NOT NULL DEFAULT 0,
+    kerf_mm DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    sheet_edge_margin_mm DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    horizontal_spacing_mm DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    vertical_spacing_mm DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    print_edge_margin_mm DECIMAL(8,2) NOT NULL DEFAULT 0.00,
     track_stock TINYINT(1) NOT NULL DEFAULT 0,
     inventory_method VARCHAR(20) NOT NULL DEFAULT 'NONE',
     minimum_stock_level DECIMAL(14,4) NULL,
@@ -2048,6 +2054,8 @@ CREATE TABLE recipe_items (
     rounding_rule VARCHAR(10) NOT NULL DEFAULT 'NONE',
     pack_size DECIMAL(14,4) NULL,
     yield_mode VARCHAR(10) NOT NULL DEFAULT 'NONE',
+    quantity_basis VARCHAR(20) NOT NULL DEFAULT 'PER_UNIT',
+    batch_size INT UNSIGNED NULL,
     condition_json JSON NULL,
     sort_order INT NOT NULL DEFAULT 0,
     optional TINYINT(1) NOT NULL DEFAULT 0,
@@ -2719,3 +2727,146 @@ CREATE TABLE work_blocks (
     CONSTRAINT fk_work_blocks_reason FOREIGN KEY (reason_id) REFERENCES block_reasons (id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_work_blocks_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Phase 9 estimating and yield.
+CREATE TABLE estimates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    estimate_number VARCHAR(40) NOT NULL,
+    revision_number INT UNSIGNED NOT NULL DEFAULT 1,
+    customer_id INT UNSIGNED NULL,
+    opportunity_id INT UNSIGNED NULL,
+    quote_id INT UNSIGNED NULL,
+    job_id INT UNSIGNED NULL,
+    recipe_id INT UNSIGNED NULL,
+    recipe_version INT UNSIGNED NULL,
+    estimate_type VARCHAR(30) NOT NULL DEFAULT 'GENERAL',
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    subtotal_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    material_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    labour_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    machine_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    installation_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    travel_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    subcontract_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    other_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    recommended_sell_price DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    expected_gross_profit DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    expected_margin DECIMAL(8,2) NULL,
+    confidence_basis VARCHAR(30) NOT NULL DEFAULT 'NO_HISTORY',
+    snapshot_json JSON NULL,
+    notes TEXT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_estimates_number (estimate_number),
+    KEY idx_estimates_customer (customer_id),
+    KEY idx_estimates_quote (quote_id),
+    KEY idx_estimates_job (job_id),
+    KEY idx_estimates_status (status),
+    KEY idx_estimates_recipe (recipe_id),
+    CONSTRAINT fk_estimates_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_estimates_opportunity FOREIGN KEY (opportunity_id) REFERENCES sales_opportunities (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_estimates_quote FOREIGN KEY (quote_id) REFERENCES quotes (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_estimates_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_estimates_recipe FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_estimates_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE estimate_revisions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    estimate_id INT UNSIGNED NOT NULL,
+    revision_number INT UNSIGNED NOT NULL,
+    snapshot_json JSON NOT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_estimate_revisions (estimate_id, revision_number),
+    CONSTRAINT fk_estimate_revisions_estimate FOREIGN KEY (estimate_id) REFERENCES estimates (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_estimate_revisions_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE estimate_components (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    estimate_id INT UNSIGNED NOT NULL,
+    component_type VARCHAR(20) NOT NULL,
+    product_id INT UNSIGNED NULL,
+    recipe_item_id INT UNSIGNED NULL,
+    description VARCHAR(180) NOT NULL,
+    billable_quantity DECIMAL(14,4) NULL,
+    estimated_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    actual_quantity DECIMAL(14,4) NULL,
+    unit VARCHAR(20) NOT NULL DEFAULT 'unit',
+    unit_cost_snapshot DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    estimated_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    calculation_method VARCHAR(30) NOT NULL DEFAULT 'QUANTITY',
+    calculation_details_json JSON NULL,
+    manual_override TINYINT(1) NOT NULL DEFAULT 0,
+    override_reason VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_estimate_components_estimate (estimate_id),
+    CONSTRAINT fk_estimate_components_estimate FOREIGN KEY (estimate_id) REFERENCES estimates (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_estimate_components_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE pricing_recommendations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    recommendation_type VARCHAR(40) NOT NULL,
+    recipe_id INT UNSIGNED NULL,
+    recipe_item_id INT UNSIGNED NULL,
+    product_id INT UNSIGNED NULL,
+    current_value VARCHAR(40) NOT NULL,
+    suggested_value VARCHAR(40) NOT NULL,
+    sample_size INT UNSIGNED NOT NULL DEFAULT 0,
+    confidence_basis VARCHAR(30) NOT NULL DEFAULT 'LIMITED_HISTORY',
+    reason TEXT NOT NULL,
+    statistic_json JSON NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'NEW',
+    reviewed_by INT UNSIGNED NULL,
+    reviewed_at DATETIME NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_pricing_recommendations_status (status),
+    KEY idx_pricing_recommendations_recipe (recipe_id),
+    CONSTRAINT fk_pricing_recommendations_recipe FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_pricing_recommendations_user FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE quote_risk_reviews (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    quote_id INT UNSIGNED NULL,
+    estimate_id INT UNSIGNED NULL,
+    level VARCHAR(20) NOT NULL,
+    warnings_json JSON NOT NULL,
+    override_reason VARCHAR(255) NULL,
+    override_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_quote_risk_quote (quote_id),
+    KEY idx_quote_risk_estimate (estimate_id),
+    CONSTRAINT fk_quote_risk_quote FOREIGN KEY (quote_id) REFERENCES quotes (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_quote_risk_estimate FOREIGN KEY (estimate_id) REFERENCES estimates (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_quote_risk_user FOREIGN KEY (override_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE installation_access_levels (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(20) NOT NULL,
+    name VARCHAR(80) NOT NULL,
+    multiplier DECIMAL(8,2) NOT NULL DEFAULT 1.00,
+    notes VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_installation_access_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE installation_height_categories (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(20) NOT NULL,
+    name VARCHAR(80) NOT NULL,
+    equipment_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    notes VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_installation_height_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

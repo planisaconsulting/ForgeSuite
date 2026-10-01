@@ -98,6 +98,27 @@ final class RecipeRepository extends Repository
         $this->run('UPDATE recipes SET active = ? WHERE id = ?', [$active, $id]);
     }
 
+    public function setVersion(int $id, int $version): void
+    {
+        $this->run('UPDATE recipes SET version_number = ? WHERE id = ?', [$version, $id]);
+    }
+
+    public function setItemWaste(int $recipeId, int $itemId, string $waste): void
+    {
+        $this->run(
+            'UPDATE recipe_items SET waste_percent_override = ? WHERE id = ? AND recipe_id = ?',
+            [$waste, $itemId, $recipeId]
+        );
+    }
+
+    public function setItemFormula(int $recipeId, int $itemId, string $formula): void
+    {
+        $this->run(
+            'UPDATE recipe_items SET quantity_formula = ? WHERE id = ? AND recipe_id = ?',
+            [$formula, $itemId, $recipeId]
+        );
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

@@ -66,6 +66,15 @@ final class SettingsService
         'artwork_approval_statement' => 'Artwork approval statement',
         'portal_link_hours' => 'Portal link lifetime (hours)',
         'subcontract_prefix' => 'Subcontract order prefix',
+        'estimate_prefix' => 'Estimate prefix',
+        'minimum_sample_size' => 'Completed jobs required before a pricing recommendation',
+        'cost_age_warning_days' => 'Warn when a supplier cost is older than this many days',
+        'price_volatility_percent' => 'Material movement percent that warns on a quote',
+        'price_volatility_days' => 'Days of price history used for that movement',
+        'target_margin_percent' => 'Target gross margin percent for estimates',
+        'quote_risk_block' => 'Block a quote at review-required until a reason is stored (1 or 0)',
+        'estimate_approval_margin_percent' => 'Margin below this needs estimate approval before a quote link',
+        'estimate_approval_cost' => 'Estimate cost above this needs approval before a quote link',
         'schedule_change_notify_minutes' => 'Minutes a schedule must move before the assigned person is notified',
         'machine_cost_in_job' => 'Add machine hourly cost to the job (1) or keep it off the job because the recipe already includes it (0)',
     ];
@@ -171,7 +180,7 @@ final class SettingsService
         if (!in_array($tz, timezone_identifiers_list(), true)) {
             $errors['timezone'] = 'Choose a timezone from the PHP list, such as Africa/Johannesburg.';
         }
-        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix', 'payment_prefix', 'credit_note_prefix', 'survey_prefix', 'subcontract_prefix'] as $prefix) {
+        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix', 'payment_prefix', 'credit_note_prefix', 'survey_prefix', 'subcontract_prefix', 'estimate_prefix'] as $prefix) {
             $value = trim((string) ($input[$prefix] ?? ''));
             if (!preg_match('/^[A-Za-z0-9]{1,12}$/', $value)) {
                 $errors[$prefix] = 'Use 1 to 12 letters or numbers.';

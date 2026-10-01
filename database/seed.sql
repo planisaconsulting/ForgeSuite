@@ -145,7 +145,19 @@ INSERT INTO permissions (code, name, module) VALUES
 ('subcontractors.view', 'View subcontract orders', 'operations'),
 ('subcontractors.manage', 'Manage subcontract orders', 'operations'),
 ('capacity.view', 'View capacity and utilisation', 'operations'),
-('resource_cost.view', 'View internal resource costs', 'operations');
+('resource_cost.view', 'View internal resource costs', 'operations'),
+('estimates.view', 'View internal estimates', 'estimating'),
+('estimates.create', 'Create internal estimates', 'estimating'),
+('estimates.edit', 'Edit internal estimates', 'estimating'),
+('estimates.approve', 'Approve an estimate before it feeds a quote', 'estimating'),
+('estimates.view_cost', 'View estimate cost', 'estimating'),
+('yield.view', 'View sheet and roll yield', 'estimating'),
+('yield.override', 'Override a calculated yield', 'estimating'),
+('pricing_intelligence.view', 'View pricing intelligence', 'estimating'),
+('pricing_recommendations.review', 'Review a pricing recommendation', 'estimating'),
+('pricing_recommendations.apply', 'Apply a pricing recommendation to a new recipe version', 'estimating'),
+('quote_risk.override', 'Issue a quote below the margin rule with a reason', 'estimating'),
+('historical_costing.view', 'View historical estimate and actual cost', 'estimating');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
@@ -175,7 +187,9 @@ WHERE r.code = 'SALES'
     'templates.view', 'templates.manage',
     'site_surveys.view', 'site_surveys.create', 'site_surveys.edit', 'site_surveys.complete',
     'portal.access_manage',
-    'schedule.view', 'capacity.view'
+    'schedule.view', 'capacity.view',
+    'estimates.view', 'estimates.create', 'estimates.edit', 'estimates.view_cost',
+    'yield.view', 'yield.override', 'pricing_intelligence.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -223,7 +237,8 @@ WHERE r.code = 'ACCOUNTS'
     'credit_notes.view', 'credit_notes.create', 'credit_notes.issue',
     'statements.view', 'statements.generate', 'debtors.view', 'finance.costing.view', 'finance.vat_report.view',
     'reports.finance', 'reports.export', 'reports.profitability',
-    'subcontractors.view', 'subcontractors.manage', 'resource_cost.view'
+    'subcontractors.view', 'subcontractors.manage', 'resource_cost.view',
+    'estimates.view', 'estimates.view_cost', 'historical_costing.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -242,7 +257,9 @@ WHERE r.code = 'MANAGEMENT'
     'recipes.view', 'recipes.view_cost', 'recipes.test', 'templates.view', 'site_surveys.view',
     'schedule.view', 'schedule.manage', 'schedule.override_conflict',
     'resources.view', 'capacity.view', 'maintenance.view', 'vehicles.view',
-    'recurring_jobs.view', 'subcontractors.view', 'resource_cost.view'
+    'recurring_jobs.view', 'subcontractors.view', 'resource_cost.view',
+    'estimates.view', 'estimates.view_cost', 'yield.view', 'pricing_intelligence.view',
+    'pricing_recommendations.review', 'historical_costing.view', 'quote_risk.override'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -319,7 +336,16 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('portal_link_hours', '72'),
 ('subcontract_prefix', 'SFSUB'),
 ('schedule_change_notify_minutes', '30'),
-('machine_cost_in_job', '0');
+('machine_cost_in_job', '0'),
+('estimate_prefix', 'SFE'),
+('minimum_sample_size', '5'),
+('cost_age_warning_days', '90'),
+('price_volatility_percent', '5'),
+('price_volatility_days', '90'),
+('target_margin_percent', '35'),
+('quote_risk_block', '0'),
+('estimate_approval_margin_percent', '25'),
+('estimate_approval_cost', '50000');
 
 INSERT INTO kpi_targets (kpi_code, name, target_value, comparison_type, period_type, active) VALUES
 ('TARGET_GROSS_MARGIN', 'Target gross margin %', 35, 'MINIMUM', 'MONTH', 1),
@@ -814,3 +840,22 @@ FROM (
     UNION ALL SELECT '2026-12-28', 'Day of Goodwill observed'
 ) AS v
 WHERE NOT EXISTS (SELECT 1 FROM calendar_exceptions c WHERE c.exception_date = v.exception_date);
+
+INSERT INTO installation_access_levels (code, name, multiplier, notes)
+SELECT v.code, v.name, v.multiplier, v.notes FROM (
+    SELECT 'EASY' AS code, 'Easy' AS name, 1.00 AS multiplier, 'No extra time. Multiplier 1.00.' AS notes
+    UNION ALL SELECT 'STANDARD', 'Standard', 1.00, 'Normal access. Multiplier 1.00.'
+    UNION ALL SELECT 'DIFFICULT', 'Difficult', 1.25, 'Site labour x 1.25.'
+    UNION ALL SELECT 'SPECIALIST', 'Specialist', 1.50, 'Site labour x 1.50.'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM installation_access_levels a WHERE a.code = v.code);
+
+INSERT INTO installation_height_categories (code, name, equipment_cost, notes)
+SELECT v.code, v.name, v.equipment_cost, v.notes FROM (
+    SELECT 'GROUND' AS code, 'Ground level' AS name, 0.00 AS equipment_cost, 'No equipment cost.' AS notes
+    UNION ALL SELECT 'LADDER', 'Ladder', 0.00, 'Use a ladder already on the job.'
+    UNION ALL SELECT 'SCAFFOLD', 'Scaffolding', 450.00, 'Default equipment cost. Edit it.'
+    UNION ALL SELECT 'CHERRY_PICKER', 'Cherry picker', 1800.00, 'Default equipment cost. Edit it.'
+    UNION ALL SELECT 'OTHER', 'Other', 0.00, 'Enter the equipment cost on the estimate.'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM installation_height_categories h WHERE h.code = v.code);

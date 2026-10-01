@@ -94,14 +94,15 @@ final class ProductRepository extends Repository
                 category_id, supplier_id, sku, name, description, product_type, pricing_method,
                 cost_price, cost_unit, roll_width_mm, sheet_width_mm, sheet_height_mm,
                 standard_waste_percent, waste_threshold_percent, default_waste_policy,
-                allow_rotation, allow_nesting, track_stock, minimum_stock_level,
+                allow_rotation, allow_nesting, direction_sensitive, kerf_mm, sheet_edge_margin_mm,
+                horizontal_spacing_mm, vertical_spacing_mm, print_edge_margin_mm, track_stock, minimum_stock_level,
                 reorder_level, preferred_order_quantity, inventory_method, costing_method,
                 supplier_code, active, notes, created_by
              ) VALUES (
                 ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?,
                 ?, ?, ?,
-                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?,
                 ?, ?, ?, ?
              )',
@@ -124,7 +125,9 @@ final class ProductRepository extends Repository
                 category_id = ?, supplier_id = ?, sku = ?, name = ?, description = ?, product_type = ?,
                 pricing_method = ?, cost_price = ?, cost_unit = ?, roll_width_mm = ?, sheet_width_mm = ?,
                 sheet_height_mm = ?, standard_waste_percent = ?, waste_threshold_percent = ?,
-                default_waste_policy = ?, allow_rotation = ?, allow_nesting = ?, track_stock = ?,
+                default_waste_policy = ?, allow_rotation = ?, allow_nesting = ?, direction_sensitive = ?,
+                kerf_mm = ?, sheet_edge_margin_mm = ?, horizontal_spacing_mm = ?, vertical_spacing_mm = ?,
+                print_edge_margin_mm = ?, track_stock = ?,
                 minimum_stock_level = ?, reorder_level = ?, preferred_order_quantity = ?,
                 inventory_method = ?, costing_method = ?, supplier_code = ?, active = ?, notes = ?
              WHERE id = ?',
@@ -193,7 +196,9 @@ final class ProductRepository extends Repository
             $data['product_type'], $data['pricing_method'], $data['cost_price'], $data['cost_unit'],
             $data['roll_width_mm'], $data['sheet_width_mm'], $data['sheet_height_mm'],
             $data['standard_waste_percent'], $data['waste_threshold_percent'], $data['default_waste_policy'],
-            $data['allow_rotation'], $data['allow_nesting'], $data['track_stock'], $data['minimum_stock_level'],
+            $data['allow_rotation'], $data['allow_nesting'], $data['direction_sensitive'], $data['kerf_mm'],
+            $data['sheet_edge_margin_mm'], $data['horizontal_spacing_mm'], $data['vertical_spacing_mm'],
+            $data['print_edge_margin_mm'], $data['track_stock'], $data['minimum_stock_level'],
             $data['reorder_level'], $data['preferred_order_quantity'], $data['inventory_method'], $data['costing_method'],
             $data['supplier_code'], $data['active'], $data['notes'], $data['created_by'],
         ];

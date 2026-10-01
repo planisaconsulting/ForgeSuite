@@ -145,7 +145,8 @@ $value = static function (string $key, string $default = '') use ($old): string 
         </div>
         <div class="col-12 d-flex flex-wrap gap-3">
             <?php foreach ([
-                'allow_rotation' => 'Allow rotation later',
+                'allow_rotation' => 'Allow rotation',
+                'direction_sensitive' => 'Direction sensitive, do not rotate',
                 'allow_nesting' => 'Allow nesting later',
                 'track_stock' => 'Flag for stock tracking',
                 'active' => 'Active',

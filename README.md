@@ -358,6 +358,28 @@ A recurring template creates one follow-up for a due period. It does not create 
 
 `php tests/phase8.php` checks an overlapping printer, leave, 80% and 120% utilisation, a print-before-laminate dependency, a material shortage, a machine breakdown that does not move work, a shared vehicle, one monthly follow-up, a subcontract cost posted once, a customer date that survives an internal change, and schedule permissions on the action and the URL.
 
+## Phase 9 estimating and yield
+
+An estimate is internal. A quote remains the customer document. Historical quote prices are not rewritten when a recipe, a cost, or a recommendation changes.
+
+Sheet yield is a grid. Usable size is the sheet minus the edge margin on every side. Parts per side are `floor((usable + kerf) / (part + kerf))`. Both orientations are tried when rotation is allowed. The better count wins. A tie keeps the original orientation. The screen says best layout found. Mixed rectangles use a first-fit shelf pack with the same label. It is not a perfect layout.
+
+Roll yield counts how many graphics fit across the usable width, including spacing, then the rows and the linear metres. Both orientations are compared unless the product is direction sensitive. The shorter length wins. Several roll widths are shown together. The user chooses. A predicted remnant is not written to inventory.
+
+An offcut fits only when both sides are large enough. Area alone is not enough. Score is `1000000000 - leftover square millimetres`, plus 10000 for the same location, minus 1 if the part is rotated. Nothing is consumed automatically.
+
+Gross margin sell price is `cost / (1 - margin)`. Markup sell price is `cost x (1 + markup)`. They are labelled separately. Variance percent is `(actual - estimated) / estimated x 100`. A zero estimate has no percent. Actual below estimate is favourable for cost. The summed difference on the pricing screen is cost estimate variance, not an accounting loss.
+
+Recommendations use the median. Every sample value stays visible, including outliers. Fewer than `minimum_sample_size` completed values is insufficient history. Accepting a recommendation stores a new recipe version. Old quote snapshots keep their version.
+
+`php tests/phase9.php` checks the sheet and roll examples, offcut dimensions, a 40% margin, a discount, labour statistics, a recipe version, quote risk, a fleet setup charged once, separate installation components, and rejected cost, formula, and permission changes.
+
+## Upgrading a Phase 8 database
+
+Back up the database first. Then import `database/migrations/009_estimating_intelligence.sql` once. It adds estimates, yield settings, and permissions. It does not change quote totals. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `009` on a database created from the current `schema.sql`.
+
 ## Upgrading a Phase 7 database
 
 Back up the database first. Export it from the host panel and keep that file off the server. Confirm the export contains `users`, `quotes`, `jobs`, and `invoices` before you change anything.

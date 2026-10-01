@@ -33,6 +33,7 @@ use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
 use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
+use App\Controllers\EstimatingController;
 use App\Controllers\PageController;
 use App\Controllers\PricingLevelController;
 use App\Controllers\ProductController;
@@ -226,6 +227,73 @@ $router->post('/calculator/price', static function (): void {
 $router->post('/calculator/quote', static function (): void {
     (new CalculatorController())->addToQuote();
 }, true, true, 'quotes.manage');
+
+$router->get('/estimates', static function (): void {
+    (new EstimatingController())->index();
+}, true, 'estimates.view');
+$router->get('/estimates/new', static function (): void {
+    (new EstimatingController())->create();
+}, true, 'estimates.create');
+$router->post('/estimates', static function (): void {
+    (new EstimatingController())->store();
+}, true, true, 'estimates.create');
+$router->get('/estimates/{id}', static function (string $id): void {
+    (new EstimatingController())->show($id);
+}, true, 'estimates.view');
+$router->post('/estimates/{id}/approve', static function (string $id): void {
+    (new EstimatingController())->approve($id);
+}, true, true, 'estimates.approve');
+$router->get('/estimating/sheets', static function (): void {
+    (new EstimatingController())->sheets();
+}, true, 'yield.view');
+$router->post('/estimating/sheets', static function (): void {
+    (new EstimatingController())->sheets();
+}, true, true, 'yield.view');
+$router->get('/estimating/rolls', static function (): void {
+    (new EstimatingController())->rolls();
+}, true, 'yield.view');
+$router->post('/estimating/rolls', static function (): void {
+    (new EstimatingController())->rolls();
+}, true, true, 'yield.view');
+$router->get('/estimating/installation', static function (): void {
+    (new EstimatingController())->installation();
+}, true, 'estimates.view');
+$router->post('/estimating/installation', static function (): void {
+    (new EstimatingController())->installation();
+}, true, true, 'estimates.create');
+$router->get('/estimating/vehicles', static function (): void {
+    (new EstimatingController())->vehicles();
+}, true, 'estimates.view');
+$router->post('/estimating/vehicles', static function (): void {
+    (new EstimatingController())->vehicles();
+}, true, true, 'estimates.create');
+$router->get('/estimating/simulator', static function (): void {
+    (new EstimatingController())->simulator();
+}, true, 'estimates.view');
+$router->post('/estimating/simulator', static function (): void {
+    (new EstimatingController())->simulator();
+}, true, true, 'estimates.view');
+$router->get('/estimating/intelligence', static function (): void {
+    (new EstimatingController())->intelligence();
+}, true, 'pricing_intelligence.view');
+$router->get('/estimating/recommendations', static function (): void {
+    (new EstimatingController())->recommendations();
+}, true, 'pricing_intelligence.view');
+$router->post('/estimating/recommendations/{id}', static function (string $id): void {
+    (new EstimatingController())->recommendationAct($id);
+}, true, true, 'pricing_recommendations.review');
+$router->get('/reports/estimate-actual', static function (): void {
+    (new EstimatingController())->variance();
+}, true, 'historical_costing.view');
+$router->get('/reports/recipe-accuracy', static function (): void {
+    (new EstimatingController())->intelligence();
+}, true, 'pricing_intelligence.view');
+$router->get('/reports/material-yield', static function (): void {
+    (new EstimatingController())->sheets();
+}, true, 'yield.view');
+$router->get('/reports/pricing-health', static function (): void {
+    (new EstimatingController())->intelligence();
+}, true, 'pricing_intelligence.view');
 
 $router->get('/users', static function (): void {
     (new UserController())->index();

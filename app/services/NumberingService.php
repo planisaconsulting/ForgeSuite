@@ -90,6 +90,11 @@ final class NumberingService
         return $this->next('subcontract', 'subcontract_prefix', 'SFSUB');
     }
 
+    public function estimate(): string
+    {
+        return $this->next('estimate', 'estimate_prefix', 'SFE');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');
