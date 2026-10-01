@@ -5,6 +5,7 @@
     <p class="sf-muted mb-0"><?= e(customer_label($survey)) ?><?php if (!empty($survey['survey_date'])): ?> · <?= e((string) $survey['survey_date']) ?><?php endif; ?></p>
 </div>
 <div class="sf-action-row mb-3">
+    <a class="btn btn-sf" href="<?= e(url('/m/surveys/' . $survey['id'])) ?>">Field mode</a>
     <?php if ($canEdit): ?><a class="btn btn-outline-light" href="<?= e(url('/surveys/' . $survey['id'] . '/edit')) ?>">Edit</a><?php endif; ?>
     <a class="btn btn-outline-light" href="<?= e(url('/surveys/' . $survey['id'] . '/pdf')) ?>">Download site survey PDF</a>
     <?php if (!empty($survey['quote_id'])): ?><a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $survey['quote_id'])) ?>">Open quote</a><?php elseif (can('quotes.manage')): ?><a class="btn btn-sf" href="<?= e(url('/quotes/new?customer_id=' . $survey['customer_id'] . '&survey_id=' . $survey['id'] . (!empty($survey['opportunity_id']) ? '&opportunity_id=' . (int) $survey['opportunity_id'] : ''))) ?>">Create quotation</a><?php endif; ?>
@@ -55,5 +56,12 @@
         <select class="form-select mb-2" name="measurement_id"><option value="">Not linked to a measurement</option><?php foreach ($measurements as $row): ?><option value="<?= e((string) $row['id']) ?>"><?= e((string) $row['reference']) ?></option><?php endforeach; ?></select>
         <button class="btn btn-sf w-100" type="submit">Add photo</button>
     </form>
+    <?php endif; ?>
+    <?php if (($fieldNotes ?? []) !== [] || ($fieldPhotos ?? []) !== []): ?>
+        <div class="p-3">
+            <h3 class="h6">Synced from the field</h3>
+            <?php foreach ($fieldNotes as $note): ?><p><?= e((string) $note['body']) ?></p><?php endforeach; ?>
+            <?php foreach ($fieldPhotos as $photo): ?><p><a href="<?= e(url('/m/photos/' . $photo['id'])) ?>"><?= e((string) $photo['category']) ?></a></p><?php endforeach; ?>
+        </div>
     <?php endif; ?>
 </section>

@@ -1,11 +1,15 @@
 /**
- * App shell cache only. Reports, invoices, customers, the portal, and
- * site surveys stay online. This file does not sync survey photos.
+ * App shell only. Authenticated HTML and API responses are not cached.
+ * Field drafts live in IndexedDB, not in this cache.
  */
-const SHELL = "signforge-shell-v2";
+const SHELL = "signforge-shell-v3";
 const FILES = [
   "/assets/css/app.css",
   "/assets/js/app.js",
+  "/assets/js/field.js",
+  "/offline.html",
+  "/assets/images/icon-192.png",
+  "/assets/images/icon-512.png",
   "/assets/vendor/bootstrap/css/bootstrap.min.css",
   "/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"
 ];
@@ -23,15 +27,29 @@ self.addEventListener("activate", function (event) {
     }).map(function (key) {
       return caches.delete(key);
     }));
+  }).then(function () {
+    return self.clients.matchAll();
+  }).then(function (clients) {
+    clients.forEach(function (client) {
+      client.postMessage({type: "update"});
+    });
   }));
 });
 
 self.addEventListener("fetch", function (event) {
   var url = new URL(event.request.url);
-  if (event.request.method !== "GET" || FILES.indexOf(url.pathname) === -1) {
+  if (event.request.method !== "GET") {
     return;
   }
-  event.respondWith(caches.match(event.request).then(function (cached) {
-    return cached || fetch(event.request);
-  }));
+  if (FILES.indexOf(url.pathname) !== -1) {
+    event.respondWith(caches.match(event.request).then(function (cached) {
+      return cached || fetch(event.request);
+    }));
+    return;
+  }
+  if (event.request.mode === "navigate" && url.pathname.indexOf("/m") === 0) {
+    event.respondWith(fetch(event.request).catch(function () {
+      return caches.match("/offline.html");
+    }));
+  }
 });

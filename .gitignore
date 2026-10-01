@@ -23,5 +23,8 @@
 /storage/signatures/*
 !/storage/signatures/.gitkeep
 !/storage/signatures/.htaccess
+/storage/field-photos/*
+!/storage/field-photos/.gitkeep
+!/storage/field-photos/.htaccess
 .DS_Store
 Thumbs.db

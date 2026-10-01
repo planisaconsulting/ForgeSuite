@@ -57,6 +57,7 @@ use App\Controllers\SiteSurveyController;
 use App\Controllers\TemplateController;
 use App\Controllers\DispatchController;
 use App\Controllers\WorkshopController;
+use App\Controllers\MobileController;
 
 $router->get('/login', static function (): void {
     (new AuthController())->showLogin();
@@ -1545,6 +1546,100 @@ $router->get('/my/dashboard', static function (): void {
 $router->get('/reports/workflow-performance', static function (): void {
     (new PlatformController())->performance();
 }, true, 'workflows.view');
+
+$router->get('/m', static function (): void {
+    (new MobileController())->home();
+}, true, 'mobile.use');
+$router->get('/m/sync', static function (): void {
+    (new MobileController())->syncCentre();
+}, true, 'offline.use');
+$router->get('/m/more', static function (): void {
+    (new MobileController())->more();
+}, true, 'mobile.use');
+$router->get('/m/scan', static function (): void {
+    (new MobileController())->scan();
+}, true, 'mobile.use');
+$router->get('/m/workshop', static function (): void {
+    (new MobileController())->workshop();
+}, true, 'workshop.tablet');
+$router->get('/m/surveys/{id}', static function (string $id): void {
+    (new MobileController())->survey($id);
+}, true, 'site_survey.mobile');
+$router->get('/m/installations/{id}', static function (string $id): void {
+    (new MobileController())->installation($id);
+}, true, 'installation.mobile');
+$router->get('/m/deliveries/{id}', static function (string $id): void {
+    (new MobileController())->delivery($id);
+}, true, 'delivery.mobile');
+$router->get('/m/jobs/{id}', static function (string $id): void {
+    (new MobileController())->job($id);
+}, true, 'jobs.view');
+$router->get('/m/customers/{id}', static function (string $id): void {
+    (new MobileController())->customer($id);
+}, true, 'customers.view');
+$router->get('/m/quotes/{id}', static function (string $id): void {
+    (new MobileController())->quote($id);
+}, true, 'quotes.view');
+$router->get('/m/leads/{id}', static function (string $id): void {
+    (new MobileController())->lead($id);
+}, true, 'leads.view');
+$router->get('/m/devices', static function (): void {
+    (new MobileController())->devices();
+}, true, 'device.view_own');
+$router->post('/m/devices', static function (): void {
+    (new MobileController())->saveDevice();
+}, true, true, 'device.manage_own');
+$router->post('/m/devices/{id}/revoke', static function (string $id): void {
+    (new MobileController())->revokeDevice($id);
+}, true, true, 'device.manage_own');
+$router->get('/m/conflicts', static function (): void {
+    (new MobileController())->conflicts();
+}, true, 'sync_conflicts.view');
+$router->post('/m/conflicts/{id}', static function (string $id): void {
+    (new MobileController())->resolveConflict($id);
+}, true, true, 'sync_conflicts.resolve');
+$router->get('/m/photos/{id}', static function (string $id): void {
+    (new MobileController())->photo($id);
+}, true, 'mobile.use');
+$router->get('/admin/devices', static function (): void {
+    (new MobileController())->devices();
+}, true, 'device.manage_all');
+$router->get('/admin/sync-status', static function (): void {
+    (new MobileController())->syncCentre();
+}, true, 'device.manage_all');
+$router->get('/admin/sync-conflicts', static function (): void {
+    (new MobileController())->conflicts();
+}, true, 'sync_conflicts.view');
+$router->get('/admin/push', static function (): void {
+    (new MobileController())->settings();
+}, true, 'device.manage_all');
+$router->get('/admin/offline-settings', static function (): void {
+    (new MobileController())->settings();
+}, true, 'configuration.manage');
+$router->post('/admin/offline-settings', static function (): void {
+    (new MobileController())->saveSettings();
+}, true, true, 'configuration.manage');
+$router->get('/admin/field-packs', static function (): void {
+    (new MobileController())->syncCentre();
+}, true, 'device.manage_all');
+$router->get('/api/v1/mobile/config', static function (): void {
+    (new MobileController())->config();
+}, true, 'mobile.use');
+$router->post('/api/v1/devices', static function (): void {
+    (new MobileController())->registerDevice();
+}, true, true, 'mobile.use');
+$router->post('/api/v1/sync', static function (): void {
+    (new MobileController())->sync();
+}, true, true, 'offline.use');
+$router->post('/api/v1/field-packs', static function (): void {
+    (new MobileController())->downloadPack();
+}, true, true, 'field_pack.download');
+$router->post('/api/v1/push-subscriptions', static function (): void {
+    (new MobileController())->subscribe();
+}, true, true, 'push_notifications.use');
+$router->post('/api/v1/mobile/report', static function (): void {
+    (new MobileController())->report();
+}, true, true, 'mobile.use');
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

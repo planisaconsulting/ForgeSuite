@@ -37,8 +37,9 @@ $reports = (new AutomationService())->deliverScheduledReports();
 $webhookRetries = (new \App\Services\OutboundWebhookService())->processDue();
 $approvalReminders = (new \App\Services\ApprovalService())->escalate();
 $integrationRetries = (new \App\Services\IntegrationIssueService())->retryDue();
+$fieldPacks = (new \App\Services\FieldPackService())->cleanup();
 $removed = (new SystemHealthService())->cleanupTemporary();
 (new SettingRepository())->put('last_cron_at', date('Y-m-d H:i:s'));
 SettingsService::forget();
 
-fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} snag_alerts={$snagAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} webhook_retries={$webhookRetries} approval_reminders={$approvalReminders} integration_retries={$integrationRetries} temp_removed={$removed}\n");
+fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} snag_alerts={$snagAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} webhook_retries={$webhookRetries} approval_reminders={$approvalReminders} integration_retries={$integrationRetries} field_packs_closed={$fieldPacks} temp_removed={$removed}\n");

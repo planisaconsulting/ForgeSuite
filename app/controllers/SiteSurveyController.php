@@ -64,6 +64,8 @@ final class SiteSurveyController
             'canEdit' => can('site_surveys.edit'),
             'types' => SiteSurveyService::MEASUREMENTS,
             'tags' => SiteSurveyService::PHOTO_TAGS,
+            'fieldNotes' => (new \App\Repositories\FieldRepository())->notesFor('SITE_SURVEY', (int) $row['id']),
+            'fieldPhotos' => (new \App\Repositories\FieldRepository())->photosFor('SITE_SURVEY', (int) $row['id']),
         ]);
     }
 

@@ -1312,3 +1312,85 @@ INSERT IGNORE INTO tags (name) VALUES
 ('FLEET'),
 ('WARRANTY'),
 ('REWORK');
+
+-- Phase 14 mobile and offline field work.
+INSERT IGNORE INTO permissions (code, name, module) VALUES
+('mobile.use', 'Use the mobile field shell', 'mobile'),
+('offline.use', 'Sync offline field work', 'mobile'),
+('field_pack.download', 'Download a field pack', 'mobile'),
+('site_survey.mobile', 'Use site survey field mode', 'mobile'),
+('installation.mobile', 'Use installer field mode', 'mobile'),
+('delivery.mobile', 'Use delivery field mode', 'mobile'),
+('workshop.tablet', 'Use workshop tablet mode', 'mobile'),
+('device.view_own', 'View own devices', 'mobile'),
+('device.manage_own', 'Rename or revoke own devices', 'mobile'),
+('device.manage_all', 'Manage every device', 'mobile'),
+('sync_conflicts.view', 'View sync conflicts', 'mobile'),
+('sync_conflicts.resolve', 'Resolve sync conflicts', 'mobile'),
+('push_notifications.use', 'Register for push notifications', 'mobile');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN (
+    'mobile.use', 'offline.use', 'field_pack.download', 'site_survey.mobile',
+    'device.view_own', 'device.manage_own', 'push_notifications.use'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'INSTALLER' AND p.code IN (
+    'mobile.use', 'offline.use', 'field_pack.download', 'site_survey.mobile', 'installation.mobile',
+    'device.view_own', 'device.manage_own', 'sync_conflicts.view', 'push_notifications.use'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'DISPATCH' AND p.code IN (
+    'mobile.use', 'offline.use', 'field_pack.download', 'delivery.mobile',
+    'device.view_own', 'device.manage_own', 'push_notifications.use'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'PRODUCTION' AND p.code IN (
+    'mobile.use', 'offline.use', 'workshop.tablet', 'device.view_own', 'device.manage_own', 'push_notifications.use'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'MANAGEMENT' AND p.code IN (
+    'mobile.use', 'device.view_own', 'device.manage_own', 'device.manage_all',
+    'sync_conflicts.view', 'sync_conflicts.resolve', 'push_notifications.use'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ADMIN' AND p.code IN (
+    'mobile.use', 'offline.use', 'field_pack.download', 'site_survey.mobile', 'installation.mobile',
+    'delivery.mobile', 'workshop.tablet', 'device.view_own', 'device.manage_own', 'device.manage_all',
+    'sync_conflicts.view', 'sync_conflicts.resolve', 'push_notifications.use'
+);
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('offline_enabled', '1'),
+('offline_session_hours', '24'),
+('field_pack_max_age_hours', '72'),
+('image_compression_quality', '70'),
+('offline_storage_warning_mb', '300'),
+('gps_capture_policy', 'OPTIONAL'),
+('photo_required_on_complete', '0'),
+('signature_required_on_complete', '1'),
+('auto_sync', '1'),
+('push_enabled', '0'),
+('field_pack_cleanup_days', '14'),
+('measurement_sanity_mm', '20000'),
+('image_max_upload_bytes', '1500000'),
+('image_keep_original', '0'),
+('quiet_hours_start', '20:00'),
+('quiet_hours_end', '07:00'),
+('urgent_push_during_quiet', '0'),
+('clock_skew_hours', '12'),
+('installation_safety_ack', '1'),
+('schema_version', '14');
+
+UPDATE feature_flags SET enabled = 1 WHERE feature_key = 'OFFLINE_FIELD_MODE';

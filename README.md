@@ -387,6 +387,24 @@ Assistance is off until a provider is configured. Draft text does not change a p
 
 `php tests/phase13.php` covers the large-quote approval, the low-margin rule, the workflow loop, custom fields, form versions, payment webhooks, extraction, assistance boundaries, prompt injection, an offline accounting provider, and a secret-free export.
 
+## Phase 14 mobile field work
+
+Phase 14 is a phone and tablet layer on the records that already exist. It is not a second ERP, and it is not an offline copy of pricing, quotes, invoices, payments, stock, purchase orders, or approvals. Those stay on the server. A phone can keep a downloaded field pack and queue survey measurements, notes, photos, installation checklists, snags, signatures, delivery exceptions, time, and mileage. Sync sends them to `/api/v1/sync` with the signed-in session and the CSRF token. Each operation has an `operation_uuid`. The server stores that id and a repeat does not create a second survey line, photo, signature, snag, time row, or proof of delivery.
+
+A field pack is the job, survey, or delivery the person is about to leave with: contact, address, approved artwork revision, measurements, instructions, checklist, and the item codes for that delivery. It does not include cost or margin. If the office replaces the approved artwork, changes the address, cancels the job, or changes the installation instructions hash, the pack is marked stale and completing the installation is blocked until the pack is downloaded again. A photo can still sync when the office only moved the target date. If the installer and the office both edit the same installation notes, the sync opens a conflict. The resolver shows the office text and the offline text, then keep server, apply offline, or a manual merge. The screen does not show the raw payload.
+
+Photos are compressed in the browser before upload. The server accepts PNG and JPEG, rejects a file over the configured byte limit, and stores it under `storage/field-photos/`, outside the public folder. An annotation is a second file. The original path is not overwritten. There is no GD or Imagick resize on the server in this build. The client canvas does the reduction.
+
+GPS is taken only when the person starts travel, arrives, signs, or completes, and only if the browser allows it. Denying location does not stop the step when the policy is optional. Sign-Forge does not record a route and does not track a person in the background. A trusted device is a name for sync and push. It does not skip the password. Revoking a device stops the next sync and clears IndexedDB when that response arrives. Until the phone contacts the server, the browser still holds the local drafts. IndexedDB encryption depends on the phone. This is not a claim of hardware-grade encryption, and the phone is not a backup. Cleanup never deletes a draft that has not synced.
+
+The service worker cache is `signforge-shell-v3`. It holds the shell CSS, JavaScript, icons, and the offline page. It does not cache signed-in HTML or API responses. Install Sign-Forge from Chrome on Android with the Install app button or the browser menu. On iPhone, use Share, then Add to Home Screen. Some camera and background-sync behaviour differs on Safari. An Android package is optional later and should wrap this same site with Trusted Web Activity or Capacitor. Do not keep a second copy of the business rules in an app.
+
+`cron/run.php` also closes old field packs (`field_packs_closed=`). `php tests/phase14.php` covers one survey sync, a duplicate operation, a photo retry, an instruction conflict, a safe photo merge, stale artwork, one signature, one proof of delivery, a blocked material issue, a blocked payment, a revoked device, a lost permission, quiet hours, and a storage limit.
+
+## Upgrading a Phase 13 database
+
+Import `database/migrations/014_mobile_offline_field.sql` once. Do not import `schema.sql` over a live database, and do not run this migration on a database created from the current `schema.sql`.
+
 ## Upgrading a Phase 12 database
 
 Import `database/migrations/013_workflows_configurability_ai.sql` once. Do not import `schema.sql` over a live database, and do not run this migration on a database created from the current `schema.sql`.

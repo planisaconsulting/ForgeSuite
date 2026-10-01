@@ -163,6 +163,15 @@ $groups = [
         ['integration-logs', 'Integration logs', '/admin/integration-logs', 'fa-list', 'integration_logs.view'],
         ['integration-issues', 'Integration issues', '/integrations/issues', 'fa-triangle-exclamation', 'integration_logs.view'],
     ]],
+    ['label' => 'Mobile and devices', 'links' => [
+        ['mobile-home', 'Field home', '/m', 'fa-mobile-screen', 'mobile.use'],
+        ['mobile-devices', 'Devices', '/admin/devices', 'fa-tablet-screen-button', 'device.manage_all'],
+        ['mobile-sync', 'Sync status', '/admin/sync-status', 'fa-arrows-rotate', 'device.manage_all'],
+        ['mobile-conflicts', 'Sync conflicts', '/admin/sync-conflicts', 'fa-code-compare', 'sync_conflicts.view'],
+        ['mobile-push', 'Push notifications', '/admin/push', 'fa-bell', 'device.manage_all'],
+        ['mobile-settings', 'Offline settings', '/admin/offline-settings', 'fa-sliders', 'configuration.manage'],
+        ['mobile-packs', 'Field packs', '/admin/field-packs', 'fa-suitcase', 'device.manage_all'],
+    ]],
     ['label' => 'Administration', 'links' => [
         ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],
         ['users', 'Users', '/users', 'fa-user-gear', 'users.manage'],

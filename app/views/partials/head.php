@@ -8,7 +8,8 @@ $pageTitle = trim(($title ?? 'Home') . ' · Sign-Forge Management System');
 <meta name="theme-color" content="#0e1114">
 <title><?= e($pageTitle) ?></title>
 <meta name="csrf-token" content="<?= e(\App\Helpers\Csrf::token()) ?>">
-<link rel="icon" href="<?= e(asset('assets/images/mark.svg')) ?>" type="image/svg+xml">
+<link rel="icon" href="<?= e(asset('assets/images/icon-192.png')) ?>" type="image/png">
+<link rel="apple-touch-icon" href="<?= e(asset('assets/images/icon-192.png')) ?>">
 <link rel="manifest" href="<?= e(asset('manifest.webmanifest')) ?>">
 <link rel="stylesheet" href="<?= e(asset('assets/vendor/bootstrap/css/bootstrap.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('assets/vendor/fontawesome/css/all.min.css')) ?>">
