@@ -1,0 +1,19 @@
+# Used when the host document root is the project folder rather than public/.
+# Prefer pointing the domain at public/ when the hosting panel allows it.
+# This file keeps the rest of the project out of the browser either way.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Never serve application code, SQL, storage, or tests.
+    RewriteRule ^(app|database|storage|templates|tests)(/|$) - [F,L]
+
+    # A real file under public/ (css, js, images) is served from there.
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^ public%{REQUEST_URI} [L]
+
+    # Everything else goes through the front controller.
+    RewriteRule ^ index.php [L]
+</IfModule>
