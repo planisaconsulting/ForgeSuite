@@ -52,6 +52,8 @@ use App\Controllers\PortalController;
 use App\Controllers\RecipeController;
 use App\Controllers\SiteSurveyController;
 use App\Controllers\TemplateController;
+use App\Controllers\DispatchController;
+use App\Controllers\WorkshopController;
 
 $router->get('/login', static function (): void {
     (new AuthController())->showLogin();
@@ -1001,6 +1003,9 @@ $router->post('/portal/files', static function (): void {
 $router->get('/portal/files/{id}', static function (string $id): void {
     (new PortalController())->file($id);
 }, false);
+$router->get('/portal/documents/{id}', static function (string $id): void {
+    (new PortalController())->signedDocument($id);
+}, false);
 $router->post('/portal/messages', static function (): void {
     (new PortalController())->message();
 }, false, true);
@@ -1207,6 +1212,124 @@ $router->post('/feedback', static function (): void {
 $router->post('/feedback/review', static function (): void {
     (new MarketingController())->review();
 }, true, true, 'feedback.manage');
+$router->get('/workshop', static function (): void {
+    (new WorkshopController())->floor();
+}, true, 'workshop.view');
+$router->get('/workshop/board.json', static function (): void {
+    (new WorkshopController())->counts();
+}, true, 'workshop.view');
+$router->get('/workshop/queue', static function (): void {
+    (new WorkshopController())->queue();
+}, true, 'workshop.view');
+$router->get('/workshop/qc', static function (): void {
+    (new WorkshopController())->qc();
+}, true, 'qc.perform');
+$router->post('/workshop/qc', static function (): void {
+    (new WorkshopController())->quality();
+}, true, true, 'qc.perform');
+$router->get('/workshop/reprints', static function (): void {
+    (new WorkshopController())->reprints();
+}, true, 'production.reprint');
+$router->get('/workshop/scan', static function (): void {
+    (new WorkshopController())->scanForm();
+}, true, 'workshop.scan');
+$router->post('/workshop/scan', static function (): void {
+    (new WorkshopController())->scanSubmit();
+}, true, true, 'workshop.scan');
+$router->post('/workshop/actions', static function (): void {
+    (new WorkshopController())->action();
+}, true, true, 'workshop.scan');
+$router->post('/workshop/material', static function (): void {
+    (new WorkshopController())->material();
+}, true, true, 'workshop.scan');
+$router->get('/workshop/items/{id}', static function (string $id): void {
+    (new WorkshopController())->item($id);
+}, true, 'workshop.view');
+$router->get('/workshop/kiosk', static function (): void {
+    (new WorkshopController())->kiosk();
+}, false);
+$router->post('/workshop/kiosk', static function (): void {
+    (new WorkshopController())->kioskPin();
+}, false, true);
+$router->post('/workshop/kiosk/badge', static function (): void {
+    (new WorkshopController())->kioskBadge();
+}, false, true);
+$router->get('/scan/{token}', static function (string $token): void {
+    (new WorkshopController())->openToken($token);
+}, true, 'workshop.scan');
+$router->get('/dispatch', static function (): void {
+    (new DispatchController())->index();
+}, true, 'dispatch.view');
+$router->post('/dispatch', static function (): void {
+    (new DispatchController())->store();
+}, true, true, 'dispatch.create');
+$router->get('/dispatch/{id}', static function (string $id): void {
+    (new DispatchController())->show($id);
+}, true, 'dispatch.view');
+$router->post('/dispatch/{id}/pack', static function (string $id): void {
+    (new DispatchController())->pack($id);
+}, true, true, 'dispatch.create');
+$router->post('/dispatch/{id}/scan', static function (string $id): void {
+    (new DispatchController())->scan($id);
+}, true, true, 'dispatch.create');
+$router->post('/dispatch/{id}/complete', static function (string $id): void {
+    (new DispatchController())->complete($id);
+}, true, true, 'dispatch.complete');
+$router->post('/dispatch/{id}/pod', static function (string $id): void {
+    (new DispatchController())->pod($id);
+}, true, true, 'delivery.signoff');
+$router->get('/snags', static function (): void {
+    (new DispatchController())->snags();
+}, true, 'snags.view');
+$router->post('/snags', static function (): void {
+    (new DispatchController())->storeSnag();
+}, true, true, 'snags.manage');
+$router->post('/snags/{id}', static function (string $id): void {
+    (new DispatchController())->updateSnag($id);
+}, true, true, 'snags.manage');
+$router->get('/jobs/{id}/trace', static function (string $id): void {
+    (new WorkshopController())->trace($id);
+}, true, 'jobs.view');
+$router->post('/jobs/{id}/installation-signoff', static function (string $id): void {
+    (new WorkshopController())->signoff($id);
+}, true, true, 'installation.signoff');
+$router->get('/labels/preview', static function (): void {
+    (new WorkshopController())->labelPreview();
+}, true, 'labels.print');
+$router->get('/documents/job-cards', static function (): void {
+    $_GET['type'] = 'JOB_CARD';
+    (new WorkshopController())->documents();
+}, true, 'documents.internal.view');
+$router->get('/documents/delivery-notes', static function (): void {
+    $_GET['type'] = 'DELIVERY_NOTE';
+    (new WorkshopController())->documents();
+}, true, 'dispatch.view');
+$router->get('/documents/certificates', static function (): void {
+    $_GET['type'] = 'COMPLETION_CERTIFICATE';
+    (new WorkshopController())->documents();
+}, true, 'jobs.view');
+$router->get('/documents/generated/{id}', static function (string $id): void {
+    (new WorkshopController())->download($id);
+}, true, 'jobs.view');
+$router->get('/reports/throughput', static function (): void {
+    (new WorkshopController())->reports();
+}, true, 'reports.operations');
+$router->get('/reports/qc-rework', static function (): void {
+    (new WorkshopController())->reports();
+}, true, 'reports.operations');
+$router->get('/reports/traceability', static function (): void {
+    (new WorkshopController())->reports();
+}, true, 'tracking.traceability.view');
+$router->get('/admin/document-templates', static function (): void {
+    (new WorkshopController())->templates();
+}, true, 'documents.templates.manage');
+$router->post('/admin/document-templates', static function (): void {
+    (new WorkshopController())->saveTemplate();
+}, true, true, 'documents.templates.manage');
+$router->get('/admin/label-templates', static function (): void {
+    (new WorkshopController())->templates();
+}, true, 'documents.templates.manage');
+
 $router->get('/admin/integrations', static function (): void {
     (new IntegrationController())->index();
 }, true, 'integrations.view');

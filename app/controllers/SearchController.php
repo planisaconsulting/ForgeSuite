@@ -73,6 +73,9 @@ final class SearchController
             'showTemplates' => can('templates.view'),
             'portalUsers' => $term !== '' && can('portal.manage') ? (new PortalRepository())->searchUsers($term) : [],
             'showPortal' => can('portal.manage'),
+            'tracking' => $term !== '' && (can('workshop.scan') || can('inventory.view') || can('jobs.view'))
+                ? (new \App\Services\TrackingCodeService())->locate($term)
+                : null,
         ]);
     }
 }

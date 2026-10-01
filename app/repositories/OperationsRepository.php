@@ -702,8 +702,12 @@ final class OperationsRepository extends Repository
                )',
             [$jobId, $jobId]
         );
+        $phase11 = $this->one(
+            "SELECT COUNT(*) AS n FROM quality_checks WHERE job_id = ? AND status = 'FAIL' AND resolved_at IS NULL",
+            [$jobId]
+        );
 
-        return (int) ($row['n'] ?? 0) > 0;
+        return (int) ($row['n'] ?? 0) > 0 || (int) ($phase11['n'] ?? 0) > 0;
     }
 
     /**

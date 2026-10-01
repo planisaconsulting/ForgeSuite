@@ -370,6 +370,34 @@ Repeat customer rate is customers with more than one completed job, divided by c
 
 `php tests/phase10.php` covers capture, phone matching, conversion, email success and failure, WhatsApp preparation, follow-up dedupe, attribution, unsubscribe, lead visibility, webhooks, templates, and the public rate limit.
 
+## Phase 11 workshop execution and documents
+
+Phase 11 does not create a second job, stock, or installation system. A scan resolves a token or a printed code back to the job, production item, roll, sheet, offcut, package, or dispatch that already exists.
+
+A QR code contains only a random token. The database stores the SHA-256 hash of that token. The address is `/scan/{token}`. The code does not contain a database id, a cost, or a password. Opening it requires a signed-in user with `workshop.scan`. A tracking code such as `SFJ-2026-0042`, `ROL-2026-0041`, or `PI-2026-0042-01-01` can be typed or scanned with a keyboard wedge. The label also draws that code as Code 128. Phone cameras use the browser barcode detector when the device provides one.
+
+A job item is `NONE`, `BATCH`, or `INDIVIDUAL`. Stickers stay one batch. Individual pieces stop at `individual_tracking_cap` (200) and become one batch above that. A partial completion of 6 out of 10 leaves the job item open.
+
+The workshop job card omits selling price, margin, and supplier cost. A user with `costing.view` can open the costing view. Generating a new card marks the previous card superseded. An approved artwork change does the same. Signed delivery notes and proof of delivery are not overwritten.
+
+Material issue uses the existing stock movement and job usage, once, keyed by an idempotency key. The wrong product is refused unless someone with `production.override_material` records a reason. A usable offcut becomes an inventory item with its own code and label. Customer-supplied material is still tracked, and its job cost is zero.
+
+A failed quality check blocks dispatch until it is reworked or an authorised user records an override. Scanning the same piece into a dispatch twice does not add the quantity again. An item from another job is refused. Proof of delivery stores the signer, the statement version, and the server time. A second signature does not replace the first.
+
+A critical snag blocks job completion. Someone with `jobs.complete` can override it with a reason, and that reason is audited. Completion does not create the final invoice. Accounts are notified of the remaining invoiceable amount and of reservations that are still open.
+
+The workshop floor is `/workshop`. It polls `/workshop/board.json`. A shared kiosk at `/workshop/kiosk` asks for a PIN or a badge token. The PIN is hashed. An administrator badge is refused. Kiosk mode cannot open costing, product costs, users, or settings.
+
+First-pass yield is items whose first quality check passed, divided by items inspected, times 100. Reprint rate is reprinted quantity divided by quantity completed on production items, times 100. Neither figure ranks an employee.
+
+`php tests/phase11.php` covers a tampered token, the wrong material, one 4 m issue on a 20 m roll, an 800 × 500 offcut, a partial 6 of 10, a failed check that blocks dispatch, an incomplete dispatch, a duplicate scan, an immutable proof of delivery, a superseded job card, a snag that blocks completion, and workshop and installer permissions.
+
+## Upgrading a Phase 10 database
+
+Back up the database first. Then import `database/migrations/011_workshop_documents_tracking.sql` once. It adds tracking, production items, dispatch, signatures, and document tables. It does not delete jobs or rewrite stock balances. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `011` on a database created from the current `schema.sql`.
+
 ## Upgrading a Phase 9 database
 
 Back up the database first. Then import `database/migrations/010_communications_leads.sql` once. It adds leads, campaigns, consent, and permissions. It does not delete customers or rewrite quote totals. Do not import `schema.sql` on that database.
@@ -422,7 +450,7 @@ In the hosting control panel, add a cron job that runs every hour:
 php /usr/www/users/USERNAME/public_html/cron/run.php
 ```
 
-Use the real path to this project. Do not point the cron URL at the website. Confirm `storage` and `storage/backups` are writable by PHP.
+Use the real path to this project. Do not point the cron URL at the website. Confirm `storage` and `storage/backups` are writable by PHP. The same job also flags overdue snags. Signatures are stored in `storage/signatures` and generated documents in `storage/documents`. Both folders must stay outside the public web root and remain writable by PHP.
 
 ## Restore
 

@@ -27,6 +27,16 @@ final class AutomationService
         'INVOICE_OVERDUE',
         'CUSTOMER_DORMANT',
         'FEEDBACK_RECEIVED',
+        'PRODUCTION_STARTED',
+        'PRODUCTION_COMPLETED',
+        'QC_FAILED',
+        'QC_PASSED',
+        'DISPATCH_READY',
+        'DISPATCHED',
+        'DELIVERED',
+        'INSTALLATION_SIGNED_OFF',
+        'SNAG_CREATED',
+        'JOB_FULLY_COMPLETED',
     ];
 
     /** @var list<string> */

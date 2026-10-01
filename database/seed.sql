@@ -957,3 +957,149 @@ WHERE NOT EXISTS (SELECT 1 FROM communication_templates WHERE category = 'REVIEW
 INSERT INTO communication_templates (name, channel, category, subject_template, body_template, active)
 SELECT 'WhatsApp quote', 'WHATSAPP', 'QUOTE_SEND', NULL, 'Hello {{contact_name}}, quotation {{quote_number}} is ready. Total {{quote_total}}.', 1
 WHERE NOT EXISTS (SELECT 1 FROM communication_templates WHERE category = 'QUOTE_SEND' AND channel = 'WHATSAPP');
+
+-- Phase 11 workshop permissions, templates, and settings.
+
+INSERT INTO roles (code, name, description)
+SELECT 'DISPATCH', 'Dispatch', 'Packing, delivery notes, and proof of delivery.'
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE code = 'DISPATCH');
+
+INSERT IGNORE INTO permissions (code, name, module) VALUES
+('workshop.view', 'View the workshop floor', 'workshop'),
+('workshop.scan', 'Scan workshop codes', 'workshop'),
+('production.start', 'Start production', 'workshop'),
+('production.pause', 'Pause production', 'workshop'),
+('production.complete', 'Complete a production stage', 'workshop'),
+('production.reprint', 'Record a reprint', 'workshop'),
+('production.override_material', 'Issue material that does not match the job', 'workshop'),
+('qc.perform', 'Record quality checks', 'workshop'),
+('qc.override', 'Dispatch or complete after a failed quality check', 'workshop'),
+('labels.print', 'Print labels', 'workshop'),
+('labels.reprint', 'Reprint an existing label', 'workshop'),
+('dispatch.view', 'View dispatches', 'workshop'),
+('dispatch.create', 'Create and scan a dispatch', 'workshop'),
+('dispatch.complete', 'Complete a dispatch', 'workshop'),
+('delivery.signoff', 'Capture proof of delivery', 'workshop'),
+('installation.signoff', 'Capture installation sign-off', 'workshop'),
+('snags.view', 'View snags', 'workshop'),
+('snags.manage', 'Manage snags', 'workshop'),
+('documents.internal.view', 'View internal job cards and work orders', 'workshop'),
+('documents.templates.manage', 'Manage document and label templates', 'workshop'),
+('tracking.traceability.view', 'View production and material traceability', 'workshop'),
+('kiosk.use', 'Use the workshop kiosk', 'workshop');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'PRODUCTION' AND p.code IN (
+    'workshop.view', 'workshop.scan', 'production.start', 'production.pause', 'production.complete',
+    'production.reprint', 'production.override_material', 'qc.perform', 'qc.override',
+    'labels.print', 'labels.reprint', 'dispatch.view', 'snags.view', 'documents.internal.view',
+    'tracking.traceability.view', 'kiosk.use'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'INSTALLER' AND p.code IN (
+    'workshop.view', 'workshop.scan', 'installation.signoff', 'snags.view', 'snags.manage',
+    'documents.internal.view', 'labels.print', 'kiosk.use'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'DISPATCH' AND p.code IN (
+    'dashboard.view', 'jobs.view', 'workshop.view', 'workshop.scan', 'labels.print', 'labels.reprint',
+    'dispatch.view', 'dispatch.create', 'dispatch.complete', 'delivery.signoff',
+    'snags.view', 'documents.internal.view', 'kiosk.use', 'attachments.manage'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN ('workshop.view', 'dispatch.view', 'snags.view');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'MANAGEMENT' AND p.code IN (
+    'workshop.view', 'dispatch.view', 'snags.view', 'documents.internal.view', 'tracking.traceability.view'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN ('dispatch.view', 'documents.internal.view');
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('dispatch_prefix', 'SFD'),
+('completion_prefix', 'SFCOMP'),
+('package_prefix', 'SFPK'),
+('pod_acceptance_statement', 'I confirm that the listed goods were received.'),
+('completion_acceptance_statement', 'I confirm that the listed goods/services were received/completed.'),
+('acceptance_statement_version', '1'),
+('gps_capture_enabled', '0'),
+('workshop_poll_seconds', '45'),
+('workshop_time_tracking', '0'),
+('individual_tracking_cap', '200'),
+('kiosk_max_pin_attempts', '5');
+
+INSERT IGNORE INTO reprint_reasons (code, label, active) VALUES
+('PRINT_DEFECT', 'Print defect', 1),
+('COLOUR_ISSUE', 'Colour issue', 1),
+('ARTWORK_ERROR', 'Artwork error', 1),
+('MATERIAL_DEFECT', 'Material defect', 1),
+('APPLICATION_ERROR', 'Application error', 1),
+('DAMAGE', 'Damage', 1),
+('CUSTOMER_CHANGE', 'Customer change', 1),
+('OTHER', 'Other', 1);
+
+INSERT IGNORE INTO qc_checklist_items (product_id, label, sort_order, active)
+SELECT NULL, label, sort_order, 1 FROM (
+    SELECT 'Dimensions correct' AS label, 10 AS sort_order UNION ALL
+    SELECT 'Artwork correct', 20 UNION ALL
+    SELECT 'Spelling checked', 30 UNION ALL
+    SELECT 'Colour visually acceptable', 40 UNION ALL
+    SELECT 'No print defects', 50 UNION ALL
+    SELECT 'No bubbles', 60 UNION ALL
+    SELECT 'Edges finished', 70 UNION ALL
+    SELECT 'Hardware complete', 80 UNION ALL
+    SELECT 'Clean', 90 UNION ALL
+    SELECT 'Quantity correct', 100
+) AS seed
+WHERE NOT EXISTS (SELECT 1 FROM qc_checklist_items WHERE product_id IS NULL AND label = seed.label);
+
+INSERT INTO label_templates (name, entity_type, width_mm, height_mm, orientation, layout_definition, active)
+SELECT 'Roll label', 'ROLL', 100, 60, 'LANDSCAPE', '{"title":"ROLL","lines":["{{code}}","{{product}}","Width: {{width}}","Original: {{original}}","Remaining: {{remaining}}","Location: {{location}}"]}', 1
+WHERE NOT EXISTS (SELECT 1 FROM label_templates WHERE name = 'Roll label');
+
+INSERT INTO label_templates (name, entity_type, width_mm, height_mm, orientation, layout_definition, active)
+SELECT 'Sheet label', 'SHEET', 100, 60, 'LANDSCAPE', '{"title":"SHEET","lines":["{{code}}","{{product}}","{{dimensions}}","Location: {{location}}"]}', 1
+WHERE NOT EXISTS (SELECT 1 FROM label_templates WHERE name = 'Sheet label');
+
+INSERT INTO label_templates (name, entity_type, width_mm, height_mm, orientation, layout_definition, active)
+SELECT 'Offcut label', 'OFFCUT', 100, 60, 'LANDSCAPE', '{"title":"OFFCUT","lines":["{{code}}","{{product}}","{{dimensions}}","Location: {{location}}"]}', 1
+WHERE NOT EXISTS (SELECT 1 FROM label_templates WHERE name = 'Offcut label');
+
+INSERT INTO label_templates (name, entity_type, width_mm, height_mm, orientation, layout_definition, active)
+SELECT 'Job label', 'JOB', 100, 70, 'LANDSCAPE', '{"title":"JOB","lines":["{{code}}","{{customer}}","{{description}}","{{dimensions}}","Qty: {{quantity}}","Due: {{due}}"]}', 1
+WHERE NOT EXISTS (SELECT 1 FROM label_templates WHERE name = 'Job label');
+
+INSERT INTO label_templates (name, entity_type, width_mm, height_mm, orientation, layout_definition, active)
+SELECT 'Production item label', 'PRODUCTION_ITEM', 100, 70, 'LANDSCAPE', '{"title":"ITEM","lines":["{{code}}","{{customer}}","{{description}}","{{dimensions}}","Qty: {{quantity}}","Due: {{due}}"]}', 1
+WHERE NOT EXISTS (SELECT 1 FROM label_templates WHERE name = 'Production item label');
+
+INSERT INTO label_templates (name, entity_type, width_mm, height_mm, orientation, layout_definition, active)
+SELECT 'Dispatch label', 'DISPATCH', 100, 60, 'LANDSCAPE', '{"title":"DISPATCH","lines":["{{code}}","{{customer}}","{{description}}"]}', 1
+WHERE NOT EXISTS (SELECT 1 FROM label_templates WHERE name = 'Dispatch label');
+
+INSERT INTO document_templates (document_type, name, template_version, layout_config, active)
+SELECT 'JOB_CARD', 'Workshop job card', 1, '{{company.name}}\n{{job.number}}\n{{customer.name}}\n{{job.target_date}}', 1
+WHERE NOT EXISTS (SELECT 1 FROM document_templates WHERE document_type = 'JOB_CARD' AND name = 'Workshop job card');
+
+INSERT INTO document_templates (document_type, name, template_version, layout_config, active)
+SELECT 'DELIVERY_NOTE', 'Delivery note', 1, '{{company.name}}\n{{document.number}}\n{{customer.name}}\n{{job.number}}', 1
+WHERE NOT EXISTS (SELECT 1 FROM document_templates WHERE document_type = 'DELIVERY_NOTE');
+
+INSERT INTO document_templates (document_type, name, template_version, layout_config, active)
+SELECT 'COLLECTION_NOTE', 'Collection note', 1, '{{company.name}}\n{{document.number}}\n{{customer.name}}', 1
+WHERE NOT EXISTS (SELECT 1 FROM document_templates WHERE document_type = 'COLLECTION_NOTE');
+
+INSERT INTO document_templates (document_type, name, template_version, layout_config, active)
+SELECT 'COMPLETION_CERTIFICATE', 'Completion certificate', 1, '{{company.name}}\n{{document.number}}\n{{customer.name}}\n{{job.number}}', 1
+WHERE NOT EXISTS (SELECT 1 FROM document_templates WHERE document_type = 'COMPLETION_CERTIFICATE');

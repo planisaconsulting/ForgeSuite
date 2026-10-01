@@ -37,6 +37,18 @@ def require_env(name: str) -> str:
     return value
 
 
+RUNTIME_PREFIXES = (
+    "storage/backups/",
+    "storage/logs/",
+    "storage/mail/",
+    "storage/quotes/",
+    "storage/uploads/",
+    "storage/temp/",
+    "storage/documents/",
+    "storage/signatures/",
+)
+
+
 def should_skip(path: Path) -> bool:
     if path.name in SKIP_FILES:
         return True
@@ -44,6 +56,11 @@ def should_skip(path: Path) -> bool:
         return True
     if path.suffix == ".log":
         return True
+    relative = path.relative_to(ROOT).as_posix()
+    if path.name not in {".gitkeep", ".htaccess"}:
+        for prefix in RUNTIME_PREFIXES:
+            if relative.startswith(prefix):
+                return True
     return False
 
 

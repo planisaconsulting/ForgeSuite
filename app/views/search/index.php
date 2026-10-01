@@ -11,6 +11,12 @@
 <?php if ($term === ''): ?>
     <section class="sf-panel"><div class="sf-empty"><p>Type at least a few letters.</p></div></section>
 <?php else: ?>
+    <?php if (!empty($tracking)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Tracking code</h2></div>
+            <p class="p-3 mb-0"><?= e((string) $tracking['tracking_code']) ?> · <?= e((string) $tracking['entity_type']) ?></p>
+        </section>
+    <?php endif; ?>
     <?php if ($showCustomers): ?>
         <section class="sf-panel mb-3">
             <div class="sf-panel-head"><h2>Customers</h2></div>

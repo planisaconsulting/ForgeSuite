@@ -56,6 +56,9 @@ final class ProductService
      */
     public function update(int $id, array $input, int $userId): array
     {
+        if (!can('products.manage')) {
+            return ['_form' => 'You cannot edit this product.'];
+        }
         $existing = $this->products->find($id);
         if ($existing === null) {
             return ['_form' => 'That product was not found.'];

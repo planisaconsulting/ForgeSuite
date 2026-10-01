@@ -470,15 +470,18 @@ final class JobController
 
     public function card(string $id): void
     {
-        View::render('jobs/card', $this->cardData($id), null);
+        $job = $this->job($id);
+        $showCost = can('costing.view') && (string) ($_GET['costing'] ?? '') === '1';
+        View::render('jobs/card', (new \App\Services\WorkshopDocumentService())->cardData((int) $job['id'], $this->userId(), $showCost), null);
     }
 
     public function cardPdf(string $id): void
     {
-        $data = $this->cardData($id);
-        $html = View::capture('jobs/card', $data);
-        $binary = (new QuotePdf())->render($html);
-        $name = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string) $data['job']['job_number']) ?: 'job';
+        $job = $this->job($id);
+        $showCost = can('costing.view') && (string) ($_GET['costing'] ?? '') === '1';
+        $built = (new \App\Services\WorkshopDocumentService())->jobCard((int) $job['id'], $this->userId(), $showCost);
+        $binary = (new QuotePdf())->render($built['html']);
+        $name = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string) $job['job_number']) ?: 'job';
         header('Content-Type: application/pdf');
         header('Content-Disposition: attachment; filename="' . $name . '-job-card.pdf"');
         header('X-Content-Type-Options: nosniff');

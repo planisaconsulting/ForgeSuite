@@ -298,6 +298,33 @@ final class PortalController
     /**
      * @return array<string, mixed>
      */
+    public function signedDocument(string $id): void
+    {
+        $user = $this->user();
+        $doc = (new \App\Repositories\WorkshopRepository())->document((int) $id);
+        $allowed = ['DELIVERY_NOTE', 'COLLECTION_NOTE', 'COMPLETION_CERTIFICATE', 'PROOF_OF_DELIVERY'];
+        if ($doc === null || !in_array((string) $doc['document_type'], $allowed, true)) {
+            $this->denied();
+        }
+        $owned = false;
+        foreach ((new \App\Repositories\WorkshopRepository())->customerDocuments((int) $user['customer_id']) as $row) {
+            if ((int) $row['id'] === (int) $doc['id']) {
+                $owned = true;
+            }
+        }
+        if (!$owned) {
+            $this->denied();
+        }
+        $path = base_path((string) $doc['file_path']);
+        if (!is_file($path)) {
+            $this->denied();
+        }
+        header('Content-Type: text/html; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+        readfile($path);
+        exit;
+    }
+
     private function user(): array
     {
         $user = (new PortalAuthService())->user();

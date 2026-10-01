@@ -30,6 +30,7 @@ use App\Services\SystemHealthService;
 
 $alerts = (new AlertService())->evaluate();
 $leadAlerts = (new LeadAlertService())->evaluate();
+$snagAlerts = (new \App\Services\SnagService())->flagOverdue();
 $scheduleAlerts = (new ScheduleAlertService())->evaluate();
 $recurring = (new RecurringJobService())->run();
 $reports = (new AutomationService())->deliverScheduledReports();
@@ -37,4 +38,4 @@ $removed = (new SystemHealthService())->cleanupTemporary();
 (new SettingRepository())->put('last_cron_at', date('Y-m-d H:i:s'));
 SettingsService::forget();
 
-fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} temp_removed={$removed}\n");
+fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} snag_alerts={$snagAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} temp_removed={$removed}\n");

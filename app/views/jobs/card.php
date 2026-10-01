@@ -1,5 +1,10 @@
 <?php
-/** Internal job card. No markup, margin, or selling prices. */
+/** Internal job card. Costs stay off unless an authorised user asks for the costing view. */
+$qr_url = $qr_url ?? '';
+$generated_at = $generated_at ?? '';
+$updated = $updated ?? false;
+$show_cost = $show_cost ?? false;
+$approved = $approved ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -7,19 +12,20 @@
     <meta charset="utf-8">
     <title><?= e((string) $job['job_number']) ?> job card</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; color: #1c1f24; font-size: 12px; margin: 24px; }
-        h1 { font-size: 22px; margin: 0; }
-        h2 { font-size: 13px; margin: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+        body { font-family: DejaVu Sans, sans-serif; color: #1c1f24; font-size: 12px; padding: 24px; }
+        h1 { font-size: 22px; padding: 0; }
+        h2 { font-size: 13px; padding: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border-bottom: 1px solid #d5d8de; text-align: left; padding: 5px 4px; vertical-align: top; }
         .muted { color: #5c6370; }
-        .box { border: 1px solid #1c1f24; padding: 8px 10px; margin-top: 8px; }
-        @media print { body { margin: 12mm; } .no-print { display: none; } }
+        .box { border: 1px solid #1c1f24; padding: 8px 10px; }
+        @media print { body { padding: 12mm; } .no-print { display: none; } }
     </style>
 </head>
 <body>
     <p class="no-print"><button onclick="window.print()">Print</button></p>
-    <p class="muted" style="margin:0"><?= e((string) $company) ?> · Internal job card</p>
+    <?php if ($updated): ?><p><strong>JOB CARD UPDATED</strong></p><?php endif; ?>
+    <p class="muted"><?= e((string) $company) ?> · Internal job card<?= $generated_at !== '' ? ' · ' . e((string) $generated_at) : '' ?></p>
     <h1><?= e((string) $job['job_number']) ?></h1>
     <p><strong><?= e((string) $job['title']) ?></strong></p>
     <table>
@@ -84,6 +90,14 @@
         <?php foreach ($stages as $stage): ?>
             <div class="box"><?= e((string) $stage['stage_name']) ?> · <?= e((string) $stage['status']) ?></div>
         <?php endforeach; ?>
+    <?php endif; ?>
+    <?php if ($show_cost && !empty($costing)): ?>
+        <h2>Internal costing</h2>
+        <p>Actual cost <?= e(money((string) ($costing['actual_total_cost'] ?? '0'))) ?></p>
+    <?php endif; ?>
+    <?php if ($qr_url !== ''): ?>
+        <h2>Scan</h2>
+        <p class="box"><?= e((string) $qr_url) ?></p>
     <?php endif; ?>
 </body>
 </html>

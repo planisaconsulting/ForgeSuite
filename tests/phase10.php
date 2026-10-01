@@ -78,12 +78,14 @@ $customer = (new CustomerService())->create([
     'phone' => '0100000000',
 ], (int) $admin['id']);
 $eq('customer for phase 10', true, $customer['id'] !== null);
+$localPhone = '06' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+$intlPhone = '+27 ' . substr($localPhone, 1, 2) . ' ' . substr($localPhone, 3, 3) . ' ' . substr($localPhone, 6);
 $contactId = (new ContactRepository())->insert([
     'customer_id' => (int) $customer['id'],
     'name' => 'Existing Contact',
     'position' => null,
     'email' => 'person-' . $stamp . '@example.com',
-    'phone' => '0821234567',
+    'phone' => $localPhone,
     'mobile' => null,
     'primary_contact' => 1,
     'notes' => null,
@@ -104,7 +106,7 @@ $campaignId = (new MarketingRepository())->insertCampaign([
 
 $public = (new LeadService())->acceptPublic(json_encode([
     'name' => 'Website Lead ' . $stamp,
-    'phone' => '+27 82 123 4567',
+    'phone' => $intlPhone,
     'email' => 'web-' . $stamp . '@example.com',
     'message' => 'Need a shopfront sign ' . $stamp,
     'service_interest' => 'Shopfront',

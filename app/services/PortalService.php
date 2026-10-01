@@ -45,6 +45,7 @@ final class PortalService
             'artworks' => $this->portal->artworks($customerId),
             'invoices' => $this->portal->invoices($customerId),
             'documents' => $this->portal->documents($customerId),
+            'signed_documents' => (new \App\Repositories\WorkshopRepository())->customerDocuments($customerId),
             'balance' => $this->portal->balance($customerId),
             'customer' => $this->portal->customerLabel($customerId),
         ];

@@ -259,6 +259,13 @@ final class JobService
                     throw new JobRejected($decision['errors']);
                 }
                 $status = strtoupper(trim($to));
+                $extraBlockers = [];
+                if ($status === JobStatus::Completed->value) {
+                    $extraBlockers = (new JobCompletionService())->blockers($jobId);
+                    if ($extraBlockers !== [] && (trim($overrideReason) === '' || !can('jobs.complete'))) {
+                        throw new JobRejected(['_form' => implode(' ', $extraBlockers)]);
+                    }
+                }
                 $completedAt = $job['completed_at'];
                 $completedBy = $job['completed_by'];
                 if ($status === JobStatus::Completed->value) {
@@ -273,9 +280,9 @@ final class JobService
                     'artwork_override_by' => $decision['artwork_override'] ? $userId : null,
                     'artwork_override_reason' => $decision['artwork_override'] ? trim($overrideReason) : null,
                     'artwork_override_at' => $decision['artwork_override'] ? date('Y-m-d H:i:s') : null,
-                    'completion_override_by' => $decision['completion_override'] ? $userId : null,
-                    'completion_override_reason' => $decision['completion_override'] ? trim($overrideReason) : null,
-                    'completion_override_at' => $decision['completion_override'] ? date('Y-m-d H:i:s') : null,
+                    'completion_override_by' => ($decision['completion_override'] || $extraBlockers !== []) ? $userId : null,
+                    'completion_override_reason' => ($decision['completion_override'] || $extraBlockers !== []) ? trim($overrideReason) : null,
+                    'completion_override_at' => ($decision['completion_override'] || $extraBlockers !== []) ? date('Y-m-d H:i:s') : null,
                     'completed_at' => $completedAt,
                     'completed_by' => $completedBy,
                 ], $version);
@@ -295,9 +302,21 @@ final class JobService
                         'reason' => trim($overrideReason),
                     ], $userId);
                 }
+                if ($extraBlockers !== []) {
+                    $this->audit->record('job', $jobId, 'COMPLETION_OVERRIDE', null, [
+                        'reason' => trim($overrideReason),
+                        'blockers' => $extraBlockers,
+                    ], $userId);
+                }
+                if ($status === JobStatus::InProduction->value) {
+                    (new ProductionItemService())->generateForJob($jobId, $userId);
+                }
             });
         } catch (JobRejected $e) {
             return $e->errors;
+        }
+        if (strtoupper($to) === JobStatus::Completed->value) {
+            (new JobCompletionService())->handoff($jobId, $userId);
         }
 
         return [];
@@ -613,6 +632,7 @@ final class JobService
                 'approval_method' => $method,
             ], $userId);
         });
+        (new WorkshopDocumentService())->supersedeJobCards($jobId, 'Approved artwork changed');
 
         return [];
     }

@@ -30,6 +30,12 @@
     <?php endif; ?>
 </section>
 <section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Delivery and completion</h2></div>
+    <?php if (($data['signed_documents'] ?? []) === []): ?><div class="sf-empty"><p>No delivery notes or completion certificates yet.</p></div><?php else: ?>
+        <ul class="sf-feed"><?php foreach ($data['signed_documents'] as $row): ?><li><a href="<?= e(url('/portal/documents/' . $row['id'])) ?>"><?= e((string) ($row['document_number'] ?: $row['document_type'])) ?></a><small><?= e((string) $row['document_type']) ?> · <?= e((string) $row['generated_at']) ?></small></li><?php endforeach; ?></ul>
+    <?php endif; ?>
+</section>
+<section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Documents</h2></div>
     <?php if ($data['documents'] === []): ?><div class="sf-empty"><p>No shared documents.</p></div><?php else: ?>
         <ul class="sf-feed"><?php foreach ($data['documents'] as $row): ?><li><a href="<?= e(url('/portal/files/' . $row['id'])) ?>"><?= e((string) $row['original_filename']) ?></a><small><?= e((string) $row['visibility']) ?></small></li><?php endforeach; ?></ul>

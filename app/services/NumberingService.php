@@ -100,6 +100,21 @@ final class NumberingService
         return $this->next('lead', 'lead_prefix', 'SFL');
     }
 
+    public function dispatch(): string
+    {
+        return $this->next('dispatch', 'dispatch_prefix', 'SFD');
+    }
+
+    public function completion(): string
+    {
+        return $this->next('completion', 'completion_prefix', 'SFCOMP');
+    }
+
+    public function package(): string
+    {
+        return $this->next('package', 'package_prefix', 'SFPK');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

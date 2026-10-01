@@ -17,5 +17,11 @@
 /storage/backups/*
 !/storage/backups/.gitkeep
 !/storage/backups/.htaccess
+/storage/documents/*
+!/storage/documents/.gitkeep
+!/storage/documents/.htaccess
+/storage/signatures/*
+!/storage/signatures/.gitkeep
+!/storage/signatures/.htaccess
 .DS_Store
 Thumbs.db

@@ -261,10 +261,15 @@ function company_name(): string
 /**
  * @return array<string, mixed>|null
  */
-function auth_user(): ?array
+function auth_user(bool $reload = false): ?array
 {
     static $loaded = false;
     static $user = null;
+
+    if ($reload) {
+        $loaded = false;
+        $user = null;
+    }
 
     if ($loaded) {
         return $user;
@@ -287,6 +292,11 @@ function auth_user(): ?array
     $user = $found;
 
     return $user;
+}
+
+function forget_auth_user(): void
+{
+    auth_user(true);
 }
 
 function require_login(string $path): void

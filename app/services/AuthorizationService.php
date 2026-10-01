@@ -26,6 +26,11 @@ final class AuthorizationService
         if ($user === null) {
             return false;
         }
+        if (!empty($_SESSION['kiosk_mode']) && in_array($permission, [
+            'costing.view', 'costing.edit', 'inventory.view_cost', 'users.manage', 'settings.manage', 'products.manage',
+        ], true)) {
+            return false;
+        }
         if (($user['role_code'] ?? '') === 'ADMIN') {
             return true;
         }
