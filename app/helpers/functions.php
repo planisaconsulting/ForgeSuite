@@ -312,3 +312,47 @@ function csrf_field(): string
 {
     return App\Helpers\Csrf::field();
 }
+
+/**
+ * Remember me keeps the sign-in cookie for 30 days.
+ * Without it, the cookie is a browser session and disappears when the
+ * browser closes. Sign-out clears either cookie.
+ */
+function remember_login(bool $remember): void
+{
+    if (!$remember) {
+        unset($_SESSION['remember_me']);
+
+        return;
+    }
+
+    $_SESSION['remember_me'] = 1;
+    send_session_cookie(time() + 60 * 60 * 24 * 30);
+}
+
+function refresh_remember_me(): void
+{
+    if (empty($_SESSION['remember_me']) || empty($_SESSION['user_id'])) {
+        return;
+    }
+
+    send_session_cookie(time() + 60 * 60 * 24 * 30);
+}
+
+function clear_session_cookie(): void
+{
+    send_session_cookie(time() - 42000);
+}
+
+function send_session_cookie(int $expires): void
+{
+    $params = session_get_cookie_params();
+    setcookie(session_name(), $expires < time() ? '' : session_id(), [
+        'expires' => $expires,
+        'path' => ($params['path'] ?? '') !== '' ? $params['path'] : '/',
+        'domain' => (string) ($params['domain'] ?? ''),
+        'secure' => (bool) ($params['secure'] ?? false),
+        'httponly' => true,
+        'samesite' => ($params['samesite'] ?? '') !== '' ? (string) $params['samesite'] : 'Lax',
+    ]);
+}

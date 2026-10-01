@@ -19,7 +19,7 @@ final class AuthService
     private const MAX_ATTEMPTS = 5;
     private const LOCK_SECONDS = 60;
 
-    public function attempt(string $email, string $password): string
+    public function attempt(string $email, string $password, bool $remember = false): string
     {
         if ($this->isLocked()) {
             return 'throttled';
@@ -39,6 +39,7 @@ final class AuthService
         $this->clearFailures();
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
+        remember_login($remember);
         Csrf::rotate();
 
         return 'ok';

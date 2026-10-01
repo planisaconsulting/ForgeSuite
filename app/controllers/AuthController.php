@@ -23,6 +23,7 @@ final class AuthController
             'title' => 'Sign in',
             'error' => null,
             'email' => '',
+            'remember' => false,
         ], 'layouts/auth');
     }
 
@@ -30,13 +31,15 @@ final class AuthController
     {
         $email = trim((string) ($_POST['email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
-        $result = (new AuthService())->attempt($email, $password);
+        $remember = (string) ($_POST['remember'] ?? '') === '1';
+        $result = (new AuthService())->attempt($email, $password, $remember);
 
         if ($result === 'throttled') {
             View::render('auth/login', [
                 'title' => 'Sign in',
                 'error' => 'Too many attempts. Wait a minute and try again.',
                 'email' => $email,
+                'remember' => $remember,
             ], 'layouts/auth');
 
             return;
@@ -47,6 +50,7 @@ final class AuthController
                 'title' => 'Sign in',
                 'error' => 'Those details do not match an active account.',
                 'email' => $email,
+                'remember' => $remember,
             ], 'layouts/auth');
 
             return;
@@ -69,10 +73,7 @@ final class AuthController
     public function logout(): void
     {
         $_SESSION = [];
-        if (ini_get('session.use_cookies')) {
-            $params = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], (bool) $params['secure'], (bool) $params['httponly']);
-        }
+        clear_session_cookie();
         session_destroy();
         redirect('/login');
     }

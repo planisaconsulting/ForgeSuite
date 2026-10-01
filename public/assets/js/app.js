@@ -1,6 +1,14 @@
 // Shell behaviour only. Pricing math will live in calculator.js
 // so the browser total can never become the number that is saved.
 (function () {
+    var showPassword = document.getElementById("show_password");
+    var password = document.getElementById("password");
+    if (showPassword && password) {
+        showPassword.addEventListener("change", function () {
+            password.type = showPassword.checked ? "text" : "password";
+        });
+    }
+
     var nav = document.getElementById("appNav");
     if (!nav || typeof bootstrap === "undefined") {
         return;

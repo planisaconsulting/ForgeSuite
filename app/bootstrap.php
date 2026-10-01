@@ -74,6 +74,9 @@ if (PHP_SAPI !== 'cli') {
 
     $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     session_name('SFSESSID');
+    // Keep the session file long enough for "Remember me". The browser cookie
+    // still expires when the browser closes unless that switch was used.
+    ini_set('session.gc_maxlifetime', (string) (60 * 60 * 24 * 30));
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => url('/') === '/' ? '/' : url('/'),
@@ -82,4 +85,5 @@ if (PHP_SAPI !== 'cli') {
         'secure' => $secure,
     ]);
     session_start();
+    refresh_remember_me();
 }
