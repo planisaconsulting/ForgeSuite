@@ -16,9 +16,9 @@ use App\Repositories\ProductRepository;
  *
  * The unit cost is copied from the product at this moment. A price posted
  * with the form is ignored, and later catalogue changes do not rewrite the
- * row. This service does not change stock. Phase 4 can pass a
- * StockConsumptionHook so the same row can also create a stock movement.
- * Do not add a second stock table here.
+ * row. When a StockConsumptionHook is attached, a tracked product also
+ * writes a stock movement in the same transaction. Untracked products
+ * still record usage only. A posted unit cost is ignored.
  */
 final class MaterialUsageService
 {
@@ -69,46 +69,72 @@ final class MaterialUsageService
             return ['errors' => ['job_item_id' => 'That item is not on this job.'], 'id' => null];
         }
         $unitCost = Decimal::round((string) ($product['cost_price'] ?? '0'), 4);
-        $total = Decimal::money(Decimal::mul($quantity, $unitCost));
         $unit = substr(trim((string) ($product['cost_unit'] ?? 'unit')), 0, 20);
         if ($unit === '') {
             $unit = 'unit';
         }
+        if ($this->stock !== null) {
+            try {
+                $quoted = $this->stock->prepare($product, $input);
+            } catch (StockRejected $e) {
+                return ['errors' => $e->errors, 'id' => null];
+            }
+            if ($quoted !== null) {
+                $unitCost = $quoted['unit_cost'];
+                if ($quoted['unit'] !== '') {
+                    $unit = substr($quoted['unit'], 0, 20);
+                }
+            }
+        }
+        $total = Decimal::money(Decimal::mul($quantity, $unitCost));
         $usageId = 0;
-        Database::transaction(function () use ($jobId, $itemId, $productId, $usage, $quantity, $unit, $unitCost, $total, $reason, $input, $userId, &$usageId): void {
-            $usageId = $this->ops->insertUsage([
-                'job_id' => $jobId,
-                'job_item_id' => $itemId > 0 ? $itemId : null,
-                'product_id' => $productId,
-                'usage_type' => $usage->value,
-                'quantity' => Decimal::round($quantity, 4),
-                'unit' => $unit,
-                'unit_cost_snapshot' => $unitCost,
-                'total_cost' => $total,
-                'reason' => $reason,
-                'notes' => blank_to_null($input['notes'] ?? null),
-                'recorded_by' => $userId,
-            ]);
-            $action = $usage->needsReason() ? 'WASTE_RECORDED' : 'MATERIAL_RECORDED';
-            $this->audit->record('job', $jobId, $action, null, [
-                'usage_id' => $usageId,
-                'product_id' => $productId,
-                'usage_type' => $usage->value,
-                'quantity' => Decimal::round($quantity, 4),
-                'unit_cost_snapshot' => $unitCost,
-            ], $userId);
-            if ($this->stock !== null) {
-                $this->stock->recordConsumption([
-                    'usage_id' => $usageId,
+        try {
+            Database::transaction(function () use ($jobId, $itemId, $productId, $product, $usage, $quantity, $unit, $unitCost, $total, $reason, $input, $userId, &$usageId): void {
+                $usageId = $this->ops->insertUsage([
                     'job_id' => $jobId,
+                    'job_item_id' => $itemId > 0 ? $itemId : null,
                     'product_id' => $productId,
                     'usage_type' => $usage->value,
                     'quantity' => Decimal::round($quantity, 4),
                     'unit' => $unit,
+                    'unit_cost_snapshot' => $unitCost,
+                    'total_cost' => $total,
+                    'reason' => $reason,
+                    'notes' => blank_to_null($input['notes'] ?? null),
+                    'recorded_by' => $userId,
                 ]);
-            }
-            $this->costing->refresh($jobId);
-        });
+                $action = $usage->needsReason() ? 'WASTE_RECORDED' : 'MATERIAL_RECORDED';
+                $this->audit->record('job', $jobId, $action, null, [
+                    'usage_id' => $usageId,
+                    'product_id' => $productId,
+                    'usage_type' => $usage->value,
+                    'quantity' => Decimal::round($quantity, 4),
+                    'unit_cost_snapshot' => $unitCost,
+                ], $userId);
+                if ($this->stock !== null) {
+                    $this->stock->recordConsumption([
+                        'usage_id' => $usageId,
+                        'job_id' => $jobId,
+                        'product_id' => $productId,
+                        'usage_type' => $usage->value,
+                        'quantity' => Decimal::round($quantity, 4),
+                        'unit' => $unit,
+                        'unit_cost' => $unitCost,
+                        'inventory_item_id' => (int) ($input['inventory_item_id'] ?? 0),
+                        'stock_location_id' => (int) ($input['stock_location_id'] ?? 0),
+                        'reservation_id' => (int) ($input['reservation_id'] ?? 0),
+                        'allow_negative' => posted_flag($input, 'stock_override', 0) === 1,
+                        'override_reason' => trim((string) ($input['override_reason'] ?? '')),
+                        'reason' => $reason,
+                        'notes' => blank_to_null($input['notes'] ?? null),
+                        'user_id' => $userId,
+                    ]);
+                }
+                $this->costing->refresh($jobId);
+            });
+        } catch (StockRejected $e) {
+            return ['errors' => $e->errors, 'id' => null];
+        }
 
         return ['errors' => [], 'id' => $usageId];
     }

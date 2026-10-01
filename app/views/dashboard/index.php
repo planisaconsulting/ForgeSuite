@@ -164,7 +164,7 @@
     <div class="row g-3 p-3">
         <?php foreach ([
             'Outstanding invoices' => 'Invoices are not stored yet.',
-            'Low stock' => 'Stock movements are not stored yet. A product can be flagged for tracking only.',
+            'Low stock' => isset($lowStock) ? (string) $lowStock . ' tracked products are at or below minimum.' : 'Stock is available to roles that can view inventory.',
         ] as $label => $note): ?>
             <div class="col-12 col-md-6 col-xl-3">
                 <article class="sf-future">

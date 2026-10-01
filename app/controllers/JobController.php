@@ -119,6 +119,45 @@ final class JobController
             $data['usageTypes'] = MaterialUsageType::cases();
             $data['reasons'] = WasteReason::cases();
             $data['variance'] = can('costing.view') ? ((new JobCostingService())->report($jobId)['materials'] ?? []) : [];
+            if (can('inventory.view')) {
+                $inventory = new \App\Repositories\InventoryRepository();
+                $purchasing = new \App\Repositories\PurchasingRepository();
+                $data['locations'] = $inventory->locations(true);
+                $data['reservations'] = $inventory->reservationsForJob($jobId);
+                $data['openItems'] = $inventory->searchItems(['open_only' => 1], 80);
+                $data['jobOrders'] = $purchasing->ordersForJob($jobId);
+                $coverage = [];
+                foreach ($data['requirements'] as $requirement) {
+                    $productId = (int) ($requirement['product_id'] ?? 0);
+                    $required = (string) ($requirement['final_required_quantity'] ?: $requirement['required_quantity']);
+                    $reserved = '0';
+                    foreach ($data['reservations'] as $reservation) {
+                        if ((int) $reservation['product_id'] === $productId && (string) $reservation['status'] === 'RESERVED') {
+                            $reserved = \App\Helpers\Decimal::add($reserved, (string) $reservation['quantity'], 4);
+                        }
+                    }
+                    $issued = '0';
+                    foreach ($data['usage'] as $usageRow) {
+                        if ((int) ($usageRow['product_id'] ?? 0) === $productId && \App\Helpers\Decimal::cmp((string) $usageRow['quantity'], '0') > 0) {
+                            $issued = \App\Helpers\Decimal::add($issued, (string) $usageRow['quantity'], 4);
+                        }
+                    }
+                    $short = \App\Helpers\Decimal::sub($required, \App\Helpers\Decimal::add($reserved, $issued, 4), 4);
+                    $coverage[$productId] = [
+                        'required' => $required,
+                        'reserved' => $reserved,
+                        'issued' => $issued,
+                        'shortage' => \App\Helpers\Decimal::cmp($short, '0') > 0 ? $short : '0.0000',
+                    ];
+                }
+                $data['coverage'] = $coverage;
+            } else {
+                $data['locations'] = [];
+                $data['reservations'] = [];
+                $data['openItems'] = [];
+                $data['jobOrders'] = [];
+                $data['coverage'] = [];
+            }
         } elseif ($tab === 'labour') {
             $entries = $ops->timeEntries($jobId);
             if (!can('time.view_all') && !can('costing.view')) {

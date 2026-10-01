@@ -94,14 +94,16 @@ final class ProductRepository extends Repository
                 category_id, supplier_id, sku, name, description, product_type, pricing_method,
                 cost_price, cost_unit, roll_width_mm, sheet_width_mm, sheet_height_mm,
                 standard_waste_percent, waste_threshold_percent, default_waste_policy,
-                allow_rotation, allow_nesting, track_stock, minimum_stock_level, supplier_code,
-                active, notes, created_by
+                allow_rotation, allow_nesting, track_stock, minimum_stock_level,
+                reorder_level, preferred_order_quantity, inventory_method, costing_method,
+                supplier_code, active, notes, created_by
              ) VALUES (
                 ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?,
                 ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?
+                ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?
              )',
             $this->values($data)
         );
@@ -123,7 +125,8 @@ final class ProductRepository extends Repository
                 pricing_method = ?, cost_price = ?, cost_unit = ?, roll_width_mm = ?, sheet_width_mm = ?,
                 sheet_height_mm = ?, standard_waste_percent = ?, waste_threshold_percent = ?,
                 default_waste_policy = ?, allow_rotation = ?, allow_nesting = ?, track_stock = ?,
-                minimum_stock_level = ?, supplier_code = ?, active = ?, notes = ?
+                minimum_stock_level = ?, reorder_level = ?, preferred_order_quantity = ?,
+                inventory_method = ?, costing_method = ?, supplier_code = ?, active = ?, notes = ?
              WHERE id = ?',
             $params
         );
@@ -132,6 +135,11 @@ final class ProductRepository extends Repository
     public function setActive(int $id, int $active): void
     {
         $this->run('UPDATE products SET active = ? WHERE id = ?', [$active, $id]);
+    }
+
+    public function updateCost(int $id, string $cost): void
+    {
+        $this->run('UPDATE products SET cost_price = ? WHERE id = ?', [$cost, $id]);
     }
 
     public function addPriceHistory(int $productId, string $oldCost, string $newCost, ?int $userId): void
@@ -186,6 +194,7 @@ final class ProductRepository extends Repository
             $data['roll_width_mm'], $data['sheet_width_mm'], $data['sheet_height_mm'],
             $data['standard_waste_percent'], $data['waste_threshold_percent'], $data['default_waste_policy'],
             $data['allow_rotation'], $data['allow_nesting'], $data['track_stock'], $data['minimum_stock_level'],
+            $data['reorder_level'], $data['preferred_order_quantity'], $data['inventory_method'], $data['costing_method'],
             $data['supplier_code'], $data['active'], $data['notes'], $data['created_by'],
         ];
     }

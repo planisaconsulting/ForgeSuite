@@ -107,8 +107,33 @@ $value = static function (string $key, string $default = '') use ($old): string 
         <div class="col-md-4">
             <label class="form-label" for="minimum_stock_level">Minimum stock level</label>
             <input class="form-control" id="minimum_stock_level" name="minimum_stock_level" inputmode="decimal" value="<?= e($value('minimum_stock_level')) ?>">
-            <div class="form-text">A later stock ledger will use this. It is not a quantity on hand.</div>
+            <div class="form-text">Available stock is on hand minus reservations. This is not a quantity stored on the product.</div>
             <?= field_error($errors, 'minimum_stock_level') ?>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="reorder_level">Reorder level</label>
+            <input class="form-control" id="reorder_level" name="reorder_level" inputmode="decimal" value="<?= e($value('reorder_level')) ?>">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="preferred_order_quantity">Preferred order quantity</label>
+            <input class="form-control" id="preferred_order_quantity" name="preferred_order_quantity" inputmode="decimal" value="<?= e($value('preferred_order_quantity')) ?>">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="inventory_method">Inventory tracking</label>
+            <select class="form-select" id="inventory_method" name="inventory_method">
+                <?php foreach (App\Domain\InventoryMethod::cases() as $case): ?>
+                    <option value="<?= e($case->value) ?>" <?= $value('inventory_method', 'NONE') === $case->value ? 'selected' : '' ?>><?= e($case->label()) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="costing_method">Receipt costing</label>
+            <select class="form-select" id="costing_method" name="costing_method">
+                <?php foreach (App\Domain\CostingMethod::cases() as $case): ?>
+                    <option value="<?= e($case->value) ?>" <?= $value('costing_method', 'LAST_COST') === $case->value ? 'selected' : '' ?>><?= e($case->label()) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <div class="form-text">Last cost replaces the catalogue cost on receipt. Weighted average is for bulk quantity, unit, and area stock. Rolls and sheets keep their own acquisition cost.</div>
         </div>
         <div class="col-12">
             <label class="form-label" for="description">Description</label>

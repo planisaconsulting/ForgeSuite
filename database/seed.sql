@@ -65,6 +65,22 @@ INSERT INTO permissions (code, name, module) VALUES
 ('installations.schedule', 'Schedule installations', 'operations'),
 ('installations.complete', 'Complete installations', 'operations'),
 ('attachments.manage', 'Upload customer and quote files', 'crm'),
+('inventory.view', 'View stock balances', 'inventory'),
+('inventory.receive', 'Receive and open stock', 'inventory'),
+('inventory.consume', 'Consume stock on a job', 'inventory'),
+('inventory.transfer', 'Transfer stock between locations', 'inventory'),
+('inventory.adjust', 'Adjust stock and approve counts', 'inventory'),
+('inventory.count', 'Record a stock count', 'inventory'),
+('inventory.view_cost', 'See stock values and costs', 'inventory'),
+('inventory.override', 'Consume more stock than is available', 'inventory'),
+('purchasing.view', 'View purchase orders', 'purchasing'),
+('purchasing.create', 'Create purchase orders and requests', 'purchasing'),
+('purchasing.edit', 'Edit draft purchase orders', 'purchasing'),
+('purchasing.approve', 'Approve purchase orders', 'purchasing'),
+('purchasing.receive', 'Receive goods against a purchase order', 'purchasing'),
+('purchasing.cancel', 'Cancel a purchase order', 'purchasing'),
+('supplier_prices.view', 'View supplier prices', 'purchasing'),
+('supplier_prices.edit', 'Edit supplier prices', 'purchasing'),
 ('users.manage', 'Manage users', 'admin'),
 ('settings.manage', 'Manage settings', 'admin'),
 ('audit.view', 'View audit history', 'admin');
@@ -90,7 +106,7 @@ WHERE r.code = 'SALES'
     'quotes.view', 'quotes.manage', 'quotes.discount', 'quotes.price_override',
     'quotes.accept', 'quotes.convert', 'costing.view',
     'jobs.view', 'jobs.create', 'jobs.edit', 'installations.view', 'artwork.approve_record',
-    'attachments.manage'
+    'attachments.manage', 'inventory.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -113,7 +129,8 @@ WHERE r.code = 'PRODUCTION'
   AND p.code IN (
     'dashboard.view', 'products.view', 'suppliers.view',
     'jobs.view', 'jobs.change_status', 'production.view', 'production.update',
-    'materials.view', 'materials.record_usage', 'time.record', 'attachments.manage'
+    'materials.view', 'materials.record_usage', 'time.record', 'attachments.manage',
+    'inventory.view', 'inventory.consume', 'inventory.transfer'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -124,7 +141,9 @@ WHERE r.code = 'ACCOUNTS'
   AND p.code IN (
     'dashboard.view',
     'customers.view', 'products.view', 'suppliers.view', 'pricing.view',
-    'quotes.view', 'jobs.view', 'costing.view', 'costing.edit', 'time.view_all', 'materials.view'
+    'quotes.view', 'jobs.view', 'costing.view', 'costing.edit', 'time.view_all', 'materials.view',
+    'inventory.view', 'inventory.view_cost', 'purchasing.view', 'purchasing.receive',
+    'supplier_prices.view', 'supplier_prices.edit'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -134,7 +153,8 @@ JOIN permissions p
 WHERE r.code = 'INSTALLER'
   AND p.code IN (
     'dashboard.view', 'customers.view',
-    'jobs.view', 'installations.view', 'installations.complete', 'time.record', 'attachments.manage'
+    'jobs.view', 'installations.view', 'installations.complete', 'time.record', 'attachments.manage',
+    'inventory.view'
   );
 
 INSERT INTO users (name, email, password_hash, role_id, active, must_change_password)
@@ -167,7 +187,16 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('default_quote_validity_days', '14'),
 ('default_quote_terms', 'This quotation is valid until the expiry date. Prices are in the currency shown and exclude VAT unless the quotation says otherwise. Work starts after written acceptance and any deposit shown above. A site measure that differs from the sizes in this quotation may change the price. Artwork supplied by the customer is their responsibility. Goods remain the property of the company until paid in full.'),
 ('default_labour_hourly_cost', '0'),
-('timezone', 'Africa/Johannesburg');
+('timezone', 'Africa/Johannesburg'),
+('po_prefix', 'SFPO'),
+('grn_prefix', 'SFGRN'),
+('roll_prefix', 'ROL'),
+('sheet_prefix', 'SHT'),
+('offcut_prefix', 'OFC'),
+('batch_prefix', 'BAT'),
+('default_costing_method', 'LAST_COST'),
+('offcut_valuation', 'REDUCED_COST'),
+('offcut_value_percent', '50');
 
 -- Markup percentages are starter data. Change them under Pricing levels.
 INSERT INTO pricing_levels (code, name, markup_percent, active, sort_order) VALUES
@@ -528,3 +557,24 @@ SELECT v.name, v.sort_order FROM (
     UNION ALL SELECT 'Installation hardware included', 130
 ) AS v
 WHERE NOT EXISTS (SELECT 1 FROM qc_check_definitions d WHERE d.name = v.name);
+
+INSERT INTO stock_locations (code, name, description, active)
+SELECT v.code, v.name, v.description, 1 FROM (
+    SELECT 'MAIN' AS code, 'Main Store' AS name, 'Primary stores' AS description
+    UNION ALL SELECT 'WORKSHOP', 'Workshop', 'Fabrication and assembly'
+    UNION ALL SELECT 'VEHICLE', 'Installation Vehicle', 'Material loaded for site work'
+    UNION ALL SELECT 'INSTALLATION', 'Installation', 'Issued to an installation'
+    UNION ALL SELECT 'OFFCUTS', 'Offcut Rack', 'Usable offcuts'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM stock_locations l WHERE l.code = v.code);
+
+UPDATE products SET inventory_method = 'ROLL', track_stock = 1
+WHERE sku IN ('SF-PV-1300', 'SF-PV-1600', 'SF-LAM-1300') AND inventory_method = 'NONE';
+UPDATE products SET inventory_method = 'SHEET', track_stock = 1
+WHERE sku IN ('SF-CHR-2450', 'SF-ACM-2440', 'SF-PX-3MM') AND inventory_method = 'NONE';
+UPDATE products SET inventory_method = 'UNIT', track_stock = 1
+WHERE sku IN ('SF-LED-MOD', 'SF-PSU-12V') AND inventory_method = 'NONE';
+UPDATE products SET inventory_method = 'LENGTH', track_stock = 1
+WHERE sku = 'SF-ST-2525' AND inventory_method = 'NONE';
+UPDATE products SET inventory_method = 'NONE', track_stock = 0
+WHERE sku IN ('SF-LAB-DES', 'SF-LAB-INS');

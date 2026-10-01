@@ -55,6 +55,8 @@ final class SupplierController
             'supplier' => $supplier,
             'audit' => (new AuditRepository())->forEntity('supplier', $supplierId),
             'canManage' => can('suppliers.manage'),
+            'orders' => can('purchasing.view') ? (new \App\Repositories\PurchasingRepository())->ordersForSupplier($supplierId) : [],
+            'prices' => can('supplier_prices.view') ? (new \App\Repositories\InventoryRepository())->supplierProductsForSupplier($supplierId) : [],
         ]);
     }
 

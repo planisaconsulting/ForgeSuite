@@ -44,7 +44,7 @@ final class JobService
         private readonly SupplierRepository $suppliers = new SupplierRepository(),
         private readonly JobWorkflowService $workflow = new JobWorkflowService(),
         private readonly JobCostingService $costing = new JobCostingService(),
-        private readonly MaterialUsageService $materials = new MaterialUsageService(),
+        private readonly MaterialUsageService $materials = new MaterialUsageService(stock: new JobStockHook()),
         private readonly AttachmentService $files = new AttachmentService(),
         private readonly AuditService $audit = new AuditService()
     ) {

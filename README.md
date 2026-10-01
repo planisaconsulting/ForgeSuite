@@ -1,6 +1,6 @@
 # Sign-Forge Management System
 
-Staff application for **Sign-Forge Signs**. Phase 1 is the foundation: sign-in, company settings, customers, the catalogue, and the pricing engine. Phase 2 adds opportunities and quotations. Phase 3 runs the job after an accepted quote: artwork, production, materials actually used, labour, installation, and job costing. Stock movements and invoices are not built yet.
+Staff application for **Sign-Forge Signs**. Phase 1 is the foundation: sign-in, company settings, customers, the catalogue, and the pricing engine. Phase 2 adds opportunities and quotations. Phase 3 runs the job after an accepted quote: artwork, production, materials actually used, labour, installation, and job costing. Phase 4 is the stock ledger, rolls, sheets, offcuts, and purchasing. Invoices and payments are not built yet.
 
 The application name in the interface is Sign-Forge Management System. The company name (Sign-Forge Signs) comes from settings and can be changed without editing code.
 
@@ -83,11 +83,13 @@ The browser can show a live preview, but the preview is the server's answer. A p
 
 ## What is deliberately not in the database yet
 
-Quotes, jobs, stock movements, recipes, purchase orders, invoices, and payments. Product rows have `track_stock` and `minimum_stock_level` as flags only. There is no quantity-on-hand column. Future stock should be a ledger of movements (purchase, job usage, waste, adjustment), including individual vinyl rolls later.
+Invoices, deposits as receipts, payments, credit notes, customer statements, and recipes. Quotations, jobs, stock movements, and purchase orders are stored.
+
+There is no `products.stock_quantity` column. On hand is the sum of signed `stock_movements` rows. A product is tracked only when `inventory_method` is not `NONE`.
 
 A recipe such as a printed Chromadek sign will point at existing products (board, vinyl, laminate, labour). Product types are already material, component, service, labour, and consumable so that recipe does not need a new kind of catalogue row.
 
-`products.supplier_id` is the preferred supplier. A later `product_suppliers` table can add more without replacing that column.
+`products.supplier_id` is the preferred supplier. `supplier_products` holds extra supplier SKUs and buy prices without replacing that column.
 
 ## Database installation
 
@@ -160,6 +162,8 @@ php tests/quotes.php
 php tests/operations.php
 php tests/sales_flow.php
 php tests/jobs_flow.php
+php tests/inventory_math.php
+php tests/inventory_flow.php
 php tests/acceptance.php http://127.0.0.1:8741
 ```
 
@@ -224,7 +228,7 @@ The job page is tabbed: overview, artwork, tasks, production, materials, time an
 
 Quoted revenue is the accepted quotation's ex-VAT amount. It is not money received. Gross profit is quoted revenue minus actual cost. Gross margin is that profit divided by quoted revenue. Markup is not used on the costing tab.
 
-Actual cost is the sum of material usage, labour time, and other costs. Each material row stores the product cost at the moment it was recorded. Each time row stores the internal hourly cost. Later catalogue or wage changes do not rewrite those rows. Recording usage does not move stock. `MaterialUsageService` accepts a `StockConsumptionHook` so Phase 4 can attach stock movements without a second stock table.
+Actual cost is the sum of material usage, labour time, and other costs. Each material row stores the product cost at the moment it was recorded. Each time row stores the internal hourly cost. Later catalogue or wage changes do not rewrite those rows. When the product's inventory method is not `NONE`, recording usage also writes a stock movement in the same transaction. Untracked products leave the ledger alone.
 
 A production route template is copied onto the job. Editing the job's stages does not change the template. Tasks are not created automatically at conversion.
 
@@ -240,6 +244,32 @@ Then import `database/migrations/003_jobs_operations.sql` once. It widens job st
 
 A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `003` on a database created from the current `schema.sql`.
 
-## Phase 4, when you ask for it
+## Phase 4 inventory and purchasing
 
-Stock locations, stock movements, roll and sheet tracking, offcuts, purchase orders, goods receiving, supplier orders, reservations, allocations, low-stock alerts, and stock valuation. Connect those movements through `StockConsumptionHook` on material usage. Invoicing, deposits as receipts, payments, credit notes, and statements stay after that. Do not start them until Phase 3 is accepted.
+On hand for a product at a location is `SUM(stock_movements.quantity)`. Increases are positive. Decreases are negative. Offcut movements are kept out of the full-stock on-hand figure so a leftover piece is not counted as another full sheet. Available stock is on hand minus reservations that are still `RESERVED`. Consuming a reservation reduces on hand and clears the reservation, so the quantity is not subtracted twice.
+
+Movements are insert-only. A correction is a new movement.
+
+Inventory methods are `NONE`, `QUANTITY`, `ROLL`, `SHEET`, `LENGTH`, `AREA`, and `UNIT`. Rolls, sheets, and offcuts are `inventory_items` with codes such as `ROL-2026-0001`. Bulk quantity stock can be movements only. Roll consumption stores the physical length taken from the roll. The quotation's billable area stays on the quote and is not rewritten from that length.
+
+Offcuts are entered by hand after a cut. There is no automatic nesting. Search can allow rotation. Valuation of a new offcut follows settings: `FULL_COST`, `REDUCED_COST` (default, 50% of acquisition cost), or `ZERO_COST`. The acquisition cost stays on the item.
+
+Purchase orders use `NumberingService` (`SFPO-2026-0001`). Goods receipts use `SFGRN-2026-0001`. A receipt can be partial. Receiving rolls creates one inventory item per roll. Posted unit costs and PO totals are ignored. The server uses the supplier price, or the product cost when no supplier price is linked.
+
+Costing methods are `LAST_COST` and `WEIGHTED_AVERAGE_COST`. Weighted average is `(existing quantity × existing unit cost + receipt quantity × receipt cost) / total quantity`, and it is applied to quantity, unit, and area products. Rolls, sheets, and lengths keep the item's acquisition cost. `LAST_COST` updates `products.cost_price` on receipt so the next new quote sees it. Saved quote lines and posted job usage keep their snapshots.
+
+Waste rate is waste divided by production plus waste. It is left blank when both are zero.
+
+Negative stock is refused unless the user has `inventory.override` and records a reason. That writes `NEGATIVE_STOCK_OVERRIDE`.
+
+## Upgrading a Phase 3 database
+
+Back up the database first. Export it from the host panel and keep that file off the server. Confirm the export contains `users`, `quotes`, and `jobs` before you change anything.
+
+Then import `database/migrations/004_inventory_purchasing.sql` once. It adds the ledger, purchasing tables, permissions, settings, and the five starter locations. It does not drop earlier rows. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `004` on a database created from the current `schema.sql`.
+
+## Phase 5, when you ask for it
+
+Invoices, deposits recorded as receipts, payments, credit notes, customer statements, and debtors. Do not start them until Phase 4 is accepted.

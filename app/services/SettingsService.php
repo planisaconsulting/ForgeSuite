@@ -33,6 +33,15 @@ final class SettingsService
         'opportunity_prefix' => 'Opportunity prefix',
         'invoice_prefix' => 'Invoice prefix',
         'job_prefix' => 'Job prefix',
+        'po_prefix' => 'Purchase order prefix',
+        'grn_prefix' => 'Goods receipt prefix',
+        'roll_prefix' => 'Roll code prefix',
+        'sheet_prefix' => 'Sheet code prefix',
+        'offcut_prefix' => 'Offcut code prefix',
+        'batch_prefix' => 'Batch code prefix',
+        'default_costing_method' => 'Default costing method (LAST_COST or WEIGHTED_AVERAGE_COST)',
+        'offcut_valuation' => 'Offcut valuation (FULL_COST, REDUCED_COST, or ZERO_COST)',
+        'offcut_value_percent' => 'Offcut value percent when reduced',
         'default_quote_validity_days' => 'Default quote validity (days)',
         'default_quote_terms' => 'Default quotation terms',
         'default_labour_hourly_cost' => 'Default internal labour cost per hour',
@@ -91,7 +100,7 @@ final class SettingsService
         $new = [];
         foreach (array_keys(self::FIELDS) as $key) {
             $value = trim((string) ($input[$key] ?? ''));
-            if ($key === 'currency_code') {
+            if ($key === 'currency_code' || $key === 'default_costing_method' || $key === 'offcut_valuation') {
                 $value = strtoupper($value);
             }
             $old[$key] = self::get($key, '');
@@ -140,11 +149,23 @@ final class SettingsService
         if (!in_array($tz, timezone_identifiers_list(), true)) {
             $errors['timezone'] = 'Choose a timezone from the PHP list, such as Africa/Johannesburg.';
         }
-        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix'] as $prefix) {
+        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix'] as $prefix) {
             $value = trim((string) ($input[$prefix] ?? ''));
             if (!preg_match('/^[A-Za-z0-9]{1,12}$/', $value)) {
                 $errors[$prefix] = 'Use 1 to 12 letters or numbers.';
             }
+        }
+        $costing = strtoupper(trim((string) ($input['default_costing_method'] ?? 'LAST_COST')));
+        if (!in_array($costing, ['LAST_COST', 'WEIGHTED_AVERAGE_COST'], true)) {
+            $errors['default_costing_method'] = 'Use LAST_COST or WEIGHTED_AVERAGE_COST.';
+        }
+        $offcut = strtoupper(trim((string) ($input['offcut_valuation'] ?? 'REDUCED_COST')));
+        if (!in_array($offcut, ['FULL_COST', 'REDUCED_COST', 'ZERO_COST'], true)) {
+            $errors['offcut_valuation'] = 'Use FULL_COST, REDUCED_COST, or ZERO_COST.';
+        }
+        $offcutPercent = str_replace(',', '.', trim((string) ($input['offcut_value_percent'] ?? '50')));
+        if ($offcutPercent === '' || !is_numeric($offcutPercent) || (float) $offcutPercent < 0 || (float) $offcutPercent > 100) {
+            $errors['offcut_value_percent'] = 'Offcut value percent must be between 0 and 100.';
         }
         $email = trim((string) ($input['email'] ?? ''));
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {

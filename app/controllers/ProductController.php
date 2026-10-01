@@ -54,6 +54,22 @@ final class ProductController
         if ($product === null) {
             abort_not_found('That product was not found.');
         }
+        $stock = null;
+        if (can('inventory.view')) {
+            $inventory = new \App\Repositories\InventoryRepository();
+            $onHand = $inventory->onHand($productId);
+            $reserved = $inventory->reserved($productId);
+            $stock = [
+                'on_hand' => $onHand,
+                'reserved' => $reserved,
+                'available' => \App\Services\StockValuation::available($onHand, $reserved),
+                'balances' => $inventory->productBalances($productId),
+                'items' => $inventory->searchItems(['product_id' => $productId], 30),
+                'movements' => $inventory->movements(['product_id' => $productId], 15),
+                'suppliers' => can('supplier_prices.view') ? $inventory->supplierProductsForProduct($productId) : [],
+                'purchases' => can('purchasing.view') ? (new \App\Repositories\PurchasingRepository())->ordersForProduct($productId) : [],
+            ];
+        }
         View::render('products/show', [
             'title' => (string) $product['name'],
             'activeNav' => 'products',
@@ -61,6 +77,9 @@ final class ProductController
             'history' => (new ProductRepository())->priceHistory($productId),
             'audit' => (new AuditRepository())->forEntity('product', $productId),
             'canManage' => can('products.manage'),
+            'stock' => $stock,
+            'showCost' => can('inventory.view_cost') || can('costing.view'),
+            'supplierOptions' => can('supplier_prices.edit') ? (new \App\Repositories\SupplierRepository())->options() : [],
         ]);
     }
 

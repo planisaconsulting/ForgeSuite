@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Helpers\View;
 use App\Repositories\CustomerRepository;
+use App\Repositories\InventoryRepository;
 use App\Repositories\OpportunityRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\QuoteRepository;
@@ -44,6 +45,10 @@ final class SearchController
             'showQuotes' => can('quotes.view'),
             'showProducts' => can('products.view'),
             'showSuppliers' => can('suppliers.view'),
+            'inventory' => $term !== '' && can('inventory.view')
+                ? (new InventoryRepository())->searchItems(['q' => $term], 20)
+                : [],
+            'showInventory' => can('inventory.view'),
         ]);
     }
 }

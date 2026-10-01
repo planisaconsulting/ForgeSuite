@@ -35,6 +35,36 @@ final class NumberingService
         return $this->next('job', 'job_prefix', 'SFJ');
     }
 
+    public function purchaseOrder(): string
+    {
+        return $this->next('purchase_order', 'po_prefix', 'SFPO');
+    }
+
+    public function goodsReceipt(): string
+    {
+        return $this->next('goods_receipt', 'grn_prefix', 'SFGRN');
+    }
+
+    public function roll(): string
+    {
+        return $this->next('roll', 'roll_prefix', 'ROL');
+    }
+
+    public function sheet(): string
+    {
+        return $this->next('sheet', 'sheet_prefix', 'SHT');
+    }
+
+    public function offcut(): string
+    {
+        return $this->next('offcut', 'offcut_prefix', 'OFC');
+    }
+
+    public function batch(): string
+    {
+        return $this->next('batch', 'batch_prefix', 'BAT');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

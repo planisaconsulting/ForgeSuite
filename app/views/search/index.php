@@ -1,7 +1,7 @@
 <?php require base_path('app/views/partials/flashes.php'); ?>
 <div class="sf-page-head">
     <h1>Search</h1>
-    <p class="sf-muted mb-0">Customers, opportunities, quotations, products, and suppliers.</p>
+    <p class="sf-muted mb-0">Customers, opportunities, quotations, products, suppliers, and inventory codes.</p>
 </div>
 <form class="sf-filters" method="get" action="<?= e(url('/search')) ?>">
     <label class="visually-hidden" for="search-q">Search</label>
@@ -54,6 +54,18 @@
                 <ul class="sf-feed">
                     <?php foreach ($products as $row): ?>
                         <li><a href="<?= e(url('/products/' . $row['id'])) ?>"><?= e((string) $row['name']) ?></a><small><?= e((string) $row['sku']) ?></small></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showInventory)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Inventory</h2></div>
+            <?php if ($inventory === []): ?><div class="sf-empty"><p>No rolls, sheets, or offcuts.</p></div><?php else: ?>
+                <ul class="sf-feed">
+                    <?php foreach ($inventory as $row): ?>
+                        <li><a href="<?= e(url('/inventory/items/' . $row['id'])) ?>"><?= e((string) $row['inventory_code']) ?></a><small><?= e((string) $row['product_name']) ?></small></li>
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>

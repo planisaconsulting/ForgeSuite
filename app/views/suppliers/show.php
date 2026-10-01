@@ -26,6 +26,16 @@
         <div><dt>Notes</dt><dd><?= nl_text((string) ($supplier['notes'] ?? '')) ?: '—' ?></dd></div>
     </dl>
 </section>
+<?php if ($orders !== []): ?>
+<section class="sf-panel mt-3"><div class="sf-panel-head"><h2>Purchase orders</h2></div>
+    <ul class="sf-feed"><?php foreach ($orders as $order): ?><li><a href="<?= e(url('/purchasing/orders/' . $order['id'])) ?>"><?= e((string) $order['po_number']) ?></a><small><?= e((string) $order['status']) ?></small></li><?php endforeach; ?></ul>
+</section>
+<?php endif; ?>
+<?php if ($prices !== []): ?>
+<section class="sf-panel mt-3"><div class="sf-panel-head"><h2>Supplier prices</h2></div>
+    <ul class="sf-feed"><?php foreach ($prices as $price): ?><li><?= e((string) $price['product_name']) ?><small><?= e(money((string) $price['cost_price'])) ?></small></li><?php endforeach; ?></ul>
+</section>
+<?php endif; ?>
 <?php if ($audit !== []): ?>
     <section class="sf-panel mt-3">
         <div class="sf-panel-head"><h2>Record history</h2></div>

@@ -18,7 +18,9 @@ use App\Controllers\ActivityController;
 use App\Controllers\AttachmentController;
 use App\Controllers\AuthController;
 use App\Controllers\CalculatorController;
+use App\Controllers\InventoryController;
 use App\Controllers\JobController;
+use App\Controllers\PurchasingController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
@@ -473,12 +475,81 @@ $router->get('/attachments/{id}', static function (string $id): void {
     (new AttachmentController())->download($id);
 }, true, 'attachments.manage');
 
+$inventory = static function (): InventoryController {
+    return new InventoryController();
+};
+$purchasing = static function (): PurchasingController {
+    return new PurchasingController();
+};
+
+$router->get('/inventory', static function () use ($inventory): void { $inventory()->index(); }, true, 'inventory.view');
+$router->get('/inventory/movements', static function () use ($inventory): void { $inventory()->movements(); }, true, 'inventory.view');
+$router->get('/inventory/offcuts', static function () use ($inventory): void { $inventory()->offcuts(); }, true, 'inventory.view');
+$router->post('/inventory/offcuts', static function () use ($inventory): void { $inventory()->offcut(); }, true, true, 'inventory.view');
+$router->get('/inventory/counts', static function () use ($inventory): void { $inventory()->counts(); }, true, 'inventory.view');
+$router->post('/inventory/counts', static function () use ($inventory): void { $inventory()->startCount(); }, true, true, 'inventory.count');
+$router->get('/inventory/counts/{id}', static function (string $id) use ($inventory): void { $inventory()->count($id); }, true, 'inventory.view');
+$router->post('/inventory/counts/{id}', static function (string $id) use ($inventory): void { $inventory()->saveCount($id); }, true, true, 'inventory.count');
+$router->post('/inventory/counts/{id}/approve', static function (string $id) use ($inventory): void { $inventory()->approveCount($id); }, true, true, 'inventory.adjust');
+$router->get('/inventory/requirements', static function () use ($inventory): void { $inventory()->requirements(); }, true, 'inventory.view');
+$router->get('/inventory/code/{code}', static function (string $code) use ($inventory): void { $inventory()->code($code); }, true, 'inventory.view');
+$router->get('/inventory/items/{id}', static function (string $id) use ($inventory): void { $inventory()->item($id); }, true, 'inventory.view');
+$router->get('/inventory/items/{id}/label', static function (string $id) use ($inventory): void { $inventory()->label($id); }, true, 'inventory.view');
+$router->post('/inventory/opening', static function () use ($inventory): void { $inventory()->opening(); }, true, true, 'inventory.receive');
+$router->post('/inventory/adjustments', static function () use ($inventory): void { $inventory()->adjust(); }, true, true, 'inventory.adjust');
+$router->post('/inventory/transfers', static function () use ($inventory): void { $inventory()->transfer(); }, true, true, 'inventory.transfer');
+$router->post('/inventory/supplier-returns', static function () use ($inventory): void { $inventory()->supplierReturn(); }, true, true, 'inventory.adjust');
+$router->post('/inventory/locations', static function () use ($inventory): void { $inventory()->saveLocation(); }, true, true, 'inventory.view');
+
+$router->get('/purchasing', static function () use ($purchasing): void { $purchasing()->index(); }, true, 'purchasing.view');
+$router->get('/purchasing/orders', static function () use ($purchasing): void { $purchasing()->orders(); }, true, 'purchasing.view');
+$router->post('/purchasing/orders', static function () use ($purchasing): void { $purchasing()->create(); }, true, true, 'purchasing.create');
+$router->get('/purchasing/orders/{id}', static function (string $id) use ($purchasing): void { $purchasing()->show($id); }, true, 'purchasing.view');
+$router->post('/purchasing/orders/{id}/lines', static function (string $id) use ($purchasing): void { $purchasing()->addLine($id); }, true, true, 'purchasing.view');
+$router->post('/purchasing/orders/{id}/status', static function (string $id) use ($purchasing): void { $purchasing()->status($id); }, true, true, 'purchasing.view');
+$router->post('/purchasing/orders/{id}/receive', static function (string $id) use ($purchasing): void { $purchasing()->receive($id); }, true, true, 'purchasing.view');
+$router->get('/purchasing/orders/{id}/pdf', static function (string $id) use ($purchasing): void { $purchasing()->pdf($id); }, true, 'purchasing.view');
+$router->get('/purchasing/requests', static function () use ($purchasing): void { $purchasing()->requests(); }, true, 'purchasing.view');
+$router->post('/purchasing/requests', static function () use ($purchasing): void { $purchasing()->storeRequest(); }, true, true, 'inventory.view');
+$router->post('/purchasing/requests/consolidate', static function () use ($purchasing): void { $purchasing()->consolidate(); }, true, true, 'purchasing.create');
+$router->post('/purchasing/requests/{id}', static function (string $id) use ($purchasing): void { $purchasing()->decide($id); }, true, true, 'purchasing.approve');
+$router->post('/purchasing/supplier-prices', static function () use ($purchasing): void { $purchasing()->supplierPrice(); }, true, true, 'supplier_prices.edit');
+
+$router->post('/jobs/{id}/reserve', static function (string $id): void {
+    $jobId = route_id($id);
+    $result = (new \App\Services\StockMovementService())->reserve(array_merge($_POST, ['job_id' => $jobId]), (int) auth_user()['id']);
+    if ($result['errors'] !== []) {
+        flash('error', (string) ($result['errors']['_form'] ?? reset($result['errors'])));
+    } else {
+        flash('success', 'Stock reserved.');
+    }
+    redirect('/jobs/' . $jobId . '?tab=materials');
+}, true, true, 'jobs.view');
+
+$router->post('/jobs/{id}/reservations/{reservationId}/release', static function (string $id, string $reservationId): void {
+    $errors = (new \App\Services\StockMovementService())->release(route_id($reservationId), (int) auth_user()['id']);
+    if ($errors !== []) {
+        flash('error', (string) ($errors['_form'] ?? reset($errors)));
+    } else {
+        flash('success', 'Reservation released.');
+    }
+    redirect('/jobs/' . route_id($id) . '?tab=materials');
+}, true, true, 'jobs.view');
+
+$router->post('/jobs/{id}/stock-return', static function (string $id): void {
+    $jobId = route_id($id);
+    $result = (new \App\Services\StockMovementService())->jobReturn(array_merge($_POST, ['job_id' => $jobId]), (int) auth_user()['id']);
+    if ($result['errors'] !== []) {
+        flash('error', (string) ($result['errors']['_form'] ?? reset($result['errors'])));
+    } else {
+        flash('success', 'Material returned to stock.');
+    }
+    redirect('/jobs/' . $jobId . '?tab=materials');
+}, true, true, 'jobs.view');
+
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);
 };
-$router->get('/stock', static function () use ($soon): void {
-    $soon('stock');
-});
 $router->get('/invoices', static function () use ($soon): void {
     $soon('invoices');
 });

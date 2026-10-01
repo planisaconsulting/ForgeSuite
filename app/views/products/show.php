@@ -56,15 +56,41 @@
         </section>
     </div>
 </div>
-<div class="row g-3 mt-1">
-    <?php foreach ([
-        'Stock' => 'On-hand quantity will come from stock movements, not from this product row.',
-        'Purchase history' => 'Purchase orders are not part of this phase.',
-        'Usage history' => 'Job usage will be listed here later.',
-    ] as $label => $note): ?>
-        <div class="col-md-4"><section class="sf-future h-100"><p class="sf-kicker"><?= e($label) ?></p><p class="mb-0"><?= e($note) ?></p></section></div>
-    <?php endforeach; ?>
-</div>
+<?php if ($stock !== null): ?>
+<section class="sf-panel mt-3">
+    <div class="sf-panel-head"><h2>Stock</h2></div>
+    <div class="row g-3 p-3">
+        <div class="col-6 col-md-3"><p class="sf-kicker">On hand</p><p class="mb-0"><?= e($stock['on_hand']) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Reserved</p><p class="mb-0"><?= e($stock['reserved']) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Available</p><p class="mb-0"><?= e($stock['available']) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Minimum / reorder</p><p class="mb-0"><?= e((string) ($product['minimum_stock_level'] ?? '—')) ?> / <?= e((string) ($product['reorder_level'] ?? '—')) ?></p></div>
+        <?php if ($showCost): ?><div class="col-6 col-md-3"><p class="sf-kicker">Catalogue cost</p><p class="mb-0"><?= e(money((string) $product['cost_price'])) ?></p></div><div class="col-6 col-md-3"><p class="sf-kicker">Average cost</p><p class="mb-0"><?= $product['average_cost'] === null ? '—' : e(money((string) $product['average_cost'])) ?></p></div><?php endif; ?>
+    </div>
+    <?php if ($stock['items'] !== []): ?>
+        <ul class="sf-feed"><?php foreach ($stock['items'] as $item): ?><li><a href="<?= e(url('/inventory/items/' . $item['id'])) ?>"><?= e((string) $item['inventory_code']) ?></a><small><?= e((string) $item['status']) ?> · <?= e((string) $item['remaining_quantity']) ?></small></li><?php endforeach; ?></ul>
+    <?php endif; ?>
+</section>
+<?php if ($stock['suppliers'] !== [] || $supplierOptions !== []): ?>
+<section class="sf-panel mt-3"><div class="sf-panel-head"><h2>Supplier prices</h2></div>
+    <ul class="sf-feed"><?php foreach ($stock['suppliers'] as $link): ?><li><?= e((string) $link['supplier_name']) ?><small><?= e((string) ($link['supplier_sku'] ?? '')) ?> · <?= e(money((string) $link['cost_price'])) ?></small></li><?php endforeach; ?></ul>
+    <?php if ($supplierOptions !== []): ?>
+        <form class="p-3 row g-2" method="post" action="<?= e(url('/purchasing/supplier-prices')) ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="product_id" value="<?= e((string) $product['id']) ?>">
+            <div class="col-md-4"><select class="form-select" name="supplier_id" required><?php foreach ($supplierOptions as $supplier): ?><option value="<?= e((string) $supplier['id']) ?>"><?= e((string) $supplier['name']) ?></option><?php endforeach; ?></select></div>
+            <div class="col-md-3"><input class="form-control" name="cost_price" placeholder="Cost" required></div>
+            <div class="col-md-3"><input class="form-control" name="supplier_sku" placeholder="Supplier SKU"></div>
+            <div class="col-md-2"><button class="btn btn-sf w-100" type="submit">Save</button></div>
+        </form>
+    <?php endif; ?>
+</section>
+<?php endif; ?>
+<?php if ($stock['purchases'] !== []): ?>
+<section class="sf-panel mt-3"><div class="sf-panel-head"><h2>Purchase history</h2></div>
+    <ul class="sf-feed"><?php foreach ($stock['purchases'] as $po): ?><li><?= e((string) $po['po_number']) ?> · <?= e((string) $po['supplier_name']) ?><small><?= e((string) $po['ordered_quantity']) ?> ordered · <?= e((string) $po['received_quantity']) ?> received</small></li><?php endforeach; ?></ul>
+</section>
+<?php endif; ?>
+<?php endif; ?>
 <?php if ($audit !== []): ?>
     <section class="sf-panel mt-3">
         <div class="sf-panel-head"><h2>Record history</h2></div>

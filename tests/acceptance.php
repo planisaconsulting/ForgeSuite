@@ -139,7 +139,7 @@ try {
     }
 
     [$status, , $body] = $http('GET', '/');
-    if ($status === 200 && str_contains($body, 'Workshop desk') && str_contains($body, 'Invoices are not stored yet') && str_contains($body, 'Stock movements are not stored yet') && str_contains($body, 'not paid revenue')) {
+    if ($status === 200 && str_contains($body, 'Workshop desk') && str_contains($body, 'Invoices are not stored yet') && str_contains($body, 'tracked products are at or below minimum') && str_contains($body, 'not paid revenue')) {
         $ok('dashboard shows real counts and does not invent quote totals');
     } else {
         $fail('dashboard did not render as expected, status ' . $status);

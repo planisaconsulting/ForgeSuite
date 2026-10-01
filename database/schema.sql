@@ -1,5 +1,5 @@
 -- Sign-Forge Management System
--- Current schema (Phase 1 foundation plus Phase 2 sales)
+-- Current schema (Phases 1 to 4)
 --
 -- Import this into an EMPTY database, or run database/install.php --force
 -- on a development copy. It drops the Sign-Forge tables first.
@@ -23,11 +23,10 @@
 -- ---------------------------------------------------------------------------
 -- What this schema deliberately does not store
 -- ---------------------------------------------------------------------------
--- Phase 2 stores opportunities, quotations, revisions, a basic job hand-off,
--- and attachments. It does not store stock movements, recipes, purchase
--- orders, invoices, or payments.
--- products.track_stock is only a flag. There is no stock-on-hand column.
--- Future stock must be a ledger of movements, not a single quantity.
+-- Phases 2 and 3 store opportunities, quotations, jobs, artwork, production,
+-- and job costing. Phase 4 stores stock as a ledger of movements. There is
+-- no products.stock_quantity column. On hand is the sum of signed movements.
+-- This schema does not store invoices, payments, credit notes, or statements.
 -- A future recipe table can point at products.id. Product types already
 -- separate materials, components, services, labour, and consumables.
 --
@@ -58,6 +57,41 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS supplier_price_history;
+DROP TABLE IF EXISTS goods_receipt_items;
+DROP TABLE IF EXISTS goods_receipts;
+DROP TABLE IF EXISTS purchase_requests;
+DROP TABLE IF EXISTS stock_count_items;
+DROP TABLE IF EXISTS stock_counts;
+DROP TABLE IF EXISTS stock_transfers;
+DROP TABLE IF EXISTS stock_reservations;
+DROP TABLE IF EXISTS stock_movements;
+DROP TABLE IF EXISTS inventory_items;
+DROP TABLE IF EXISTS purchase_order_items;
+DROP TABLE IF EXISTS purchase_orders;
+DROP TABLE IF EXISTS supplier_products;
+DROP TABLE IF EXISTS stock_locations;
+DROP TABLE IF EXISTS installation_checklist_items;
+DROP TABLE IF EXISTS installation_checklist_template_items;
+DROP TABLE IF EXISTS installation_checklist_templates;
+DROP TABLE IF EXISTS job_quality_checks;
+DROP TABLE IF EXISTS qc_check_definitions;
+DROP TABLE IF EXISTS job_status_history;
+DROP TABLE IF EXISTS job_installations;
+DROP TABLE IF EXISTS job_other_costs;
+DROP TABLE IF EXISTS job_time_entries;
+DROP TABLE IF EXISTS job_material_usage;
+DROP TABLE IF EXISTS job_material_requirements;
+DROP TABLE IF EXISTS artwork_approvals;
+DROP TABLE IF EXISTS job_artworks;
+DROP TABLE IF EXISTS job_production_stages;
+DROP TABLE IF EXISTS job_tasks;
+DROP TABLE IF EXISTS job_items;
+DROP TABLE IF EXISTS production_route_template_stages;
+DROP TABLE IF EXISTS production_route_templates;
+DROP TABLE IF EXISTS production_stages;
+DROP TABLE IF EXISTS team_members;
+DROP TABLE IF EXISTS teams;
 DROP TABLE IF EXISTS attachments;
 DROP TABLE IF EXISTS jobs;
 DROP TABLE IF EXISTS quote_status_history;
@@ -302,7 +336,12 @@ CREATE TABLE products (
     allow_rotation TINYINT(1) NOT NULL DEFAULT 0,
     allow_nesting TINYINT(1) NOT NULL DEFAULT 0,
     track_stock TINYINT(1) NOT NULL DEFAULT 0,
+    inventory_method VARCHAR(20) NOT NULL DEFAULT 'NONE',
     minimum_stock_level DECIMAL(14,4) NULL,
+    reorder_level DECIMAL(14,4) NULL,
+    preferred_order_quantity DECIMAL(14,4) NULL,
+    costing_method VARCHAR(30) NOT NULL DEFAULT 'LAST_COST',
+    average_cost DECIMAL(14,4) NULL,
     supplier_code VARCHAR(80) NULL,
     active TINYINT(1) NOT NULL DEFAULT 1,
     notes TEXT NULL,
@@ -1107,3 +1146,351 @@ ALTER TABLE crm_activities
         FOREIGN KEY (opportunity_id) REFERENCES sales_opportunities (id)
         ON DELETE SET NULL ON UPDATE CASCADE;
 
+-- Phase 4 inventory and purchasing. Movements are the stock balance.
+-- purchase_order foreign keys are added after both sides exist.
+
+CREATE TABLE stock_locations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    description VARCHAR(255) NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_stock_locations_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE inventory_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    stock_location_id INT UNSIGNED NOT NULL,
+    inventory_type VARCHAR(20) NOT NULL,
+    inventory_code VARCHAR(40) NOT NULL,
+    supplier_id INT UNSIGNED NULL,
+    purchase_order_item_id INT UNSIGNED NULL,
+    source_inventory_item_id INT UNSIGNED NULL,
+    source_job_id INT UNSIGNED NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    received_date DATE NULL,
+    expiry_date DATE NULL,
+    original_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    remaining_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    unit VARCHAR(20) NOT NULL DEFAULT 'unit',
+    unit_cost DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    acquisition_cost DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    valuation_treatment VARCHAR(20) NULL,
+    width_mm DECIMAL(10,2) NULL,
+    length_mm DECIMAL(12,2) NULL,
+    height_mm DECIMAL(10,2) NULL,
+    batch_number VARCHAR(80) NULL,
+    supplier_reference VARCHAR(80) NULL,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_inventory_items_code (inventory_code),
+    KEY idx_inventory_items_product (product_id),
+    KEY idx_inventory_items_location (stock_location_id),
+    KEY idx_inventory_items_status (status),
+    KEY idx_inventory_items_type (inventory_type, status),
+    CONSTRAINT fk_inventory_items_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_inventory_items_location FOREIGN KEY (stock_location_id) REFERENCES stock_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_inventory_items_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_inventory_items_source_item FOREIGN KEY (source_inventory_item_id) REFERENCES inventory_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_inventory_items_source_job FOREIGN KEY (source_job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE stock_movements (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    stock_location_id INT UNSIGNED NOT NULL,
+    inventory_item_id INT UNSIGNED NULL,
+    movement_type VARCHAR(40) NOT NULL,
+    quantity DECIMAL(14,4) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    unit_cost_snapshot DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    total_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    reference_type VARCHAR(40) NULL,
+    reference_id INT UNSIGNED NULL,
+    job_id INT UNSIGNED NULL,
+    purchase_order_id INT UNSIGNED NULL,
+    job_material_usage_id INT UNSIGNED NULL,
+    reason VARCHAR(80) NULL,
+    notes VARCHAR(255) NULL,
+    movement_date DATE NOT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_stock_movements_product (product_id),
+    KEY idx_stock_movements_location (stock_location_id),
+    KEY idx_stock_movements_job (job_id),
+    KEY idx_stock_movements_date (movement_date),
+    KEY idx_stock_movements_item (inventory_item_id),
+    KEY idx_stock_movements_po (purchase_order_id),
+    KEY idx_stock_movements_usage (job_material_usage_id),
+    CONSTRAINT fk_stock_movements_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_movements_location FOREIGN KEY (stock_location_id) REFERENCES stock_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_movements_item FOREIGN KEY (inventory_item_id) REFERENCES inventory_items (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_movements_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_movements_usage FOREIGN KEY (job_material_usage_id) REFERENCES job_material_usage (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_movements_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE stock_reservations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_material_requirement_id INT UNSIGNED NULL,
+    product_id INT UNSIGNED NOT NULL,
+    inventory_item_id INT UNSIGNED NULL,
+    stock_location_id INT UNSIGNED NOT NULL,
+    quantity DECIMAL(14,4) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'RESERVED',
+    reserved_by INT UNSIGNED NULL,
+    reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    released_at TIMESTAMP NULL DEFAULT NULL,
+    notes VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    KEY idx_stock_reservations_job (job_id),
+    KEY idx_stock_reservations_product (product_id),
+    KEY idx_stock_reservations_status (status),
+    KEY idx_stock_reservations_item (inventory_item_id),
+    CONSTRAINT fk_stock_reservations_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_reservations_requirement FOREIGN KEY (job_material_requirement_id) REFERENCES job_material_requirements (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_reservations_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_reservations_item FOREIGN KEY (inventory_item_id) REFERENCES inventory_items (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_reservations_location FOREIGN KEY (stock_location_id) REFERENCES stock_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_reservations_user FOREIGN KEY (reserved_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE stock_transfers (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    inventory_item_id INT UNSIGNED NULL,
+    from_location_id INT UNSIGNED NOT NULL,
+    to_location_id INT UNSIGNED NOT NULL,
+    quantity DECIMAL(14,4) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    reason VARCHAR(80) NULL,
+    notes VARCHAR(255) NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_stock_transfers_product (product_id),
+    CONSTRAINT fk_stock_transfers_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_transfers_item FOREIGN KEY (inventory_item_id) REFERENCES inventory_items (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_transfers_from FOREIGN KEY (from_location_id) REFERENCES stock_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_transfers_to FOREIGN KEY (to_location_id) REFERENCES stock_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_transfers_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE stock_counts (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    reference_code VARCHAR(40) NOT NULL,
+    stock_location_id INT UNSIGNED NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+    notes VARCHAR(255) NULL,
+    created_by INT UNSIGNED NULL,
+    approved_by INT UNSIGNED NULL,
+    approved_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_stock_counts_code (reference_code),
+    KEY idx_stock_counts_status (status),
+    CONSTRAINT fk_stock_counts_location FOREIGN KEY (stock_location_id) REFERENCES stock_locations (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_counts_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_counts_approver FOREIGN KEY (approved_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE stock_count_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    stock_count_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    inventory_item_id INT UNSIGNED NULL,
+    stock_location_id INT UNSIGNED NOT NULL,
+    system_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    physical_quantity DECIMAL(14,4) NULL,
+    unit VARCHAR(20) NOT NULL,
+    unit_cost_snapshot DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    notes VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    KEY idx_stock_count_items_count (stock_count_id),
+    KEY idx_stock_count_items_product (product_id),
+    CONSTRAINT fk_stock_count_items_count FOREIGN KEY (stock_count_id) REFERENCES stock_counts (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_count_items_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_count_items_item FOREIGN KEY (inventory_item_id) REFERENCES inventory_items (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_stock_count_items_location FOREIGN KEY (stock_location_id) REFERENCES stock_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE supplier_products (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    supplier_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    supplier_sku VARCHAR(80) NULL,
+    supplier_description VARCHAR(180) NULL,
+    cost_price DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    minimum_order_quantity DECIMAL(14,4) NULL,
+    lead_time_days INT UNSIGNED NULL,
+    preferred_supplier TINYINT(1) NOT NULL DEFAULT 0,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    last_price_update TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_supplier_products (supplier_id, product_id),
+    KEY idx_supplier_products_product (product_id),
+    KEY idx_supplier_products_supplier (supplier_id),
+    CONSTRAINT fk_supplier_products_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_supplier_products_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE supplier_price_history (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    supplier_product_id INT UNSIGNED NOT NULL,
+    old_price DECIMAL(14,4) NOT NULL,
+    new_price DECIMAL(14,4) NOT NULL,
+    effective_date DATE NOT NULL,
+    changed_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_supplier_price_history_product (supplier_product_id, created_at),
+    CONSTRAINT fk_supplier_price_history_row FOREIGN KEY (supplier_product_id) REFERENCES supplier_products (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_supplier_price_history_user FOREIGN KEY (changed_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE purchase_orders (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    po_number VARCHAR(40) NOT NULL,
+    supplier_id INT UNSIGNED NOT NULL,
+    order_date DATE NOT NULL,
+    expected_date DATE NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+    subtotal DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    vat_rate DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    vat_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    total DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    supplier_reference VARCHAR(80) NULL,
+    notes TEXT NULL,
+    internal_notes TEXT NULL,
+    created_by INT UNSIGNED NULL,
+    approved_by INT UNSIGNED NULL,
+    approved_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_purchase_orders_number (po_number),
+    KEY idx_purchase_orders_supplier (supplier_id),
+    KEY idx_purchase_orders_status (status),
+    KEY idx_purchase_orders_date (order_date),
+    CONSTRAINT fk_purchase_orders_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_orders_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_orders_approver FOREIGN KEY (approved_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE purchase_order_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    purchase_order_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    supplier_product_id INT UNSIGNED NULL,
+    description VARCHAR(180) NOT NULL,
+    ordered_quantity DECIMAL(14,4) NOT NULL,
+    received_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    unit VARCHAR(20) NOT NULL,
+    unit_cost DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    line_total DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    expected_date DATE NULL,
+    job_id INT UNSIGNED NULL,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_po_items_po (purchase_order_id),
+    KEY idx_po_items_product (product_id),
+    KEY idx_po_items_job (job_id),
+    CONSTRAINT fk_po_items_po FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_po_items_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_po_items_supplier_product FOREIGN KEY (supplier_product_id) REFERENCES supplier_products (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_po_items_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE goods_receipts (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    grn_number VARCHAR(40) NOT NULL,
+    purchase_order_id INT UNSIGNED NOT NULL,
+    supplier_id INT UNSIGNED NOT NULL,
+    received_date DATE NOT NULL,
+    supplier_delivery_note VARCHAR(80) NULL,
+    supplier_invoice_number VARCHAR(80) NULL,
+    received_by INT UNSIGNED NULL,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_goods_receipts_number (grn_number),
+    KEY idx_goods_receipts_po (purchase_order_id),
+    CONSTRAINT fk_goods_receipts_po FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_goods_receipts_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_goods_receipts_user FOREIGN KEY (received_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE goods_receipt_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    goods_receipt_id INT UNSIGNED NOT NULL,
+    purchase_order_item_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    quantity_received DECIMAL(14,4) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    unit_cost DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    stock_location_id INT UNSIGNED NOT NULL,
+    width_mm DECIMAL(10,2) NULL,
+    length_mm DECIMAL(12,2) NULL,
+    track_each TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_grn_items_receipt (goods_receipt_id),
+    KEY idx_grn_items_po_item (purchase_order_item_id),
+    CONSTRAINT fk_grn_items_receipt FOREIGN KEY (goods_receipt_id) REFERENCES goods_receipts (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_grn_items_po_item FOREIGN KEY (purchase_order_item_id) REFERENCES purchase_order_items (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_grn_items_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_grn_items_location FOREIGN KEY (stock_location_id) REFERENCES stock_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE purchase_requests (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NULL,
+    requested_by INT UNSIGNED NULL,
+    product_id INT UNSIGNED NOT NULL,
+    quantity DECIMAL(14,4) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    required_by DATE NULL,
+    reason VARCHAR(255) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'REQUESTED',
+    approved_by INT UNSIGNED NULL,
+    purchase_order_id INT UNSIGNED NULL,
+    purchase_order_item_id INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_purchase_requests_status (status),
+    KEY idx_purchase_requests_job (job_id),
+    KEY idx_purchase_requests_product (product_id),
+    CONSTRAINT fk_purchase_requests_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_requests_user FOREIGN KEY (requested_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_requests_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_requests_approver FOREIGN KEY (approved_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_requests_po FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_requests_po_item FOREIGN KEY (purchase_order_item_id) REFERENCES purchase_order_items (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+ALTER TABLE stock_movements
+    ADD CONSTRAINT fk_stock_movements_po
+        FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders (id)
+        ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE inventory_items
+    ADD CONSTRAINT fk_inventory_items_po_item
+        FOREIGN KEY (purchase_order_item_id) REFERENCES purchase_order_items (id)
+        ON DELETE SET NULL ON UPDATE CASCADE;

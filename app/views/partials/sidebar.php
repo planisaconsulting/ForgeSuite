@@ -16,7 +16,7 @@ $groups = [
     ]],
     ['label' => 'Operations', 'links' => [
         ['jobs', 'Jobs', '/jobs', 'fa-clipboard-list', 'jobs.view'],
-        ['workshop', 'Workshop', '/jobs/workshop', 'fa-industry', 'production.view'],
+        ['workshop', 'Production', '/jobs/workshop', 'fa-industry', 'production.view'],
         ['board', 'Production board', '/jobs/board', 'fa-table-columns', 'production.view'],
         ['design', 'Design', '/jobs/design', 'fa-pen-ruler', 'jobs.view'],
         ['schedule', 'Schedule', '/jobs/schedule', 'fa-calendar-day', 'production.view'],
@@ -24,10 +24,19 @@ $groups = [
         ['setup', 'Production setup', '/jobs/setup', 'fa-sliders', 'settings.manage'],
     ]],
     ['label' => 'Inventory', 'links' => [
+        ['inventory', 'Inventory', '/inventory', 'fa-warehouse', 'inventory.view'],
         ['products', 'Products', '/products', 'fa-box', 'products.view'],
+        ['offcuts', 'Offcuts', '/inventory/offcuts', 'fa-scissors', 'inventory.view'],
+        ['movements', 'Stock movements', '/inventory/movements', 'fa-right-left', 'inventory.view'],
+        ['counts', 'Stock counts', '/inventory/counts', 'fa-clipboard-check', 'inventory.view'],
+        ['requirements', 'Material requirements', '/inventory/requirements', 'fa-list-check', 'inventory.view'],
         ['categories', 'Categories', '/categories', 'fa-tags', 'categories.manage'],
+    ]],
+    ['label' => 'Purchasing', 'links' => [
+        ['requests', 'Purchase requests', '/purchasing/requests', 'fa-cart-plus', 'purchasing.view'],
+        ['orders', 'Purchase orders', '/purchasing/orders', 'fa-file-contract', 'purchasing.view'],
+        ['purchasing', 'Goods receiving', '/purchasing', 'fa-dolly', 'purchasing.view'],
         ['suppliers', 'Suppliers', '/suppliers', 'fa-truck', 'suppliers.view'],
-        ['stock', 'Stock', null, 'fa-warehouse', null],
     ]],
     ['label' => 'Finance', 'links' => [
         ['invoices', 'Invoices', null, 'fa-receipt', null],

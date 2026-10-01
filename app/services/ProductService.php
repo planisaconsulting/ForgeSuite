@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Domain\CostingMethod;
+use App\Domain\InventoryMethod;
 use App\Domain\PricingMethod;
 use App\Domain\ProductType;
 use App\Domain\Units;
@@ -169,6 +171,20 @@ final class ProductService
         if ($stock !== '' && ($this->number($stock) === null || Decimal::cmp($this->number($stock) ?? '0', '0') < 0)) {
             $errors['minimum_stock_level'] = 'Minimum stock must be zero or greater.';
         }
+        foreach (['reorder_level', 'preferred_order_quantity'] as $level) {
+            $raw = trim((string) ($input[$level] ?? ''));
+            if ($raw !== '' && ($this->number($raw) === null || Decimal::cmp($this->number($raw) ?? '0', '0') < 0)) {
+                $errors[$level] = 'Enter zero or greater.';
+            }
+        }
+        $inventory = strtoupper(trim((string) ($input['inventory_method'] ?? 'NONE')));
+        if (InventoryMethod::tryFrom($inventory) === null) {
+            $errors['inventory_method'] = 'Choose how this product is tracked.';
+        }
+        $costing = strtoupper(trim((string) ($input['costing_method'] ?? 'LAST_COST')));
+        if (CostingMethod::tryFrom($costing) === null) {
+            $errors['costing_method'] = 'Choose a costing method.';
+        }
 
         return $errors;
     }
@@ -200,8 +216,12 @@ final class ProductService
             'default_waste_policy' => strtoupper(trim((string) ($input['default_waste_policy'] ?? 'ACTUAL'))),
             'allow_rotation' => posted_flag($input, 'allow_rotation', 0),
             'allow_nesting' => posted_flag($input, 'allow_nesting', 0),
-            'track_stock' => posted_flag($input, 'track_stock', 0),
+            'track_stock' => $this->tracks($input),
             'minimum_stock_level' => $this->optionalNumber($input['minimum_stock_level'] ?? null, 4),
+            'reorder_level' => $this->optionalNumber($input['reorder_level'] ?? null, 4),
+            'preferred_order_quantity' => $this->optionalNumber($input['preferred_order_quantity'] ?? null, 4),
+            'inventory_method' => strtoupper(trim((string) ($input['inventory_method'] ?? 'NONE'))),
+            'costing_method' => strtoupper(trim((string) ($input['costing_method'] ?? 'LAST_COST'))),
             'supplier_code' => blank_to_null($input['supplier_code'] ?? null),
             'active' => posted_flag($input, 'active', 1),
             'notes' => blank_to_null($input['notes'] ?? null),
@@ -220,6 +240,7 @@ final class ProductService
             'cost_price', 'cost_unit', 'roll_width_mm', 'sheet_width_mm', 'sheet_height_mm',
             'standard_waste_percent', 'waste_threshold_percent', 'default_waste_policy',
             'allow_rotation', 'allow_nesting', 'track_stock', 'minimum_stock_level',
+            'reorder_level', 'preferred_order_quantity', 'inventory_method', 'costing_method',
             'supplier_code', 'active',
         ];
         $out = [];
@@ -248,5 +269,18 @@ final class ProductService
         $number = $this->number($value);
 
         return $number === null ? null : Decimal::round($number, $scale);
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function tracks(array $input): int
+    {
+        $method = strtoupper(trim((string) ($input['inventory_method'] ?? 'NONE')));
+        if ($method !== '' && $method !== 'NONE') {
+            return 1;
+        }
+
+        return posted_flag($input, 'track_stock', 0);
     }
 }
