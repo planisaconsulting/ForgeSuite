@@ -1,0 +1,161 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use App\Repositories\InventoryRepository;
+use App\Repositories\ForecastRepository;
+use App\Services\ApiClientService;
+use App\Services\LeadService;
+use App\Services\RateLimiter;
+
+/**
+ * Versioned API. A client needs a matching scope. Errors do not include a stack trace.
+ */
+final class ApiV1Controller
+{
+    public function customer(string $id): void
+    {
+        $this->read('customers.read', 'customer', (int) $id, static function (int $id): ?array {
+            $row = (new ForecastRepository())->customer($id);
+
+            return $row === null ? null : [
+                'id' => (int) $row['id'],
+                'name' => trim((string) ($row['company_name'] ?: ($row['first_name'] . ' ' . $row['last_name']))),
+            ];
+        });
+    }
+
+    public function quote(string $id): void
+    {
+        $this->read('quotes.read', 'quote', (int) $id, static fn (int $id): ?array => (new ForecastRepository())->quoteStatus($id));
+    }
+
+    public function job(string $id): void
+    {
+        $this->read('jobs.read', 'job', (int) $id, static fn (int $id): ?array => (new ForecastRepository())->jobStatus($id));
+    }
+
+    public function invoice(string $id): void
+    {
+        $this->read('invoices.read', 'invoice', (int) $id, static function (int $id): ?array {
+            $status = (new ForecastRepository())->invoiceStatus($id);
+
+            return $status === null ? null : ['id' => $id, 'status' => $status];
+        });
+    }
+
+    public function stock(string $id): void
+    {
+        $this->read('inventory.read', 'product', (int) $id, static function (int $id): ?array {
+            $product = (new ForecastRepository())->product($id);
+            if ($product === null) {
+                return null;
+            }
+
+            return [
+                'id' => $id,
+                'name' => (string) $product['name'],
+                'on_hand' => (new InventoryRepository())->onHand($id),
+            ];
+        });
+    }
+
+    public function createLead(): void
+    {
+        $auth = $this->gate('leads.write');
+        if ($auth === null) {
+            return;
+        }
+        $body = json_decode((string) file_get_contents('php://input'), true);
+        if (!is_array($body)) {
+            $this->finish($auth, 422, false, null, ['body' => 'Send a JSON object.'], 'lead', null);
+
+            return;
+        }
+        $created = (new LeadService())->create($body, (int) ($auth['client']['created_by'] ?? 0));
+        if ($created['id'] === null) {
+            $this->finish($auth, 422, false, null, $created['errors'], 'lead', null);
+
+            return;
+        }
+        $this->finish($auth, 201, true, ['id' => $created['id']], [], 'lead', $created['id']);
+    }
+
+    /**
+     * @param callable(int): ?array<string, mixed> $loader
+     */
+    private function read(string $scope, string $entity, int $id, callable $loader): void
+    {
+        $auth = $this->gate($scope);
+        if ($auth === null) {
+            return;
+        }
+        $row = $id > 0 ? $loader($id) : null;
+        if ($row === null) {
+            $this->finish($auth, 404, false, null, ['record' => 'That record was not found.'], $entity, $id);
+
+            return;
+        }
+        $this->finish($auth, 200, true, $row, [], $entity, $id);
+    }
+
+    /**
+     * @return array{client: array<string, mixed>, scopes: list<string>}|null
+     */
+    private function gate(string $scope): ?array
+    {
+        $header = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+        $auth = (new ApiClientService())->authenticate($header);
+        if ($auth === null) {
+            $this->send(401, false, null, ['auth' => 'The API credential was not accepted.']);
+
+            return null;
+        }
+        $limit = (int) \App\Services\SettingsService::get('api_rate_per_minute', '60');
+        if (!(new RateLimiter())->allow('api:' . $auth['client']['id'], max(1, $limit), 60)) {
+            $this->finish($auth, 429, false, null, ['rate' => 'Too many requests.'], null, null);
+
+            return null;
+        }
+        if (!(new ApiClientService())->allows($auth['scopes'], $scope)) {
+            $this->finish($auth, 403, false, null, ['scope' => 'This client cannot call that resource.'], null, null);
+
+            return null;
+        }
+
+        return $auth;
+    }
+
+    /**
+     * @param array{client: array<string, mixed>, scopes: list<string>} $auth
+     * @param array<string, string> $errors
+     */
+    private function finish(array $auth, int $status, bool $success, ?array $data, array $errors, ?string $entity, ?int $entityId): void
+    {
+        (new ForecastRepository())->logApi([
+            'api_client_id' => (int) $auth['client']['id'],
+            'endpoint' => (string) ($_SERVER['REQUEST_URI'] ?? ''),
+            'action' => (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'),
+            'status_code' => $status,
+            'entity_type' => $entity,
+            'entity_id' => $entityId,
+        ]);
+        $this->send($status, $success, $data, $errors);
+    }
+
+    /**
+     * @param array<string, mixed>|null $data
+     * @param array<string, string> $errors
+     */
+    private function send(int $status, bool $success, ?array $data, array $errors): void
+    {
+        json_response([
+            'success' => $success,
+            'data' => $data,
+            'errors' => $errors,
+            'meta' => ['version' => 'v1'],
+        ], $status);
+    }
+}

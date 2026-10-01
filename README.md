@@ -370,6 +370,38 @@ Repeat customer rate is customers with more than one completed job, divided by c
 
 `php tests/phase10.php` covers capture, phone matching, conversion, email success and failure, WhatsApp preparation, follow-up dedupe, attribution, unsubscribe, lead visibility, webhooks, templates, and the public rate limit.
 
+## Phase 12 planning, forecasting, and integrations
+
+Phase 12 reads the records already in the system. It does not create a second job, stock, invoice, or purchasing ledger. A forecast is labelled with its source, the calculation, the assumptions, and the time it was generated. Actual, committed, forecast, target, and budget figures are not added into one revenue number.
+
+Weighted pipeline is the opportunity estimated value times the probability entered on that opportunity, divided by 100. A blank probability contributes nothing to the weighted total. The raw value is still shown. Historical quote conversion is context only. Quote age does not assign a probability.
+
+Backlog is accepted commercial work that is not complete and not cancelled. For each open job, commercial value is `quoted_revenue_snapshot`. Completed scope is that value times completed item quantity divided by total item quantity. An item counts only when its production status is COMPLETE. Remaining backlog is commercial value minus completed scope. A job with no items stays fully in the backlog. Payments and invoiced amounts are shown beside it and are not subtracted. Periods are this week, next week, this month, next month, later, and unscheduled, from the job target date.
+
+The potential invoice schedule uses unpaid quote deposits (basis DEPOSIT) and the remaining commercial value dated by the job target date (basis JOB COMPLETION). It does not create invoices. Issued invoice balances are contractual receivables, dated by the invoice due date. The historical cash scenario moves the displayed date by the customer’s median days to pay. It does not change the amount. Unissued work is forecast future cash, not a receivable. Approved purchase orders are a purchasing cash requirement, not an accounting payable. The cash screen says OPERATIONAL FORECAST — NOT BANK RECONCILIATION. There is no bank feed.
+
+Material net requirement is time-phased. Available stock is on hand minus reserved. Incoming stock counts only when it arrives on or before that demand date. A later purchase order does not cover an earlier shortage. Safety stock is the product minimum level and is applied once at the end. Forecast demand is excluded. Net requirement = dated shortfalls + safety gap. Example: gross 120, available 50, on-time incoming 40, safety 10, net 40.
+
+Order quantity is raised to the supplier minimum, then rounded up to the pack size. 37 with a minimum of 50 becomes 50. 23 with a pack of 10 becomes 30. Order-by date is the required date minus supplier lead time minus `planning_order_buffer_days` (default 2). Weekends are skipped when `planning_skip_weekends` is 1. A recommendation does not send a purchase order. A person reviews it and can create a purchase request.
+
+Committed capacity is scheduled hours plus unscheduled committed hours. Remaining committed capacity is available minus that total, and not below zero. Forecast pipeline hours are shown separately and are not subtracted. A shortfall is labelled PROJECTED BOTTLENECK.
+
+Operational budget variance is actual minus target. R500,000 targeted and R460,000 actual is −R40,000 and −8%. A scenario stores a copy of the calculation. A 10% material increase changes the scenario cost only. The product cost and the issued quote stay as they are.
+
+Snapshots in `forecast_snapshots` are appended. An older forecast is not overwritten. Accuracy is actual minus the stored forecast.
+
+CSV import previews customers before it writes. An email or phone match is an error. The same company name is a warning and is not merged. The versioned API is `/api/v1/`. A client sends `Authorization: Bearer {identifier}.{secret}`. Only the SHA-256 of the secret is stored. A missing credential is 401. A missing scope is 403. Responses are `success`, `data`, `errors`, and `meta`. Outbound webhooks are signed with HMAC-SHA256 of `timestamp.body` in `X-SignForge-Signature`, with `X-SignForge-Event` and `X-SignForge-Timestamp`. Retries are 1 minute, 5 minutes, 30 minutes, and 2 hours, then the delivery fails. A failed webhook or a failed accounting sync does not roll back the internal invoice. `accounting_provider` empty means no sync. The value `unavailable` records SYNC FAILED for tests. There is no live Sage, Xero, or QuickBooks connection.
+
+`business_locations` and optional location columns prepare a workshop, warehouse, or branch. Historical rows are not forced onto a location. This is not multi-company accounting.
+
+`php tests/phase12.php` covers the weighted pipeline, backlog, MRP, a late purchase order, MOQ, pack size, capacity, contractual cash, budget variance, a scenario that leaves live costs alone, import preview, API 401/403/200, webhook retry, accounting failure, and a salesperson denied the cash screen.
+
+## Upgrading a Phase 11 database
+
+Back up the database first. Then import `database/migrations/012_planning_forecasting_integrations.sql` once. It adds planning, forecast, budget, API, webhook, and integration tables, and optional location columns. It does not delete jobs, stock, or invoices. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `012` on a database created from the current `schema.sql`.
+
 ## Phase 11 workshop execution and documents
 
 Phase 11 does not create a second job, stock, or installation system. A scan resolves a token or a printed code back to the job, production item, roll, sheet, offcut, package, or dispatch that already exists.

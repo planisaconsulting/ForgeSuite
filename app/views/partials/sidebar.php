@@ -6,6 +6,18 @@ $groups = [
         ['dashboard', 'Dashboard', '/', 'fa-gauge-high', 'dashboard.view'],
         ['my-work', 'My work', '/work', 'fa-list-check', 'schedule.view'],
     ]],
+    ['label' => 'Planning', 'links' => [
+        ['planning', 'Business overview', '/planning', 'fa-chart-pie', 'planning.view'],
+        ['planning-sales', 'Sales forecast', '/planning/sales', 'fa-chart-line', 'forecast.sales'],
+        ['planning-backlog', 'Backlog', '/planning/backlog', 'fa-layer-group', 'planning.view'],
+        ['planning-cash', 'Cash visibility', '/planning/cash', 'fa-coins', 'forecast.cash'],
+        ['planning-materials', 'Material planning', '/planning/materials', 'fa-boxes-stacked', 'forecast.materials'],
+        ['planning-mrp', 'MRP', '/planning/mrp', 'fa-diagram-project', 'mrp.view'],
+        ['planning-purchasing', 'Purchase forecast', '/planning/purchasing', 'fa-cart-shopping', 'purchase_recommendations.review'],
+        ['planning-capacity', 'Capacity forecast', '/planning/capacity', 'fa-gauge', 'forecast.capacity'],
+        ['planning-calendar', 'Planning calendar', '/planning/calendar', 'fa-calendar', 'planning.view'],
+        ['planning-scenarios', 'Scenarios', '/planning/scenarios', 'fa-sliders', 'scenarios.view'],
+    ]],
     ['label' => 'Workshop', 'links' => [
         ['workshop-floor', 'Workshop floor', '/workshop', 'fa-industry', 'workshop.view'],
         ['workshop-scan', 'Scan', '/workshop/scan', 'fa-qrcode', 'workshop.scan'],
@@ -74,6 +86,12 @@ $groups = [
         ['orders', 'Purchase orders', '/purchasing/orders', 'fa-file-contract', 'purchasing.view'],
         ['purchasing', 'Goods receiving', '/purchasing', 'fa-dolly', 'purchasing.view'],
         ['suppliers', 'Suppliers', '/suppliers', 'fa-truck', 'suppliers.view'],
+        ['planning-purchasing', 'Recommendations', '/planning/purchasing', 'fa-lightbulb', 'purchase_recommendations.review'],
+    ]],
+    ['label' => 'Budgets', 'links' => [
+        ['budgets', 'Operational budget', '/budgets', 'fa-scale-balanced', 'budgets.view'],
+        ['planning-targets', 'Targets', '/budgets/targets', 'fa-bullseye', 'targets.view'],
+        ['budget-actual', 'Budget vs actual', '/budgets', 'fa-chart-column', 'budgets.view'],
     ]],
     ['label' => 'Finance', 'links' => [
         ['invoices', 'Invoices', '/invoices', 'fa-receipt', 'invoices.view'],
@@ -125,6 +143,15 @@ $groups = [
         ['report-throughput', 'Production throughput', '/reports/throughput', 'fa-gauge', 'reports.operations'],
         ['report-qc', 'QC / rework', '/reports/qc-rework', 'fa-clipboard-check', 'reports.operations'],
         ['report-trace', 'Traceability', '/reports/traceability', 'fa-route', 'tracking.traceability.view'],
+        ['report-accuracy', 'Forecast accuracy', '/reports/forecast-accuracy', 'fa-chart-line', 'planning.view'],
+        ['report-coverage', 'Stock coverage', '/reports/stock-coverage', 'fa-warehouse', 'forecast.materials'],
+        ['report-quality', 'Data quality', '/reports/data-quality', 'fa-clipboard-check', 'data_quality.view'],
+    ]],
+    ['label' => 'Integrations', 'links' => [
+        ['api-clients', 'API clients', '/admin/api-clients', 'fa-key', 'api.manage'],
+        ['webhooks', 'Webhooks', '/admin/webhooks', 'fa-tower-broadcast', 'webhooks.manage'],
+        ['integrations', 'Accounting', '/admin/integrations', 'fa-plug', 'integrations.view'],
+        ['integration-logs', 'Integration logs', '/admin/integration-logs', 'fa-list', 'integration_logs.view'],
     ]],
     ['label' => 'Administration', 'links' => [
         ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],
@@ -143,6 +170,8 @@ $groups = [
         ['doc-templates', 'Document templates', '/admin/document-templates', 'fa-file-code', 'documents.templates.manage'],
         ['label-templates', 'Label templates', '/admin/label-templates', 'fa-tag', 'documents.templates.manage'],
         ['settings', 'Settings', '/settings', 'fa-gear', 'settings.manage'],
+        ['imports', 'Imports', '/admin/imports', 'fa-file-import', 'imports.perform'],
+        ['exports-planning', 'Planning export', '/planning/export.csv', 'fa-file-export', 'exports.perform'],
     ]],
 ];
 ?>

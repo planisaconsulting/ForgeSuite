@@ -37,6 +37,14 @@ final class AutomationService
         'INSTALLATION_SIGNED_OFF',
         'SNAG_CREATED',
         'JOB_FULLY_COMPLETED',
+        'PROJECTED_MATERIAL_SHORTAGE',
+        'ORDER_BY_APPROACHING',
+        'PROJECTED_CAPACITY_SHORTFALL',
+        'FORECAST_CASH_PRESSURE',
+        'BUDGET_VARIANCE',
+        'TARGET_AT_RISK',
+        'STALE_FORECAST',
+        'INTEGRATION_FAILURE',
     ];
 
     /** @var list<string> */

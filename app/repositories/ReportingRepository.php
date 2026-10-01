@@ -709,6 +709,13 @@ final class ReportingRepository extends Repository
              FROM products p
              LEFT JOIN job_material_usage u ON u.product_id = p.id
              WHERE p.inventory_method <> 'NONE' AND p.active = 1
+               AND NOT EXISTS (
+                    SELECT 1 FROM job_material_requirements r
+                    INNER JOIN jobs j ON j.id = r.job_id
+                    WHERE r.product_id = p.id
+                      AND j.status NOT IN ('COMPLETED', 'CANCELLED')
+                      AND r.final_required_quantity > 0
+               )
              GROUP BY p.id, p.name, p.cost_price, p.created_at
              HAVING last_movement < ?
              ORDER BY last_movement

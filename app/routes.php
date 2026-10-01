@@ -48,6 +48,8 @@ use App\Controllers\SupplierController;
 use App\Controllers\UserController;
 use App\Controllers\PortalAdminController;
 use App\Controllers\PlanningController;
+use App\Controllers\BusinessPlanningController;
+use App\Controllers\ApiV1Controller;
 use App\Controllers\PortalController;
 use App\Controllers\RecipeController;
 use App\Controllers\SiteSurveyController;
@@ -1329,6 +1331,118 @@ $router->post('/admin/document-templates', static function (): void {
 $router->get('/admin/label-templates', static function (): void {
     (new WorkshopController())->templates();
 }, true, 'documents.templates.manage');
+
+$router->get('/planning', static function (): void {
+    (new BusinessPlanningController())->overview();
+}, true, 'planning.view');
+$router->get('/planning/sales', static function (): void {
+    (new BusinessPlanningController())->sales();
+}, true, 'forecast.sales');
+$router->get('/planning/backlog', static function (): void {
+    (new BusinessPlanningController())->backlog();
+}, true, 'planning.view');
+$router->get('/planning/cash', static function (): void {
+    (new BusinessPlanningController())->cash();
+}, true, 'forecast.cash');
+$router->get('/planning/materials', static function (): void {
+    (new BusinessPlanningController())->materials();
+}, true, 'forecast.materials');
+$router->get('/planning/mrp', static function (): void {
+    (new BusinessPlanningController())->mrp();
+}, true, 'mrp.view');
+$router->post('/planning/mrp/refresh', static function (): void {
+    (new BusinessPlanningController())->refreshMrp();
+}, true, true, 'mrp.manage');
+$router->get('/planning/purchasing', static function (): void {
+    (new BusinessPlanningController())->purchasing();
+}, true, 'purchase_recommendations.review');
+$router->post('/planning/recommendations/{id}', static function (string $id): void {
+    (new BusinessPlanningController())->reviewRecommendation($id);
+}, true, true, 'purchase_recommendations.review');
+$router->post('/planning/recommendations/{id}/request', static function (string $id): void {
+    (new BusinessPlanningController())->convertRecommendation($id);
+}, true, true, 'purchase_recommendations.review');
+$router->get('/planning/capacity', static function (): void {
+    (new BusinessPlanningController())->capacity();
+}, true, 'forecast.capacity');
+$router->get('/planning/calendar', static function (): void {
+    (new BusinessPlanningController())->calendar();
+}, true, 'planning.view');
+$router->get('/planning/scenarios', static function (): void {
+    (new BusinessPlanningController())->scenarios();
+}, true, 'scenarios.view');
+$router->post('/planning/scenarios', static function (): void {
+    (new BusinessPlanningController())->runScenario();
+}, true, true, 'scenarios.manage');
+$router->get('/planning/export.csv', static function (): void {
+    (new BusinessPlanningController())->exportCsv();
+}, true, 'exports.perform');
+$router->get('/budgets', static function (): void {
+    (new BusinessPlanningController())->budgets();
+}, true, 'budgets.view');
+$router->post('/budgets', static function (): void {
+    (new BusinessPlanningController())->saveBudget();
+}, true, true, 'budgets.manage');
+$router->get('/budgets/targets', static function (): void {
+    (new BusinessPlanningController())->targets();
+}, true, 'targets.view');
+$router->post('/budgets/targets', static function (): void {
+    (new BusinessPlanningController())->saveTarget();
+}, true, true, 'targets.manage');
+$router->get('/budgets/{id}/actual', static function (string $id): void {
+    (new BusinessPlanningController())->budgetActual($id);
+}, true, 'budgets.view');
+$router->get('/reports/forecast-accuracy', static function (): void {
+    (new BusinessPlanningController())->accuracy();
+}, true, 'planning.view');
+$router->get('/reports/stock-coverage', static function (): void {
+    (new BusinessPlanningController())->coverage();
+}, true, 'forecast.materials');
+$router->get('/reports/data-quality', static function (): void {
+    (new BusinessPlanningController())->quality();
+}, true, 'data_quality.view');
+$router->get('/admin/imports', static function (): void {
+    (new BusinessPlanningController())->importForm();
+}, true, 'imports.perform');
+$router->post('/admin/imports/preview', static function (): void {
+    (new BusinessPlanningController())->importPreview();
+}, true, true, 'imports.perform');
+$router->post('/admin/imports/commit', static function (): void {
+    (new BusinessPlanningController())->importCommit();
+}, true, true, 'imports.perform');
+$router->get('/admin/api-clients', static function (): void {
+    (new BusinessPlanningController())->apiClients();
+}, true, 'api.manage');
+$router->post('/admin/api-clients', static function (): void {
+    (new BusinessPlanningController())->saveApiClient();
+}, true, true, 'api.manage');
+$router->get('/admin/webhooks', static function (): void {
+    (new BusinessPlanningController())->webhooks();
+}, true, 'webhooks.manage');
+$router->post('/admin/webhooks', static function (): void {
+    (new BusinessPlanningController())->saveWebhook();
+}, true, true, 'webhooks.manage');
+$router->get('/admin/integration-logs', static function (): void {
+    (new BusinessPlanningController())->integrationLogs();
+}, true, 'integration_logs.view');
+$router->get('/api/v1/customers/{id}', static function (string $id): void {
+    (new ApiV1Controller())->customer($id);
+}, false);
+$router->get('/api/v1/quotes/{id}', static function (string $id): void {
+    (new ApiV1Controller())->quote($id);
+}, false);
+$router->get('/api/v1/jobs/{id}', static function (string $id): void {
+    (new ApiV1Controller())->job($id);
+}, false);
+$router->get('/api/v1/invoices/{id}', static function (string $id): void {
+    (new ApiV1Controller())->invoice($id);
+}, false);
+$router->get('/api/v1/stock/{id}', static function (string $id): void {
+    (new ApiV1Controller())->stock($id);
+}, false);
+$router->post('/api/v1/leads', static function (): void {
+    (new ApiV1Controller())->createLead();
+}, false, false);
 
 $router->get('/admin/integrations', static function (): void {
     (new IntegrationController())->index();

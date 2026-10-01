@@ -1,5 +1,5 @@
 -- Sign-Forge Management System
--- Current schema (Phases 1 to 5)
+-- Current schema (Phases 1 to 12)
 --
 -- Import this into an EMPTY database, or run database/install.php --force
 -- on a development copy. It drops the Sign-Forge tables first.
@@ -59,6 +59,23 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS purchase_recommendation_sources;
+DROP TABLE IF EXISTS purchase_recommendations;
+DROP TABLE IF EXISTS webhook_deliveries;
+DROP TABLE IF EXISTS webhook_subscriptions;
+DROP TABLE IF EXISTS api_request_log;
+DROP TABLE IF EXISTS api_clients;
+DROP TABLE IF EXISTS integration_sync_log;
+DROP TABLE IF EXISTS integration_mappings;
+DROP TABLE IF EXISTS budget_lines;
+DROP TABLE IF EXISTS budgets;
+DROP TABLE IF EXISTS planning_targets;
+DROP TABLE IF EXISTS scenarios;
+DROP TABLE IF EXISTS data_imports;
+DROP TABLE IF EXISTS forecast_snapshots;
+DROP TABLE IF EXISTS operational_commitments;
+DROP TABLE IF EXISTS operational_cash_positions;
+DROP TABLE IF EXISTS business_locations;
 DROP TABLE IF EXISTS supplier_price_history;
 DROP TABLE IF EXISTS goods_receipt_items;
 DROP TABLE IF EXISTS goods_receipts;
@@ -175,6 +192,7 @@ CREATE TABLE users (
     email VARCHAR(190) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role_id INT UNSIGNED NOT NULL,
+    business_location_id INT UNSIGNED NULL,
     active TINYINT(1) NOT NULL DEFAULT 1,
     must_change_password TINYINT(1) NOT NULL DEFAULT 0,
     hourly_cost DECIMAL(14,2) NULL,
@@ -184,6 +202,7 @@ CREATE TABLE users (
     PRIMARY KEY (id),
     UNIQUE KEY uq_users_email (email),
     KEY idx_users_role (role_id),
+    KEY idx_users_location (business_location_id),
     KEY idx_users_active (active),
     CONSTRAINT fk_users_role
         FOREIGN KEY (role_id) REFERENCES roles (id)
@@ -295,6 +314,7 @@ CREATE TABLE suppliers (
     phone VARCHAR(40) NULL,
     website VARCHAR(190) NULL,
     account_number VARCHAR(80) NULL,
+    payment_terms VARCHAR(20) NULL,
     address TEXT NULL,
     notes TEXT NULL,
     active TINYINT(1) NOT NULL DEFAULT 1,
@@ -467,6 +487,7 @@ CREATE TABLE sales_opportunities (
     lost_reason VARCHAR(40) NULL,
     lost_notes TEXT NULL,
     assigned_to INT UNSIGNED NULL,
+    business_location_id INT UNSIGNED NULL,
     expected_close_date DATE NULL,
     next_follow_up_date DATE NULL,
     notes TEXT NULL,
@@ -479,6 +500,8 @@ CREATE TABLE sales_opportunities (
     KEY idx_opportunities_status (status),
     KEY idx_opportunities_assigned (assigned_to),
     KEY idx_opportunities_follow (next_follow_up_date),
+    KEY idx_opportunities_close (expected_close_date),
+    KEY idx_opportunities_location (business_location_id),
     CONSTRAINT fk_opportunities_customer
         FOREIGN KEY (customer_id) REFERENCES customers (id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -503,6 +526,7 @@ CREATE TABLE quotes (
     contact_id INT UNSIGNED NULL,
     quote_date DATE NOT NULL,
     expiry_date DATE NULL,
+    expected_decision_date DATE NULL,
     next_follow_up_date DATE NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     pricing_level_id INT UNSIGNED NULL,
@@ -542,6 +566,7 @@ CREATE TABLE quotes (
     KEY idx_quotes_status (status, expiry_date),
     KEY idx_quotes_assigned (assigned_to),
     KEY idx_quotes_dates (quote_date),
+    KEY idx_quotes_decision (expected_decision_date),
     KEY idx_quotes_follow_up (next_follow_up_date),
     CONSTRAINT fk_quotes_opportunity
         FOREIGN KEY (opportunity_id) REFERENCES sales_opportunities (id)
@@ -702,6 +727,7 @@ CREATE TABLE jobs (
     status VARCHAR(40) NOT NULL DEFAULT 'NEW',
     priority VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
     assigned_to INT UNSIGNED NULL,
+    business_location_id INT UNSIGNED NULL,
     project_manager_id INT UNSIGNED NULL,
     target_date DATE NULL,
     original_target_date DATE NULL,
@@ -745,6 +771,7 @@ CREATE TABLE jobs (
     KEY idx_jobs_assigned (assigned_to),
     KEY idx_jobs_install (installation_date),
     KEY idx_jobs_opportunity (opportunity_id),
+    KEY idx_jobs_location (business_location_id),
     CONSTRAINT fk_jobs_customer
         FOREIGN KEY (customer_id) REFERENCES customers (id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -1408,6 +1435,7 @@ CREATE TABLE purchase_orders (
     supplier_id INT UNSIGNED NOT NULL,
     order_date DATE NOT NULL,
     expected_date DATE NULL,
+    payment_terms VARCHAR(20) NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
     subtotal DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     vat_rate DECIMAL(6,2) NOT NULL DEFAULT 0.00,
@@ -1427,6 +1455,7 @@ CREATE TABLE purchase_orders (
     KEY idx_purchase_orders_supplier (supplier_id),
     KEY idx_purchase_orders_status (status),
     KEY idx_purchase_orders_date (order_date),
+    KEY idx_purchase_orders_expected (expected_date),
     CONSTRAINT fk_purchase_orders_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_purchase_orders_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_purchase_orders_approver FOREIGN KEY (approved_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
@@ -2336,6 +2365,7 @@ CREATE TABLE resources (
     linked_user_id INT UNSIGNED NULL,
     linked_team_id INT UNSIGNED NULL,
     linked_supplier_id INT UNSIGNED NULL,
+    business_location_id INT UNSIGNED NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'AVAILABLE',
     active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2346,6 +2376,7 @@ CREATE TABLE resources (
     KEY idx_resources_user (linked_user_id),
     KEY idx_resources_team (linked_team_id),
     KEY idx_resources_supplier (linked_supplier_id),
+    KEY idx_resources_location (business_location_id),
     CONSTRAINT fk_resources_user FOREIGN KEY (linked_user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_resources_team FOREIGN KEY (linked_team_id) REFERENCES teams (id) ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_resources_supplier FOREIGN KEY (linked_supplier_id) REFERENCES suppliers (id) ON DELETE SET NULL ON UPDATE CASCADE
@@ -3574,3 +3605,282 @@ CREATE TABLE kiosk_pins (
     CONSTRAINT fk_kiosk_pins_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Phase 12 planning, forecasting, and integrations.
+CREATE TABLE business_locations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(20) NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    address TEXT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    default_stock_location_id INT UNSIGNED NULL,
+    timezone VARCHAR(60) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_business_locations_code (code),
+    KEY idx_business_locations_stock (default_stock_location_id),
+    CONSTRAINT fk_business_locations_stock FOREIGN KEY (default_stock_location_id) REFERENCES stock_locations (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE sales_opportunities
+    ADD CONSTRAINT fk_opportunities_location FOREIGN KEY (business_location_id) REFERENCES business_locations (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE jobs
+    ADD CONSTRAINT fk_jobs_location FOREIGN KEY (business_location_id) REFERENCES business_locations (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE users
+    ADD CONSTRAINT fk_users_location FOREIGN KEY (business_location_id) REFERENCES business_locations (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE resources
+    ADD CONSTRAINT fk_resources_location FOREIGN KEY (business_location_id) REFERENCES business_locations (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE TABLE forecast_snapshots (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    forecast_type VARCHAR(40) NOT NULL,
+    as_of_date DATE NOT NULL,
+    horizon_start DATE NOT NULL,
+    horizon_end DATE NOT NULL,
+    parameters_json JSON NULL,
+    result_summary_json JSON NULL,
+    generated_by INT UNSIGNED NULL,
+    generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_forecast_snapshots_type_date (forecast_type, as_of_date),
+    KEY idx_forecast_snapshots_generated (generated_at),
+    CONSTRAINT fk_forecast_snapshots_user FOREIGN KEY (generated_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE purchase_recommendations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    supplier_id INT UNSIGNED NULL,
+    required_quantity DECIMAL(14,4) NOT NULL,
+    order_quantity DECIMAL(14,4) NOT NULL,
+    required_by_date DATE NULL,
+    recommended_order_date DATE NULL,
+    source_type VARCHAR(40) NOT NULL,
+    source_summary VARCHAR(255) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'NEW',
+    generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_by INT UNSIGNED NULL,
+    reviewed_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_purchase_recommendations_product (product_id),
+    KEY idx_purchase_recommendations_status (status),
+    KEY idx_purchase_recommendations_required (required_by_date),
+    CONSTRAINT fk_purchase_recommendations_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_recommendations_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_purchase_recommendations_user FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE purchase_recommendation_sources (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    recommendation_id INT UNSIGNED NOT NULL,
+    job_id INT UNSIGNED NULL,
+    demand_category VARCHAR(20) NOT NULL,
+    quantity DECIMAL(14,4) NOT NULL,
+    required_by_date DATE NULL,
+    source_label VARCHAR(180) NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_recommendation_sources_rec (recommendation_id),
+    KEY idx_recommendation_sources_job (job_id),
+    CONSTRAINT fk_recommendation_sources_rec FOREIGN KEY (recommendation_id) REFERENCES purchase_recommendations (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_recommendation_sources_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE budgets (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    financial_year VARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_budgets_year (financial_year, status),
+    CONSTRAINT fk_budgets_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE budget_lines (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    budget_id INT UNSIGNED NOT NULL,
+    period DATE NOT NULL,
+    metric_code VARCHAR(40) NOT NULL,
+    category_id INT UNSIGNED NULL,
+    target_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_budget_lines_period (budget_id, period, metric_code),
+    CONSTRAINT fk_budget_lines_budget FOREIGN KEY (budget_id) REFERENCES budgets (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_budget_lines_category FOREIGN KEY (category_id) REFERENCES product_categories (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE planning_targets (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    metric_code VARCHAR(40) NOT NULL,
+    scope_type VARCHAR(20) NOT NULL DEFAULT 'COMPANY',
+    scope_id INT UNSIGNED NULL,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    target_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    notes VARCHAR(255) NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_planning_targets_period (metric_code, period_start, period_end),
+    CONSTRAINT fk_planning_targets_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE scenarios (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    scenario_type VARCHAR(40) NOT NULL,
+    parameters_json JSON NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_scenarios_type (scenario_type),
+    CONSTRAINT fk_scenarios_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE data_imports (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    import_type VARCHAR(40) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PREVIEW',
+    rows_total INT UNSIGNED NOT NULL DEFAULT 0,
+    rows_success INT UNSIGNED NOT NULL DEFAULT 0,
+    rows_failed INT UNSIGNED NOT NULL DEFAULT 0,
+    created_by INT UNSIGNED NULL,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    error_file_path VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    KEY idx_data_imports_type (import_type, started_at),
+    CONSTRAINT fk_data_imports_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE api_clients (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    client_identifier VARCHAR(80) NOT NULL,
+    secret_hash CHAR(64) NOT NULL,
+    scopes_json JSON NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    expires_at DATETIME NULL,
+    last_used_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_api_clients_identifier (client_identifier),
+    KEY idx_api_clients_active (active),
+    CONSTRAINT fk_api_clients_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE api_request_log (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    api_client_id INT UNSIGNED NULL,
+    endpoint VARCHAR(180) NOT NULL,
+    action VARCHAR(20) NOT NULL,
+    status_code INT NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_api_request_log_client (api_client_id, created_at),
+    CONSTRAINT fk_api_request_log_client FOREIGN KEY (api_client_id) REFERENCES api_clients (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE webhook_subscriptions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    endpoint_url VARCHAR(255) NOT NULL,
+    secret VARCHAR(128) NOT NULL,
+    event_types_json JSON NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_webhook_subscriptions_active (active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE webhook_deliveries (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    subscription_id INT UNSIGNED NOT NULL,
+    event_id VARCHAR(64) NOT NULL,
+    event_type VARCHAR(60) NOT NULL,
+    attempt INT UNSIGNED NOT NULL DEFAULT 1,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    response_code INT NULL,
+    error_message VARCHAR(255) NULL,
+    payload_json JSON NULL,
+    sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    next_retry_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_webhook_deliveries_event (event_id),
+    KEY idx_webhook_deliveries_retry (status, next_retry_at),
+    CONSTRAINT fk_webhook_deliveries_sub FOREIGN KEY (subscription_id) REFERENCES webhook_subscriptions (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE integration_mappings (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    provider VARCHAR(40) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    external_id VARCHAR(80) NULL,
+    sync_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    last_synced_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_integration_mappings_entity (provider, entity_type, entity_id),
+    KEY idx_integration_mappings_external (provider, external_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE integration_sync_log (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    provider VARCHAR(40) NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    direction VARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    message VARCHAR(255) NULL,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_integration_sync_entity (provider, entity_type, entity_id),
+    KEY idx_integration_sync_status (status, started_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE operational_cash_positions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    as_of_date DATE NOT NULL,
+    opening_amount DECIMAL(14,2) NOT NULL,
+    notes VARCHAR(255) NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_cash_positions_date (as_of_date),
+    CONSTRAINT fk_cash_positions_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE operational_commitments (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(180) NOT NULL,
+    amount DECIMAL(14,2) NOT NULL,
+    due_date DATE NOT NULL,
+    category VARCHAR(40) NOT NULL DEFAULT 'OTHER',
+    notes VARCHAR(255) NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_operational_commitments_due (due_date),
+    CONSTRAINT fk_operational_commitments_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

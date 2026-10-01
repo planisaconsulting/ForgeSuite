@@ -246,6 +246,12 @@ final class InvoiceService
             return $e->errors;
         }
 
+        try {
+            (new AccountingIntegrationService())->afterInvoiceIssued($id);
+        } catch (\Throwable) {
+            // The invoice is already issued. Sync failure stays in the integration log.
+        }
+
         return [];
     }
 

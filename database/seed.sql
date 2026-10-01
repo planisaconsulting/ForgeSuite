@@ -1103,3 +1103,63 @@ WHERE NOT EXISTS (SELECT 1 FROM document_templates WHERE document_type = 'COLLEC
 INSERT INTO document_templates (document_type, name, template_version, layout_config, active)
 SELECT 'COMPLETION_CERTIFICATE', 'Completion certificate', 1, '{{company.name}}\n{{document.number}}\n{{customer.name}}\n{{job.number}}', 1
 WHERE NOT EXISTS (SELECT 1 FROM document_templates WHERE document_type = 'COMPLETION_CERTIFICATE');
+
+INSERT INTO permissions (code, name, module) VALUES
+('planning.view', 'View the planning overview', 'planning'),
+('forecast.sales', 'View the sales forecast', 'planning'),
+('forecast.cash', 'View cash visibility', 'planning'),
+('forecast.materials', 'View material demand', 'planning'),
+('forecast.capacity', 'View the capacity forecast', 'planning'),
+('mrp.view', 'View material requirements planning', 'planning'),
+('mrp.manage', 'Refresh material planning', 'planning'),
+('purchase_recommendations.review', 'Review purchase recommendations', 'planning'),
+('budgets.view', 'View operational budgets', 'planning'),
+('budgets.manage', 'Edit operational budgets', 'planning'),
+('targets.view', 'View planning targets', 'planning'),
+('targets.manage', 'Edit planning targets', 'planning'),
+('scenarios.view', 'View scenarios', 'planning'),
+('scenarios.manage', 'Run scenarios', 'planning'),
+('imports.perform', 'Import business data', 'planning'),
+('exports.perform', 'Export planning data', 'planning'),
+('api.manage', 'Manage API clients', 'integrations'),
+('webhooks.manage', 'Manage outbound webhooks', 'integrations'),
+('integration_logs.view', 'View integration logs', 'integrations'),
+('data_quality.view', 'View data quality', 'planning');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ADMIN' AND p.code IN (
+    'planning.view', 'forecast.sales', 'forecast.cash', 'forecast.materials', 'forecast.capacity',
+    'mrp.view', 'mrp.manage', 'purchase_recommendations.review', 'budgets.view', 'budgets.manage',
+    'targets.view', 'targets.manage', 'scenarios.view', 'scenarios.manage', 'imports.perform',
+    'exports.perform', 'api.manage', 'webhooks.manage', 'integration_logs.view', 'data_quality.view'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'MANAGEMENT' AND p.code IN (
+    'planning.view', 'forecast.sales', 'forecast.cash', 'forecast.materials', 'forecast.capacity',
+    'mrp.view', 'budgets.view', 'targets.view', 'scenarios.view', 'data_quality.view', 'exports.perform'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN ('planning.view', 'forecast.sales', 'targets.view');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN ('planning.view', 'forecast.cash', 'budgets.view', 'targets.view');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'PRODUCTION' AND p.code IN ('forecast.materials', 'forecast.capacity', 'mrp.view');
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('planning_order_buffer_days', '2'),
+('planning_skip_weekends', '1'),
+('planning_default_horizon', '30'),
+('accounting_provider', ''),
+('api_rate_per_minute', '60'),
+('forecast_stale_days', '7'),
+('budget_variance_alert_percent', '10'),
+('cash_pressure_amount', '0');
