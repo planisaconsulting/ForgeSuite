@@ -1,7 +1,14 @@
 /app/config/config.local.php
 /storage/logs/*
 !/storage/logs/.gitkeep
+!/storage/logs/.htaccess
 /storage/quotes/*
 !/storage/quotes/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+!/storage/uploads/.htaccess
+/storage/temp/*
+!/storage/temp/.gitkeep
+!/storage/temp/.htaccess
 .DS_Store
 Thumbs.db

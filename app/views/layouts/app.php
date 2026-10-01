@@ -22,5 +22,8 @@ $activeNav = $activeNav ?? '';
     </div>
     <script src="<?= e(asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js')) ?>"></script>
     <script src="<?= e(asset('assets/js/app.js')) ?>"></script>
+    <?php foreach (($scripts ?? []) as $script): ?>
+        <script src="<?= e(asset((string) $script)) ?>"></script>
+    <?php endforeach; ?>
 </body>
 </html>

@@ -99,7 +99,7 @@ def main() -> None:
             sftp.chmod(target, stat.S_IRUSR | stat.S_IWUSR)
             print(target)
             uploaded += 1
-        for folder in ("storage", "storage/logs", "storage/quotes"):
+        for folder in ("storage", "storage/logs", "storage/quotes", "storage/uploads", "storage/temp"):
             remote_folder = f"/{remote_path}/{folder}"
             mkdir_p(sftp, remote_folder)
             sftp.chmod(remote_folder, 0o775)

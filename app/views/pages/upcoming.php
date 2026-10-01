@@ -1,7 +1,7 @@
 <div class="sf-page-head">
     <div>
         <h1><?= e($module['title']) ?></h1>
-        <p class="sf-muted mb-0">This section is on the menu so the desk can be navigated. The working screen comes in the next build.</p>
+        <p class="sf-muted mb-0">This module is named so the workshop map is visible. It is not built in this phase.</p>
     </div>
 </div>
 

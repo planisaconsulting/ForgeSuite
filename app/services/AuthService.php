@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Helpers\Csrf;
-use App\Models\User;
+use App\Repositories\UserRepository;
 
 /**
  * Sign-in and password changes.
@@ -26,7 +26,8 @@ final class AuthService
         }
 
         $email = strtolower(trim($email));
-        $user = $email === '' ? null : User::findByEmail($email);
+        $users = new UserRepository();
+        $user = $email === '' ? null : $users->findByEmail($email);
         $hash = is_array($user) ? (string) $user['password_hash'] : '';
         $valid = $hash !== '' && password_verify($password, $hash);
 
@@ -37,6 +38,7 @@ final class AuthService
         }
 
         $this->clearFailures();
+        $users->touchLogin((int) $user['id']);
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
         remember_login($remember);
@@ -51,7 +53,7 @@ final class AuthService
     public function changePassword(int $userId, string $current, string $new, string $confirm): array
     {
         $errors = [];
-        $user = User::findByEmail($this->emailFor($userId));
+        $user = (new UserRepository())->findByEmail($this->emailFor($userId));
 
         if ($user === null || !password_verify($current, (string) $user['password_hash'])) {
             $errors[] = 'The current password is not correct.';
@@ -73,14 +75,15 @@ final class AuthService
             return $errors;
         }
 
-        User::updatePassword($userId, password_hash($new, PASSWORD_DEFAULT));
+        (new UserRepository())->updatePassword($userId, password_hash($new, PASSWORD_DEFAULT));
+        (new AuditService())->record('user', $userId, 'password_changed', null, null, $userId);
 
         return [];
     }
 
     private function emailFor(int $userId): string
     {
-        $user = User::find($userId);
+        $user = (new UserRepository())->find($userId);
 
         return $user === null ? '' : (string) $user['email'];
     }

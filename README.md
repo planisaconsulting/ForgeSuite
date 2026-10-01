@@ -1,263 +1,186 @@
-# Sign-Forge Pricing & Quotation System
+# Sign-Forge Management System
 
-Staff application for **Sign-Forge Signs**. It replaces the Excel pricing sheet and is intended to grow into a light quotation and production desk.
+Staff application for **Sign-Forge Signs**. Phase 1 is the foundation: sign-in, company settings, customers, the catalogue, and the pricing engine. Later phases add quotations, jobs, stock, and invoices on top of these tables. They are not built yet.
 
-This release is **Phase 1, Step 1**: the project foundation. You can sign in, change the starting password, and use the responsive shell. Categories, products, pricing levels, and company settings are in the database. The calculator, customer screens, quotations, and printable quote are the next build steps. Their menu items open a short explanation instead of a half-built form.
-
-Currency is South African Rand. VAT defaults to 15% and is stored in settings, not in code.
-
-## What this release includes
-
-- Folder layout for a shared-hosting PHP application
-- MySQL schema and starter data
-- PDO database connection with prepared statements
-- Sign-in, sign-out, session regeneration, and CSRF protection
-- Forced password change for the seeded administrator
-- Dark industrial shell, sidebar on desktop, offcanvas menu on a phone
-- Dashboard counts read from the database
-
-## What is deliberately not built yet
-
-- Category, product, pricing-level, and settings screens
-- Material calculator and wastage decisions
-- Customers, quotes, quote lines, and PDF output
-
-The tables for those features are already in `database/schema.sql`, so the next steps add screens and services instead of redesigning the database.
+The application name in the interface is Sign-Forge Management System. The company name (Sign-Forge Signs) comes from settings and can be changed without editing code.
 
 ## Requirements
 
-- PHP 8.2 or newer
-- Extensions: `pdo_mysql`, `mbstring`
-- MySQL 8 or MariaDB 10.4 or newer
-- Apache with `mod_rewrite` on the server (the local PHP server does not need Apache)
-- `php-bcmath` is not required yet. The calculator step should use it so money is not calculated with floating point.
+- PHP 8.2 or newer, with PDO MySQL and `bcmath` if the host has it
+- MySQL 8 or MariaDB 10.4+
+- Apache with `mod_rewrite` (or another host that sends requests to `public/index.php`)
+- A database you create in the hosting panel
 
-No Node.js, Composer, Docker, or framework is required on the server.
+`bcmath` is preferred. If it is missing, the same decimal maths runs through string arithmetic. Do not turn on PHP `display_errors` in production. Currency is never stored as FLOAT.
 
-Bootstrap 5.3, Font Awesome Free, and the Barlow font files are already in `public/assets`. The browser does not need a CDN.
+Composer is not required for Phase 1.
 
 ## Folder structure
 
 ```
-app/                  PHP that must not be reachable as a URL
-  bootstrap.php       config, autoload, session, error log
-  routes.php          the list of URLs
-  config/             config.example.php and your private config.local.php
-  controllers/        one screen's request and response
-  models/             prepared SQL
-  services/           sign-in now; pricing and wastage services next
-  domain/             allowed values such as AREA, Q-levels, quote statuses
-  helpers/            database, router, views, CSRF, formatting
-  views/              HTML only. No SQL.
-public/               document root
-  index.php           front controller
-  router.php          used only by the PHP built-in server
-  assets/             css, javascript, images, vendored libraries
-database/
-  schema.sql          tables. Drops Sign-Forge tables if you re-import it.
-  seed.sql            administrator, categories, price levels, sample products
-  install.php         command-line import
-storage/
-  logs/               application log. Must be writable.
-  quotes/             future PDF files. Must be writable.
-templates/            future printable quotation template
-tests/foundation.php  checks the schema and seed
+app/config          example config, and config.local.php which is not committed
+app/controllers     thin HTTP handlers
+app/domain          fixed lists: pricing methods, waste modes, product types, roles
+app/helpers         database, router, CSRF, decimal maths
+app/middleware      sign-in and permission checks the router calls
+app/repositories    SQL only
+app/services        business rules, including the pricing engine
+app/views           HTML. No pricing formulas in the templates
+public              the only folder the web server should expose
+database/schema.sql full current schema (it drops Sign-Forge tables)
+database/seed.sql   roles, admin, categories, demo products, pricing levels
+database/migrations numbered SQL for later changes
+storage/logs        PHP error log
+storage/uploads     reserved for later files
+tests               calculation tests and HTTP checks
 ```
 
-A request hits `public/index.php`, which loads `app/bootstrap.php` and `app/routes.php`. The router calls a controller. The controller asks a model or service for data and passes it to a view. The view does not run SQL. When a price is saved later, the server will recalculate it. The browser total will only be a preview.
+Repositories read and write rows. Services decide what a save means (validation, cost history, audit). Controllers pass the form to a service and pick the next page. Views only print what they are given.
 
-## Architecture decisions
+There is no second copy of the pricing formulas in JavaScript. The calculator sends sizes to the server and displays the JSON that comes back.
 
-These are the problems in a straight "width × height × cost" spreadsheet, and how the schema avoids them.
+## How pricing works
 
-1. **Printed area and consumed material are different.** An 800 × 1000 mm print on a 1300 mm roll is 0.80 m² of print and 1.30 m² of roll if the spare 500 mm is billed. Quote lines store `actual_area` and `billable_area` (and the same values again on the generic quantity columns). `waste_mode` records the decision: `ACTUAL`, `CONSUMED_WIDTH`, or `MANUAL`.
+Dimensions are millimetres.
 
-2. **Manufacturing waste is not unused roll width.** `standard_waste_percent` is the extra 5% or 10% added after the billable measure is known. `waste_threshold_percent` only warns the operator. It never forces a charge. The sample vinyl uses a 50% threshold and a default policy of `ACTUAL`.
+- Area in square metres = `(width × height / 1,000,000) × quantity`
+- Linear metres = `(length / 1,000) × quantity`
+- Units, litres, hours, and custom quantities are the number you type, times the product cost
 
-3. **Selling price rule, used by every later service.**
+Two kinds of waste are kept separate.
 
-   ```
-   extended_cost   = billable_measure × unit_cost
-   cost_with_waste = extended_cost × (1 + standard_waste_percent / 100)
-   sell_ex_vat     = cost_with_waste × (1 + markup_percent / 100)
-   ```
+**Manufacturing waste** is `standard_waste_percent` on the product. It is applied after the billable quantity is chosen.
 
-   Markup percentages live in `pricing_levels`. Q1 to Q4 can be renamed to Retail or Trade later. Do not copy the seed percentages into PHP.
+```
+costed quantity = billable × (1 + standard waste percent / 100)
+total cost      = costed quantity × unit cost
+```
 
-4. **Old quotes must keep old prices.** Each quote line snapshots the product name, method, cost, manufacturing waste, and markup. The quote header snapshots the VAT rate, VAT mode, currency, and pricing-level name. Changing vinyl from R50 to R60 next month does not change a quote issued at R50.
+**Roll or sheet offcut** is a choice the operator makes. The waste threshold only warns. It never charges the customer by itself.
 
-5. **Line prices are stored excluding VAT.** `quotes.vat_mode` is `EXCLUSIVE` or `INCLUSIVE` for how the customer copy is presented. The stored line total stays net so VAT cannot be applied twice. Discount is a rand amount taken off the ex-VAT subtotal before VAT.
-
-6. **Quote numbers.** `quote_sequences` has one row per year. The future numbering service must lock that row (`SELECT ... FOR UPDATE`) and add one. That gives `SFQ-2026-0001` without two staff receiving the same number. The prefix is the `quote_prefix` setting.
-
-7. **Money columns are DECIMAL.** Totals are `DECIMAL(12,2)`. Unit rates are `DECIMAL(12,4)`. Do not use `FLOAT`. Display formatting (`R 1,234.56`) is separate from calculation.
-
-8. **Products are deactivated, not deleted,** once they appear on a quote. Foreign keys use `RESTRICT` for that link. `product_price_history` is filled by the product-save code when the cost changes, not by a hidden database trigger.
-
-9. **Roles are text** (`admin`, `sales`, `production`) checked in PHP, so a later role does not need an `ALTER TABLE`.
-
-10. **Recipes and nesting are not built.** `products.product_type` can be `ASSEMBLY` later. `quote_items.parent_item_id` will hold the component lines. `quote_items.nest_group` will mark cuts that share one length of roll. A future jobs table should point at `quotes.id`. Status `CONVERTED` is the hand-off. Phase 1 does not nest and does not create jobs.
-
-The later services should stay separate so the rules above do not get mixed into a view:
-
-| Service | Responsibility |
+| Mode | What is billed |
 | --- | --- |
-| Material consumption | Actual measure versus billable measure for area, linear, unit, sheet, litre, and hour |
-| Wastage | Roll-width warning and the three waste modes |
-| Pricing | Manufacturing waste and the selected pricing level |
-| Quote totals | Line totals, discount, VAT mode, header total |
-| Quote numbers | `SFQ-2026-0001` from `quote_sequences` |
+| ACTUAL | The print area, or the fraction of a sheet that the piece occupies |
+| CONSUMED_WIDTH | Roll width × print length × quantity |
+| FULL_SHEET | Every sheet the pieces occupy on a simple grid |
+| MANUAL | A width, area, or sheet count the operator typed. The screen says manual pricing is in use |
 
-## Installation
+A sheet product's cost is per sheet. Charging actual area bills `(piece area / sheet area) × sheet cost`. Charging the full sheet bills the whole sheet cost times the number of sheets. Rotation, when the product allows it, only picks the orientation that fits more pieces on that grid. It is not a nesting optimiser. `allow_nesting` is stored so a later layout pass can be added in `MaterialConsumptionService` without moving the maths into a controller.
 
-### 1. Put the files on the server
+**Markup is not margin.**
 
-The domain document root should be the `public` folder when the hosting panel allows it.
+```
+selling price = total cost × (1 + markup percent / 100)
+gross profit  = selling price − total cost
+gross margin  = gross profit / selling price × 100
+```
 
-If the panel can only point at the project folder, the root `.htaccess` blocks `app/`, `database/`, `storage/`, `templates/`, and `tests/`, and sends pages through `index.php`. Prefer a document root of `public/` anyway.
+A cost of R100 with 50% markup sells at R150. The margin on R150 is 33.33%, not 50%. Markup percentages live in `pricing_levels`. The calculator reads them on every request. Changing Q1 changes the next calculation. Nothing in PHP or JavaScript hard-codes those percentages.
 
-### 2. Configure the database
+Cost and selling price stay separate so a later job can compare quoted sell, quoted cost, and actual cost.
+
+The browser can show a live preview, but the preview is the server's answer. A posted cost or markup is ignored. `PricingService` loads the product and the pricing levels from the database and calculates again.
+
+## What is deliberately not in the database yet
+
+Quotes, jobs, stock movements, recipes, purchase orders, invoices, and payments. Product rows have `track_stock` and `minimum_stock_level` as flags only. There is no quantity-on-hand column. Future stock should be a ledger of movements (purchase, job usage, waste, adjustment), including individual vinyl rolls later.
+
+A recipe such as a printed Chromadek sign will point at existing products (board, vinyl, laminate, labour). Product types are already material, component, service, labour, and consumable so that recipe does not need a new kind of catalogue row.
+
+`products.supplier_id` is the preferred supplier. A later `product_suppliers` table can add more without replacing that column.
+
+## Database installation
+
+Create an empty database, then copy the config and import.
 
 ```bash
 cp app/config/config.example.php app/config/config.local.php
 ```
 
-Edit `app/config/config.local.php`:
-
-```php
-'db' => [
-    'host' => 'localhost',
-    'port' => 3306,
-    'name' => 'your_database_name',
-    'user' => 'your_database_user',
-    'pass' => 'your_database_password',
-    'charset' => 'utf8mb4',
-],
-```
-
-Set `'debug' => false` on a live site.
-
-If the site is not at the domain root, set `app.base_path` to the subdirectory, for example `/signforge`. Leave it empty when `public/` is the document root.
-
-The same values can be supplied as environment variables, which override the file:
-
-`SF_DB_HOST`, `SF_DB_PORT`, `SF_DB_NAME`, `SF_DB_USER`, `SF_DB_PASS`, `SF_APP_DEBUG`, `SF_APP_URL`, `SF_APP_BASE_PATH`, `SF_APP_ENV`
-
-`config.local.php` is listed in `.gitignore`. Do not commit it.
-
-### 3. Create and import the database
-
-Create an empty database with charset `utf8mb4` and collation `utf8mb4_unicode_ci`. Then either use the installer:
+Edit `config.local.php`: database host, name, user, password, and `app.url`. Leave `app.base_path` empty when the site is the domain root.
 
 ```bash
 php database/install.php
 ```
 
-or import the files yourself, in this order:
-
-1. `database/schema.sql`
-2. `database/seed.sql`
-
-`schema.sql` **drops** the Sign-Forge tables before creating them. Import it only into an empty database, or when you mean to wipe the desk. To reload a database that already has tables:
+That creates the database when the user is allowed to, then imports `schema.sql` and `seed.sql`. If the tables already exist:
 
 ```bash
 php database/install.php --force
 ```
 
-Check the import:
+`--force` drops the Sign-Forge tables. Do not run it on a database that already has customers you need.
+
+`database/migrations/001_initial_schema.sql` is the same schema. Later changes should be new files (`002_quotes.sql`, `003_jobs.sql`, `004_stock.sql`) and should also be folded into `schema.sql` so a fresh install stays current. Apply a new migration by importing that file once. Do not re-import `001` on a live database.
+
+## Local setup
+
+From the project folder, with PHP on your PATH:
 
 ```bash
-php tests/foundation.php
-```
-
-Run that before anyone changes the seeded password. After the password is changed, the password line in that test will fail. That is expected.
-
-### 4. Folder permissions
-
-The web server user needs to write:
-
-- `storage/logs`
-- `storage/quotes`
-
-On shared hosting, `755` is often enough. Use `775` if the panel runs PHP as a different user from the FTP account. Do not make `app/` or `database/` writable by the public, and do not put those folders inside a public document root if you can avoid it.
-
-## Local development
-
-From the project folder, with MySQL running and `config.local.php` in place:
-
-```bash
-php database/install.php
-php tests/foundation.php
 php -S 127.0.0.1:8741 -t public public/router.php
 ```
 
-Open `http://127.0.0.1:8741`.
+Open [http://127.0.0.1:8741](http://127.0.0.1:8741).
 
-The built-in server uses `public/router.php`. Apache uses `public/.htaccess` and ignores that router file.
+The built-in server is only for development. Apache should use `public` as the document root. If the panel cannot do that, the root `.htaccess` rewrites into `public/` and refuses `app`, `database`, `storage`, `tests`, and `deploy`.
+
+## Development login
+
+These are starter credentials for a local database. Change them before any real use. The account is sent to the password screen on first sign-in.
+
+- Email: `admin@signforge.local`
+- Password: `Forge#Admin2026`
+
+There is no public registration page. An administrator adds staff under Users. A password an administrator sets must be changed at the next sign-in.
+
+Demo product costs are training numbers, not Sign-Forge's buy prices. The product notes say so. Pricing levels start at Q1 65%, Q2 50%, Q3 35%, Q4 25%. Edit them under Pricing levels. Company defaults are Sign-Forge Signs, ZAR, symbol R, VAT 15%, timezone Africa/Johannesburg, prefixes SFQ / SFI / SFJ, quote validity 14 days.
+
+## Roles
+
+ADMIN, SALES, DESIGN, PRODUCTION, ACCOUNTS, and INSTALLER. ADMIN can open every current screen even if a permission row is missing. Other roles only get the codes in `role_permissions`. The router checks the code before the controller runs. Coming-soon items are shown in the menu as disabled text so they do not 404. Opening `/quotes` directly shows a short note and no invented numbers.
 
 ## Xneelo deployment
 
-1. In the control panel, set the PHP version to 8.2 or 8.3.
-2. Create a MySQL database and user. Note the host, which is often not `127.0.0.1` on shared hosting. Put that host in `config.local.php`.
-3. Upload the project. Set the site public folder to `public` if the panel allows a custom document root.
-4. Import `database/schema.sql`, then `database/seed.sql`, using phpMyAdmin. Do not import `schema.sql` again later unless you intend to erase the tables.
-5. Copy `config.example.php` to `config.local.php` on the server and fill in the database details. Turn debug off.
-6. Confirm `storage/logs` and `storage/quotes` are writable.
-7. Open the site over HTTPS, sign in, and change the administrator password.
-8. Confirm `https://your-domain/app/config/config.example.php` and `https://your-domain/database/seed.sql` are **not** downloadable. `app/`, `database/`, `storage/`, `templates/`, and `tests/` each contain an `.htaccess` that denies web access. The root `.htaccess` does the same when the document root is the project folder.
+1. In the Xneelo panel, create a MySQL database and user. Note the host (often `sqlXX.jnb1.host-h.net`, not `localhost`).
+2. Point the domain's document root at `public_html/public` if the panel allows it. If it does not, upload the project into `public_html` and leave the root `.htaccess` in place.
+3. Copy `config.example.php` to `config.local.php` on the server only. Set `app.debug` to `false`, `app.url` to the https address, and the database details. Do not commit that file. Permissions `600` are enough.
+4. Import `database/schema.sql` then `database/seed.sql` from the panel, or with a one-off PHP script that you delete afterwards. `schema.sql` drops existing Sign-Forge tables. Import it only into an empty application database, or when you mean to replace them.
+5. Upload the project by SFTP. Passive FTP from some networks cannot open a data port. `deploy/upload.py` uses SFTP on port 22 and skips `config.local.php` unless you pass `SF_CONFIG_LOCAL`.
+6. Confirm `https://your-domain/login` loads, sign in, and change the admin password.
+7. Delete any one-off import script. Confirm `README.md`, `database/`, and `app/config/config.local.php` are not downloadable (the `.htaccess` rules return 403).
 
-To upload over SFTP (Xneelo accepts SFTP on port 22 with the FTP username; `pip install paramiko` once on the machine that uploads):
+`storage/logs` must be writable by PHP. The application logs errors there and shows a plain message to the user.
+
+## Tests
 
 ```bash
-export SF_FTP_HOST=ftp.example.co.za
-export SF_FTP_USER=ftp-user
-export SF_FTP_PASS='ftp-password'
-export SF_FTP_PATH=public_html
-export SF_CONFIG_LOCAL=/path/to/production-config.local.php
-python3 deploy/upload.py
+php tests/calculations.php
+php tests/acceptance.php http://127.0.0.1:8741
 ```
 
-`deploy/upload.py` does not upload your local `config.local.php`. Point `SF_CONFIG_LOCAL` at the production file. Do not commit that file.
+`calculations.php` does not need the database. It checks area, linear, unit, manufacturing waste, roll consumption, the threshold warning, actual / consumed-width / manual modes, sheet actual and full-sheet charging, markup, gross profit, and gross margin. It runs the checks with bcmath and again with the string fallback.
 
-## Default administrator
+`acceptance.php` needs the dev server. It signs in, changes the password, walks customers, products, suppliers, and the calculator, then puts the seed password back.
 
-| | |
-| --- | --- |
-| Email | `admin@signforge.local` |
-| Password | `Forge#Admin2026` |
+## Security
 
-The first sign-in asks for a new password of at least 10 characters. The seeded password cannot open the dashboard. Change it before anyone else uses the site. There is no second staff account yet.
+- Passwords are hashed with `password_hash`. The audit log never stores them.
+- Sessions use `httponly` and `SameSite=Lax`, and `secure` on HTTPS. Sign-in calls `session_regenerate_id`. Remember me keeps the cookie for 30 days.
+- Forms and the calculator POST send a CSRF token. Failed sign-ins are throttled in the session.
+- SQL uses PDO prepared statements. Do not reuse the same named placeholder twice in one statement.
+- Output is escaped with `e()`.
+- Records that later documents will point at are deactivated (`active = 0`), not deleted.
+- Foreign keys use RESTRICT where a delete would destroy history. `created_by` uses SET NULL.
+- `config.local.php` is gitignored. Production passwords do not belong in this repository.
 
-Five wrong passwords in one session pause sign-in for a minute. The message is the same for an unknown email, a wrong password, and an inactive account.
+## Phase 2, when you ask for it
 
-## Starter data
+Quotations only. Not jobs, stock, or invoices.
 
-- 16 categories (printable vinyl through to Other)
-- Pricing levels Q1 100%, Q2 70%, Q3 45%, Q4 25% (editable later; not hard-coded)
-- Company settings: Sign-Forge Signs, prefix `SFQ`, VAT 15%, validity 14 days, currency ZAR / `R`
-- Nine sample products, including printable vinyl `SF-PV-1300` at R50.0000 per m² on a 1300 mm roll, with 10% manufacturing waste and a 50% roll-width warning
+- `quotes`, `quote_items`, and a number sequence, in `002_quotes.sql`
+- Each line stores the cost, waste mode, billable quantity, markup, and sell price from the day it was priced, by calling `PricingService` and copying the result. A later cost change must not rewrite the quote.
+- Line prices stay ex-VAT. The quote stores the VAT mode and rate.
+- Revisions, PDF, acceptance, and conversion to a job come after the first saved quote works.
 
-No customers and no quotes are seeded. The dashboard shows zeros for those.
-
-## What to test
-
-1. Sign in with the seeded account. You should land on the password screen, not the dashboard.
-2. A wrong password shows one message and does not say whether the email exists.
-3. After a new password, the dashboard shows Sign-Forge Signs, VAT 15%, the `SFQ-year-0001` pattern, 9 products, 0 customers, and `R 0.00`.
-4. Open every menu item. Catalogue and quote items explain the next build. They must not 404.
-5. On a phone-width window, open the menu, go to a page, and close it.
-6. Sign out, then open `/`. You should be sent to sign-in.
-7. Submit a form with a stale session. You should see the blocked-request page rather than a saved change.
-
-## Recommended next build
-
-**Step 2: catalogue maintenance.**
-
-- Categories: add, edit, deactivate, sort
-- Products: add, edit, search, filter by category and supplier, deactivate instead of delete
-- Product form that shows roll fields for area media and hides them for unit, litre, and hour items
-- Write a `product_price_history` row whenever `cost_price` changes
-- Pricing levels: edit names and markup percentages
-- Settings: edit the company profile, VAT rate, quote prefix, validity, and currency
-
-After that, Step 3 is the calculation service and its checked examples (area, linear metre, unit, sheet, and the 800 × 1000 mm roll-width case). The calculator screen comes after those numbers are proven on the server.
+Do not start that work until Phase 1 is accepted.

@@ -48,6 +48,28 @@ final class Database
         return self::$pdo;
     }
 
+    /**
+     * Runs several writes together. If one fails, none of them are kept.
+     * Use this when a cost change must also write price history, or when a
+     * settings save must also write the audit log.
+     */
+    public static function transaction(callable $callback): mixed
+    {
+        $pdo = self::connection();
+        $pdo->beginTransaction();
+        try {
+            $result = $callback($pdo);
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
     public static function fail(PDOException $e): never
     {
         error_log('Database connection failed: ' . $e->getMessage());

@@ -16,7 +16,7 @@ declare(strict_types=1);
 
 return [
     'app' => [
-        'name' => 'Sign-Forge Pricing & Quotation System',
+        'name' => 'Sign-Forge Management System',
         'env' => 'production',
         'debug' => false,
         'url' => 'https://quotes.example.co.za',

@@ -1,21 +1,36 @@
 <?php
-/** Primary navigation. $activeNav is the current section key. */
+/** Primary navigation. Coming-soon items are not links. */
 $activeNav = $activeNav ?? '';
-$items = [
-    'Work' => [
-        ['dashboard', 'Dashboard', '/', 'fa-gauge-high'],
-        ['calculator', 'Calculator', '/calculator', 'fa-calculator'],
-        ['quotes', 'Quotes', '/quotes', 'fa-file-invoice'],
-        ['customers', 'Customers', '/customers', 'fa-users'],
-    ],
-    'Catalogue' => [
-        ['products', 'Products', '/products', 'fa-box'],
-        ['categories', 'Categories', '/categories', 'fa-tags'],
-        ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group'],
-    ],
-    'Admin' => [
-        ['settings', 'Settings', '/settings', 'fa-gear'],
-    ],
+$groups = [
+    ['label' => null, 'links' => [
+        ['dashboard', 'Dashboard', '/', 'fa-gauge-high', 'dashboard.view'],
+    ]],
+    ['label' => 'CRM', 'links' => [
+        ['customers', 'Customers', '/customers', 'fa-users', 'customers.view'],
+        ['activities', 'Activities', '/activities', 'fa-comments', 'activities.view'],
+    ]],
+    ['label' => 'Sales', 'links' => [
+        ['calculator', 'Calculator', '/calculator', 'fa-calculator', 'calculator.use'],
+        ['quotes', 'Quotes', null, 'fa-file-invoice', null],
+    ]],
+    ['label' => 'Operations', 'links' => [
+        ['jobs', 'Jobs', null, 'fa-clipboard-list', null],
+        ['production', 'Production', null, 'fa-industry', null],
+    ]],
+    ['label' => 'Inventory', 'links' => [
+        ['products', 'Products', '/products', 'fa-box', 'products.view'],
+        ['categories', 'Categories', '/categories', 'fa-tags', 'categories.manage'],
+        ['suppliers', 'Suppliers', '/suppliers', 'fa-truck', 'suppliers.view'],
+        ['stock', 'Stock', null, 'fa-warehouse', null],
+    ]],
+    ['label' => 'Finance', 'links' => [
+        ['invoices', 'Invoices', null, 'fa-receipt', null],
+    ]],
+    ['label' => 'Administration', 'links' => [
+        ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],
+        ['users', 'Users', '/users', 'fa-user-gear', 'users.manage'],
+        ['settings', 'Settings', '/settings', 'fa-gear', 'settings.manage'],
+    ]],
 ];
 ?>
 <div class="offcanvas-header sf-offcanvas-header d-lg-none">
@@ -27,20 +42,43 @@ $items = [
         <img src="<?= e(asset('assets/images/mark.svg')) ?>" alt="" width="36" height="36">
         <span>
             <strong>Sign-Forge</strong>
-            <small><?= e(company_name()) ?></small>
+            <small>Management System</small>
         </span>
     </a>
 
-    <?php foreach ($items as $group => $links): ?>
-        <p class="sf-nav-label"><?= e($group) ?></p>
-        <nav class="sf-nav" aria-label="<?= e($group) ?>">
-            <?php foreach ($links as [$key, $label, $href, $icon]): ?>
-                <a class="<?= $key === $activeNav ? 'sf-nav-link active' : 'sf-nav-link' ?>"
-                   href="<?= e(url($href)) ?>"
-                   <?= $key === $activeNav ? 'aria-current="page"' : '' ?>>
-                    <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
-                    <span><?= e($label) ?></span>
-                </a>
+    <?php foreach ($groups as $group): ?>
+        <?php
+        $visible = [];
+        foreach ($group['links'] as $link) {
+            $permission = $link[4];
+            if ($permission !== null && !can($permission)) {
+                continue;
+            }
+            $visible[] = $link;
+        }
+        if ($visible === []) {
+            continue;
+        }
+        ?>
+        <?php if ($group['label'] !== null): ?>
+            <p class="sf-nav-label"><?= e($group['label']) ?></p>
+        <?php endif; ?>
+        <nav class="sf-nav" aria-label="<?= e($group['label'] ?? 'Main') ?>">
+            <?php foreach ($visible as [$key, $label, $href, $icon]): ?>
+                <?php if ($href === null): ?>
+                    <span class="sf-nav-link is-disabled" aria-disabled="true">
+                        <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
+                        <span><?= e($label) ?></span>
+                        <small>Soon</small>
+                    </span>
+                <?php else: ?>
+                    <a class="<?= $key === $activeNav ? 'sf-nav-link active' : 'sf-nav-link' ?>"
+                       href="<?= e(url($href)) ?>"
+                       <?= $key === $activeNav ? 'aria-current="page"' : '' ?>>
+                        <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
+                        <span><?= e($label) ?></span>
+                    </a>
+                <?php endif; ?>
             <?php endforeach; ?>
         </nav>
     <?php endforeach; ?>

@@ -7,13 +7,17 @@ $user = auth_user();
         <i class="fa-solid fa-bars" aria-hidden="true"></i>
     </button>
     <p class="sf-topbar-title"><?= e($title ?? '') ?></p>
+    <form class="sf-search" method="get" action="<?= e(url('/search')) ?>" role="search">
+        <label class="visually-hidden" for="global-search">Search</label>
+        <input class="form-control" id="global-search" type="search" name="q" value="<?= e((string) ($_GET['q'] ?? '')) ?>" placeholder="Customers, products, suppliers">
+    </form>
     <?php if ($user !== null): ?>
-        <div class="dropdown ms-auto">
+        <div class="dropdown">
             <button class="btn sf-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="sf-avatar" aria-hidden="true"><?= e(initials((string) $user['name'])) ?></span>
                 <span class="d-none d-sm-inline text-start">
                     <strong><?= e($user['name']) ?></strong>
-                    <small><?= e(role_label((string) $user['role'])) ?></small>
+                    <small><?= e((string) ($user['role_name'] ?? '')) ?></small>
                 </span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end sf-menu">
