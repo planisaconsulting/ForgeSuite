@@ -556,9 +556,16 @@ final class QuoteService
         if ($target !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $target)) {
             return ['errors' => ['target_date' => 'Target date must be a date.'], 'id' => null];
         }
+        foreach (['production_due_date' => 'Production due date', 'installation_date' => 'Installation date'] as $field => $label) {
+            $value = trim((string) ($input[$field] ?? ''));
+            if ($value !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                return ['errors' => [$field => $label . ' must be a date.'], 'id' => null];
+            }
+        }
         $jobId = 0;
+        $jobs = new JobService();
         try {
-            Database::transaction(function () use ($quoteId, $version, $userId, $title, $priority, $target, &$jobId): void {
+            Database::transaction(function () use ($quoteId, $input, $version, $userId, $title, $priority, $target, $jobs, &$jobId): void {
                 $quote = $this->locked($quoteId, $version);
                 if ((string) $quote['status'] !== 'ACCEPTED') {
                     throw new QuoteRejected(['_form' => 'Accept the quotation before converting it to a job.']);
@@ -577,6 +584,7 @@ final class QuoteService
                     'target_date' => $target === '' ? null : $target,
                     'created_by' => $userId,
                 ]);
+                $jobs->seedFromQuote($jobId, $quote, $input, $userId);
                 $this->quotes->updateStatus($quoteId, ['status' => 'CONVERTED', 'user_id' => $userId]);
                 $this->quotes->insertHistory($quoteId, 'ACCEPTED', 'CONVERTED', $userId, 'Job created');
                 if (!empty($quote['opportunity_id'])) {

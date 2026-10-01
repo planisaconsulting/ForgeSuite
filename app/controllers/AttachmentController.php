@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Repositories\CustomerRepository;
+use App\Repositories\JobRepository;
+use App\Repositories\OperationsRepository;
 use App\Repositories\OpportunityRepository;
 use App\Repositories\QuoteRepository;
 use App\Services\AttachmentService;
@@ -18,7 +20,14 @@ final class AttachmentController
         if (!$this->exists($type, $entityId)) {
             abort_not_found('That record was not found.');
         }
-        $errors = (new AttachmentService())->store($type, $entityId, $_FILES['file'] ?? [], (int) auth_user()['id']);
+        $errors = (new AttachmentService())->store(
+            $type,
+            $entityId,
+            $_FILES['file'] ?? [],
+            (int) auth_user()['id'],
+            (string) ($_POST['purpose'] ?? 'GENERAL'),
+            (string) ($_POST['notes'] ?? '')
+        );
         flash($errors === [] ? 'success' : 'error', $errors === [] ? 'File stored.' : (string) reset($errors));
         redirect($this->back($type, $entityId));
     }
@@ -42,16 +51,26 @@ final class AttachmentController
             'customer' => (new CustomerRepository())->find($id) !== null,
             'quote' => (new QuoteRepository())->find($id) !== null,
             'opportunity' => (new OpportunityRepository())->find($id) !== null,
+            'job' => (new JobRepository())->find($id) !== null,
+            'job_item' => (new OperationsRepository())->item($id) !== null,
+            'artwork' => (new OperationsRepository())->artwork($id) !== null,
+            'installation' => (new OperationsRepository())->installation($id) !== null,
             default => false,
         };
     }
 
     private function back(string $type, int $id): string
     {
+        $ops = new OperationsRepository();
+
         return match ($type) {
             'customer' => '/customers/' . $id,
             'quote' => '/quotes/' . $id,
             'opportunity' => '/opportunities/' . $id,
+            'job' => '/jobs/' . $id . '?tab=files',
+            'job_item' => '/jobs/' . (int) (($ops->item($id)['job_id'] ?? 0)) . '?tab=files',
+            'artwork' => '/jobs/' . (int) (($ops->artwork($id)['job_id'] ?? 0)) . '?tab=artwork',
+            'installation' => '/jobs/' . (int) (($ops->installation($id)['job_id'] ?? 0)) . '?tab=installation',
             default => '/',
         };
     }

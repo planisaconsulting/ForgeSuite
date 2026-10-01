@@ -15,6 +15,7 @@ use PDO;
  */
 abstract class Repository
 {
+    private int $affectedRows = 0;
     protected function pdo(): PDO
     {
         return Database::connection();
@@ -53,6 +54,12 @@ abstract class Repository
     {
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute($params);
+        $this->affectedRows = $stmt->rowCount();
+    }
+
+    protected function affected(): int
+    {
+        return $this->affectedRows;
     }
 
     protected function insertId(): int

@@ -44,7 +44,26 @@ INSERT INTO permissions (code, name, module) VALUES
 ('quotes.accept', 'Record quote acceptance', 'sales'),
 ('quotes.convert', 'Convert an accepted quote to a job', 'sales'),
 ('costing.view', 'See internal quote costing', 'sales'),
-('jobs.view', 'View job hand-off records', 'operations'),
+('costing.edit', 'Record other job costs', 'operations'),
+('jobs.view', 'View jobs', 'operations'),
+('jobs.create', 'Create jobs from accepted quotes', 'operations'),
+('jobs.edit', 'Edit job details', 'operations'),
+('jobs.assign', 'Assign jobs and tasks', 'operations'),
+('jobs.change_status', 'Change job status', 'operations'),
+('jobs.complete', 'Complete or archive a job', 'operations'),
+('jobs.reopen', 'Reopen a completed or cancelled job', 'operations'),
+('artwork.upload', 'Upload artwork proofs', 'operations'),
+('artwork.approve_record', 'Record customer artwork approval', 'operations'),
+('artwork.override_approval', 'Proceed without artwork approval', 'operations'),
+('production.view', 'View the production board', 'operations'),
+('production.update', 'Update production stages and tasks', 'operations'),
+('materials.view', 'View material requirements', 'operations'),
+('materials.record_usage', 'Record material usage and waste', 'operations'),
+('time.record', 'Record labour time', 'operations'),
+('time.view_all', 'See every person\'s time entries', 'operations'),
+('installations.view', 'View installations', 'operations'),
+('installations.schedule', 'Schedule installations', 'operations'),
+('installations.complete', 'Complete installations', 'operations'),
 ('attachments.manage', 'Upload customer and quote files', 'crm'),
 ('users.manage', 'Manage users', 'admin'),
 ('settings.manage', 'Manage settings', 'admin'),
@@ -69,7 +88,9 @@ WHERE r.code = 'SALES'
     'calculator.use',
     'opportunities.view', 'opportunities.manage',
     'quotes.view', 'quotes.manage', 'quotes.discount', 'quotes.price_override',
-    'quotes.accept', 'quotes.convert', 'costing.view', 'jobs.view', 'attachments.manage'
+    'quotes.accept', 'quotes.convert', 'costing.view',
+    'jobs.view', 'jobs.create', 'jobs.edit', 'installations.view', 'artwork.approve_record',
+    'attachments.manage'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -80,7 +101,8 @@ WHERE r.code = 'DESIGN'
   AND p.code IN (
     'dashboard.view',
     'customers.view', 'activities.view',
-    'products.view', 'calculator.use'
+    'products.view', 'calculator.use',
+    'jobs.view', 'artwork.upload', 'artwork.approve_record', 'production.view', 'time.record', 'attachments.manage'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -88,7 +110,11 @@ SELECT r.id, p.id
 FROM roles r
 JOIN permissions p
 WHERE r.code = 'PRODUCTION'
-  AND p.code IN ('dashboard.view', 'products.view', 'suppliers.view');
+  AND p.code IN (
+    'dashboard.view', 'products.view', 'suppliers.view',
+    'jobs.view', 'jobs.change_status', 'production.view', 'production.update',
+    'materials.view', 'materials.record_usage', 'time.record', 'attachments.manage'
+  );
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
@@ -98,7 +124,7 @@ WHERE r.code = 'ACCOUNTS'
   AND p.code IN (
     'dashboard.view',
     'customers.view', 'products.view', 'suppliers.view', 'pricing.view',
-    'quotes.view', 'jobs.view', 'costing.view'
+    'quotes.view', 'jobs.view', 'costing.view', 'costing.edit', 'time.view_all', 'materials.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -106,7 +132,10 @@ SELECT r.id, p.id
 FROM roles r
 JOIN permissions p
 WHERE r.code = 'INSTALLER'
-  AND p.code IN ('dashboard.view', 'customers.view');
+  AND p.code IN (
+    'dashboard.view', 'customers.view',
+    'jobs.view', 'installations.view', 'installations.complete', 'time.record', 'attachments.manage'
+  );
 
 INSERT INTO users (name, email, password_hash, role_id, active, must_change_password)
 SELECT
@@ -137,6 +166,7 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('opportunity_prefix', 'SFO'),
 ('default_quote_validity_days', '14'),
 ('default_quote_terms', 'This quotation is valid until the expiry date. Prices are in the currency shown and exclude VAT unless the quotation says otherwise. Work starts after written acceptance and any deposit shown above. A site measure that differs from the sizes in this quotation may change the price. Artwork supplied by the customer is their responsibility. Goods remain the property of the company until paid in full.'),
+('default_labour_hourly_cost', '0'),
 ('timezone', 'Africa/Johannesburg');
 
 -- Markup percentages are starter data. Change them under Pricing levels.
@@ -376,3 +406,125 @@ FROM product_categories c
 JOIN suppliers s ON s.name = 'Internal workshop'
 JOIN users u ON u.email = 'admin@signforge.local'
 WHERE c.name = 'Installation';
+
+-- Phase 3 operations starter data.
+INSERT INTO teams (code, name) SELECT 'DESIGN', 'Design' WHERE NOT EXISTS (SELECT 1 FROM teams WHERE code = 'DESIGN');
+INSERT INTO teams (code, name) SELECT 'PRODUCTION', 'Production' WHERE NOT EXISTS (SELECT 1 FROM teams WHERE code = 'PRODUCTION');
+INSERT INTO teams (code, name) SELECT 'INSTALLATION', 'Installation' WHERE NOT EXISTS (SELECT 1 FROM teams WHERE code = 'INSTALLATION');
+
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Artwork', 'Design and customer proof', 10 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Artwork');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Printing', 'Print the graphics', 20 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Printing');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Lamination', 'Laminate printed graphics', 30 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Lamination');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Cutting', 'Cut to size', 40 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Cutting');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'CNC', 'CNC cutting or routing', 50 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'CNC');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Fabrication', 'Fabricate the structure', 60 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Fabrication');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Painting', 'Paint and finish', 70 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Painting');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Assembly', 'Assemble the sign', 80 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Assembly');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Electrical', 'LED and electrical work', 90 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Electrical');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Quality Control', 'Check the finished work', 100 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Quality Control');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Packing', 'Pack for collection or delivery', 110 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Packing');
+INSERT INTO production_stages (name, description, sort_order)
+SELECT 'Installation', 'Install on site', 120 WHERE NOT EXISTS (SELECT 1 FROM production_stages WHERE name = 'Installation');
+
+INSERT INTO production_route_templates (code, name, description)
+SELECT 'PRINTED_VINYL', 'Printed vinyl', 'Artwork, print, laminate, cut, and quality control.'
+WHERE NOT EXISTS (SELECT 1 FROM production_route_templates WHERE code = 'PRINTED_VINYL');
+INSERT INTO production_route_templates (code, name, description)
+SELECT 'ACM_SIGN', 'ACM sign', 'Artwork, print, laminate, CNC, and quality control.'
+WHERE NOT EXISTS (SELECT 1 FROM production_route_templates WHERE code = 'ACM_SIGN');
+INSERT INTO production_route_templates (code, name, description)
+SELECT 'FABRICATED_SIGN', 'Fabricated sign', 'Artwork, CNC, fabrication, paint, assembly, and quality control.'
+WHERE NOT EXISTS (SELECT 1 FROM production_route_templates WHERE code = 'FABRICATED_SIGN');
+INSERT INTO production_route_templates (code, name, description)
+SELECT 'ILLUMINATED_SIGN', 'Illuminated sign', 'Fabrication plus electrical test and quality control.'
+WHERE NOT EXISTS (SELECT 1 FROM production_route_templates WHERE code = 'ILLUMINATED_SIGN');
+
+INSERT INTO production_route_template_stages (template_id, production_stage_id, sort_order)
+SELECT t.id, s.id, v.sort_order
+FROM (
+    SELECT 'PRINTED_VINYL' AS code, 'Artwork' AS stage, 10 AS sort_order
+    UNION ALL SELECT 'PRINTED_VINYL', 'Printing', 20
+    UNION ALL SELECT 'PRINTED_VINYL', 'Lamination', 30
+    UNION ALL SELECT 'PRINTED_VINYL', 'Cutting', 40
+    UNION ALL SELECT 'PRINTED_VINYL', 'Quality Control', 50
+    UNION ALL SELECT 'ACM_SIGN', 'Artwork', 10
+    UNION ALL SELECT 'ACM_SIGN', 'Printing', 20
+    UNION ALL SELECT 'ACM_SIGN', 'Lamination', 30
+    UNION ALL SELECT 'ACM_SIGN', 'CNC', 40
+    UNION ALL SELECT 'ACM_SIGN', 'Quality Control', 50
+    UNION ALL SELECT 'FABRICATED_SIGN', 'Artwork', 10
+    UNION ALL SELECT 'FABRICATED_SIGN', 'CNC', 20
+    UNION ALL SELECT 'FABRICATED_SIGN', 'Fabrication', 30
+    UNION ALL SELECT 'FABRICATED_SIGN', 'Painting', 40
+    UNION ALL SELECT 'FABRICATED_SIGN', 'Assembly', 50
+    UNION ALL SELECT 'FABRICATED_SIGN', 'Quality Control', 60
+    UNION ALL SELECT 'ILLUMINATED_SIGN', 'Artwork', 10
+    UNION ALL SELECT 'ILLUMINATED_SIGN', 'CNC', 20
+    UNION ALL SELECT 'ILLUMINATED_SIGN', 'Fabrication', 30
+    UNION ALL SELECT 'ILLUMINATED_SIGN', 'Painting', 40
+    UNION ALL SELECT 'ILLUMINATED_SIGN', 'Electrical', 50
+    UNION ALL SELECT 'ILLUMINATED_SIGN', 'Assembly', 60
+    UNION ALL SELECT 'ILLUMINATED_SIGN', 'Quality Control', 70
+) AS v
+INNER JOIN production_route_templates t ON t.code = v.code
+INNER JOIN production_stages s ON s.name = v.stage
+WHERE NOT EXISTS (
+    SELECT 1 FROM production_route_template_stages x
+    WHERE x.template_id = t.id AND x.production_stage_id = s.id
+);
+
+INSERT INTO installation_checklist_templates (name)
+SELECT 'Standard installation'
+WHERE NOT EXISTS (SELECT 1 FROM installation_checklist_templates WHERE name = 'Standard installation');
+
+INSERT INTO installation_checklist_template_items (template_id, label, sort_order)
+SELECT t.id, v.label, v.sort_order
+FROM installation_checklist_templates t
+INNER JOIN (
+    SELECT 'Correct signage loaded' AS label, 10 AS sort_order
+    UNION ALL SELECT 'Tools loaded', 20
+    UNION ALL SELECT 'Fixings loaded', 30
+    UNION ALL SELECT 'Electrical components loaded', 40
+    UNION ALL SELECT 'PPE', 50
+    UNION ALL SELECT 'Site access confirmed', 60
+    UNION ALL SELECT 'Sign installed level', 70
+    UNION ALL SELECT 'Fixings checked', 80
+    UNION ALL SELECT 'Electrical tested', 90
+    UNION ALL SELECT 'Site cleaned', 100
+    UNION ALL SELECT 'Completion photos taken', 110
+    UNION ALL SELECT 'Customer sign-off', 120
+) AS v
+WHERE t.name = 'Standard installation'
+  AND NOT EXISTS (
+      SELECT 1 FROM installation_checklist_template_items i
+      WHERE i.template_id = t.id AND i.label = v.label
+  );
+
+INSERT INTO qc_check_definitions (name, sort_order)
+SELECT v.name, v.sort_order FROM (
+    SELECT 'Correct dimensions' AS name, 10 AS sort_order
+    UNION ALL SELECT 'Correct spelling', 20
+    UNION ALL SELECT 'Correct colours', 30
+    UNION ALL SELECT 'Artwork matches approval', 40
+    UNION ALL SELECT 'Print quality', 50
+    UNION ALL SELECT 'Lamination quality', 60
+    UNION ALL SELECT 'Cut quality', 70
+    UNION ALL SELECT 'Fabrication quality', 80
+    UNION ALL SELECT 'Electrical test', 90
+    UNION ALL SELECT 'Correct quantity', 100
+    UNION ALL SELECT 'Clean and finished', 110
+    UNION ALL SELECT 'Packaging', 120
+    UNION ALL SELECT 'Installation hardware included', 130
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM qc_check_definitions d WHERE d.name = v.name);

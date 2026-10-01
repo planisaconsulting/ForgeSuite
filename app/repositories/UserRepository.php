@@ -15,7 +15,7 @@ final class UserRepository extends Repository
     {
         return $this->one(
             'SELECT u.id, u.name, u.email, u.role_id, r.code AS role_code, r.name AS role_name,
-                    u.active, u.must_change_password, u.last_login_at, u.created_at, u.updated_at
+                    u.active, u.must_change_password, u.hourly_cost, u.last_login_at, u.created_at, u.updated_at
              FROM users u
              INNER JOIN roles r ON r.id = u.role_id
              WHERE u.id = ?

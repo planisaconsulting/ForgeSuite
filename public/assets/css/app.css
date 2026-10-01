@@ -773,3 +773,83 @@ code {
         text-align: left !important;
     }
 }
+
+.sf-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.sf-badge-high {
+    border-color: #e0a15a;
+    color: #f3c48a;
+}
+
+.sf-badge-urgent {
+    background: #3a2a12;
+    border-color: #e0a15a;
+    color: #f6d7a8;
+}
+
+.sf-badge-low {
+    color: #9aa3b2;
+}
+
+.sf-row-overdue td {
+    box-shadow: inset 3px 0 0 #e0a15a;
+}
+
+.sf-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.5rem 0 1rem;
+}
+
+.sf-tabs a {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    color: inherit;
+    padding: 0.45rem 0.8rem;
+    text-decoration: none;
+}
+
+.sf-tabs a.is-active {
+    background: #ff7a1a;
+    border-color: #ff7a1a;
+    color: #1c1208;
+}
+
+.sf-board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(12rem, 1fr));
+    gap: 0.75rem;
+    overflow-x: auto;
+}
+
+.sf-board-col {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    min-height: 12rem;
+}
+
+.sf-board-card,
+.sf-workshop-card {
+    background: #171b21;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    padding: 0.85rem;
+    margin-bottom: 0.6rem;
+}
+
+.sf-check {
+    width: 1.4rem;
+    height: 1.4rem;
+}

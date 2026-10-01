@@ -357,8 +357,113 @@ $router->get('/quotes/{id}/print', static function (string $id): void {
 $router->get('/jobs', static function (): void {
     (new JobController())->index();
 }, true, 'jobs.view');
+$router->get('/jobs/board', static function (): void {
+    (new JobController())->board();
+}, true, 'production.view');
+$router->get('/jobs/workshop', static function (): void {
+    (new JobController())->workshop();
+}, true, 'production.view');
+$router->get('/jobs/design', static function (): void {
+    (new JobController())->design();
+}, true, 'jobs.view');
+$router->get('/jobs/installations', static function (): void {
+    (new JobController())->installations();
+}, true, 'installations.view');
+$router->get('/jobs/schedule', static function (): void {
+    (new JobController())->schedule();
+}, true, 'production.view');
+$router->get('/jobs/setup', static function (): void {
+    (new JobController())->setup();
+}, true, 'settings.manage');
+$router->post('/jobs/setup/stages', static function (): void {
+    (new JobController())->saveStage();
+}, true, true, 'settings.manage');
+$router->post('/jobs/setup/templates', static function (): void {
+    (new JobController())->saveTemplate();
+}, true, true, 'settings.manage');
+$router->post('/jobs/setup/teams', static function (): void {
+    (new JobController())->saveTeam();
+}, true, true, 'settings.manage');
 $router->get('/jobs/{id}', static function (string $id): void {
     (new JobController())->show($id);
+}, true, 'jobs.view');
+$router->post('/jobs/{id}', static function (string $id): void {
+    (new JobController())->save($id);
+}, true, true, 'jobs.edit');
+$router->post('/jobs/{id}/status', static function (string $id): void {
+    (new JobController())->status($id);
+}, true, true, 'jobs.view');
+$router->post('/jobs/{id}/tasks', static function (string $id): void {
+    (new JobController())->task($id);
+}, true, true, 'jobs.view');
+$router->post('/jobs/{id}/tasks/{taskId}', static function (string $id, string $taskId): void {
+    (new JobController())->taskStatus($id, $taskId);
+}, true, true, 'jobs.view');
+$router->post('/jobs/{id}/route', static function (string $id): void {
+    (new JobController())->route($id);
+}, true, true, 'production.update');
+$router->post('/jobs/{id}/stages/{stageId}', static function (string $id, string $stageId): void {
+    (new JobController())->stage($id, $stageId);
+}, true, true, 'production.update');
+$router->post('/jobs/{id}/items/{itemId}', static function (string $id, string $itemId): void {
+    (new JobController())->itemStatus($id, $itemId);
+}, true, true, 'production.update');
+$router->post('/jobs/{id}/artwork', static function (string $id): void {
+    (new JobController())->artwork($id);
+}, true, true, 'artwork.upload');
+$router->post('/jobs/{id}/artwork/{artworkId}/status', static function (string $id, string $artworkId): void {
+    (new JobController())->artworkStatus($id, $artworkId);
+}, true, true, 'artwork.upload');
+$router->post('/jobs/{id}/artwork/{artworkId}/approval', static function (string $id, string $artworkId): void {
+    (new JobController())->approval($id, $artworkId);
+}, true, true, 'artwork.approve_record');
+$router->get('/jobs/{id}/artwork/{artworkId}/file', static function (string $id, string $artworkId): void {
+    (new JobController())->artworkFile($id, $artworkId);
+}, true, 'jobs.view');
+$router->post('/jobs/{id}/material', static function (string $id): void {
+    (new JobController())->material($id);
+}, true, true, 'materials.record_usage');
+$router->post('/jobs/{id}/requirements', static function (string $id): void {
+    (new JobController())->requirement($id);
+}, true, true, 'jobs.view');
+$router->post('/jobs/{id}/time', static function (string $id): void {
+    (new JobController())->time($id);
+}, true, true, 'time.record');
+$router->post('/jobs/{id}/timer/start', static function (string $id): void {
+    (new JobController())->timerStart($id);
+}, true, true, 'time.record');
+$router->post('/jobs/{id}/timer/stop', static function (string $id): void {
+    (new JobController())->timerStop($id);
+}, true, true, 'time.record');
+$router->post('/jobs/{id}/costs', static function (string $id): void {
+    (new JobController())->other($id);
+}, true, true, 'costing.edit');
+$router->post('/jobs/{id}/quality', static function (string $id): void {
+    (new JobController())->quality($id);
+}, true, true, 'production.update');
+$router->post('/jobs/{id}/installations', static function (string $id): void {
+    (new JobController())->installation($id);
+}, true, true, 'installations.schedule');
+$router->post('/jobs/{id}/installations/{installationId}', static function (string $id, string $installationId): void {
+    (new JobController())->installationUpdate($id, $installationId);
+}, true, true, 'installations.view');
+$router->post('/jobs/{id}/installations/{installationId}/checklist/{itemId}', static function (string $id, string $installationId, string $itemId): void {
+    (new JobController())->checklist($id, $installationId, $itemId);
+}, true, true, 'installations.view');
+$router->post('/jobs/{id}/installations/{installationId}/photo', static function (string $id, string $installationId): void {
+    (new JobController())->photo($id, $installationId);
+}, true, true, 'installations.view');
+$router->post('/jobs/{id}/files', static function (string $id): void {
+    (new JobController())->jobFile($id);
+}, true, true, 'attachments.manage');
+$router->post('/jobs/{id}/archive', static function (string $id): void {
+    (new JobController())->archive($id);
+}, true, true, 'jobs.complete');
+$router->get('/jobs/{id}/card', static function (string $id): void {
+    (new JobController())->card($id);
+}, true, 'jobs.view');
+$router->get('/jobs/{id}/card.pdf', static function (string $id): void {
+    (new JobController())->cardPdf($id);
 }, true, 'jobs.view');
 
 $router->post('/attachments/{type}/{id}', static function (string $type, string $id): void {
@@ -371,9 +476,6 @@ $router->get('/attachments/{id}', static function (string $id): void {
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);
 };
-$router->get('/production', static function () use ($soon): void {
-    $soon('production');
-});
 $router->get('/stock', static function () use ($soon): void {
     $soon('stock');
 });

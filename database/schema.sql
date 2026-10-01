@@ -131,6 +131,7 @@ CREATE TABLE users (
     role_id INT UNSIGNED NOT NULL,
     active TINYINT(1) NOT NULL DEFAULT 1,
     must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+    hourly_cost DECIMAL(14,2) NULL,
     last_login_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -627,11 +628,41 @@ CREATE TABLE jobs (
     customer_id INT UNSIGNED NOT NULL,
     quote_id INT UNSIGNED NOT NULL,
     quote_revision_number INT UNSIGNED NOT NULL,
+    opportunity_id INT UNSIGNED NULL,
     title VARCHAR(180) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'NEW',
+    description TEXT NULL,
+    status VARCHAR(40) NOT NULL DEFAULT 'NEW',
     priority VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
     assigned_to INT UNSIGNED NULL,
+    project_manager_id INT UNSIGNED NULL,
     target_date DATE NULL,
+    production_due_date DATE NULL,
+    installation_date DATE NULL,
+    delivery_method VARCHAR(20) NOT NULL DEFAULT 'INSTALLATION',
+    site_address TEXT NULL,
+    site_contact_name VARCHAR(120) NULL,
+    site_contact_phone VARCHAR(40) NULL,
+    customer_po_number VARCHAR(80) NULL,
+    quoted_revenue_snapshot DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    quoted_cost_snapshot DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    actual_material_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    actual_labour_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    actual_other_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    actual_total_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    customer_notes TEXT NULL,
+    production_notes TEXT NULL,
+    installation_notes TEXT NULL,
+    internal_notes TEXT NULL,
+    artwork_override_by INT UNSIGNED NULL,
+    artwork_override_reason VARCHAR(255) NULL,
+    artwork_override_at TIMESTAMP NULL DEFAULT NULL,
+    completion_override_by INT UNSIGNED NULL,
+    completion_override_reason VARCHAR(255) NULL,
+    completion_override_at TIMESTAMP NULL DEFAULT NULL,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    completed_by INT UNSIGNED NULL,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    archived TINYINT(1) NOT NULL DEFAULT 0,
     created_by INT UNSIGNED NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -640,17 +671,36 @@ CREATE TABLE jobs (
     UNIQUE KEY uq_jobs_quote (quote_id),
     KEY idx_jobs_customer (customer_id),
     KEY idx_jobs_status (status),
+    KEY idx_jobs_target (target_date),
+    KEY idx_jobs_assigned (assigned_to),
+    KEY idx_jobs_install (installation_date),
+    KEY idx_jobs_opportunity (opportunity_id),
     CONSTRAINT fk_jobs_customer
         FOREIGN KEY (customer_id) REFERENCES customers (id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_jobs_quote
         FOREIGN KEY (quote_id) REFERENCES quotes (id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_jobs_opportunity
+        FOREIGN KEY (opportunity_id) REFERENCES sales_opportunities (id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_jobs_assigned
         FOREIGN KEY (assigned_to) REFERENCES users (id)
         ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_jobs_manager
+        FOREIGN KEY (project_manager_id) REFERENCES users (id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_jobs_created_by
         FOREIGN KEY (created_by) REFERENCES users (id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_jobs_artwork_override
+        FOREIGN KEY (artwork_override_by) REFERENCES users (id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_jobs_completion_override
+        FOREIGN KEY (completion_override_by) REFERENCES users (id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_jobs_completed_by
+        FOREIGN KEY (completed_by) REFERENCES users (id)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -661,6 +711,8 @@ CREATE TABLE attachments (
     original_filename VARCHAR(255) NOT NULL,
     stored_filename VARCHAR(255) NOT NULL,
     mime_type VARCHAR(120) NOT NULL,
+    purpose VARCHAR(40) NOT NULL DEFAULT 'GENERAL',
+    notes VARCHAR(255) NULL,
     file_size INT UNSIGNED NOT NULL,
     uploaded_by INT UNSIGNED NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -671,6 +723,384 @@ CREATE TABLE attachments (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+CREATE TABLE teams (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(80) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_teams_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE team_members (
+    team_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (team_id, user_id),
+    KEY idx_team_members_user (user_id),
+    CONSTRAINT fk_team_members_team FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_team_members_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE production_stages (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(80) NOT NULL,
+    description VARCHAR(255) NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_production_stages_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE production_route_templates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    description VARCHAR(255) NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_route_templates_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE production_route_template_stages (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    template_id INT UNSIGNED NOT NULL,
+    production_stage_id INT UNSIGNED NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_template_stage (template_id, production_stage_id),
+    KEY idx_template_stages_sort (template_id, sort_order),
+    CONSTRAINT fk_template_stages_template FOREIGN KEY (template_id) REFERENCES production_route_templates (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_template_stages_stage FOREIGN KEY (production_stage_id) REFERENCES production_stages (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    quote_item_id INT UNSIGNED NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    product_id INT UNSIGNED NULL,
+    description TEXT NULL,
+    internal_description TEXT NULL,
+    width_mm DECIMAL(14,2) NULL,
+    height_mm DECIMAL(14,2) NULL,
+    length_mm DECIMAL(14,2) NULL,
+    quantity DECIMAL(14,4) NOT NULL DEFAULT 1.0000,
+    production_status VARCHAR(20) NOT NULL DEFAULT 'NOT_STARTED',
+    artwork_required TINYINT(1) NOT NULL DEFAULT 1,
+    installation_required TINYINT(1) NOT NULL DEFAULT 0,
+    notes TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_items_job (job_id, sort_order),
+    KEY idx_job_items_quote_item (quote_item_id),
+    CONSTRAINT fk_job_items_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_items_quote_item FOREIGN KEY (quote_item_id) REFERENCES quote_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_items_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_tasks (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    title VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    task_type VARCHAR(40) NOT NULL DEFAULT 'OTHER',
+    assigned_to INT UNSIGNED NULL,
+    assigned_team_id INT UNSIGNED NULL,
+    priority VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
+    status VARCHAR(20) NOT NULL DEFAULT 'TODO',
+    due_date DATE NULL,
+    started_at TIMESTAMP NULL DEFAULT NULL,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    estimated_minutes INT UNSIGNED NULL,
+    actual_minutes INT UNSIGNED NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_tasks_job (job_id, sort_order),
+    KEY idx_job_tasks_assigned (assigned_to),
+    KEY idx_job_tasks_status (status),
+    KEY idx_job_tasks_due (due_date),
+    CONSTRAINT fk_job_tasks_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_tasks_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_tasks_user FOREIGN KEY (assigned_to) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_tasks_team FOREIGN KEY (assigned_team_id) REFERENCES teams (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_tasks_created FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_production_stages (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    production_stage_id INT UNSIGNED NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'NOT_STARTED',
+    assigned_to INT UNSIGNED NULL,
+    started_at TIMESTAMP NULL DEFAULT NULL,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_stages_job (job_id, sort_order),
+    KEY idx_job_stages_status (status),
+    CONSTRAINT fk_job_stages_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_stages_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_stages_stage FOREIGN KEY (production_stage_id) REFERENCES production_stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_job_stages_user FOREIGN KEY (assigned_to) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_artworks (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    title VARCHAR(180) NOT NULL,
+    revision_number INT UNSIGNED NOT NULL DEFAULT 1,
+    original_filename VARCHAR(255) NOT NULL,
+    stored_filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(120) NOT NULL,
+    file_size INT UNSIGNED NOT NULL,
+    status VARCHAR(40) NOT NULL DEFAULT 'DRAFT',
+    uploaded_by INT UNSIGNED NULL,
+    uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    customer_approved TINYINT(1) NOT NULL DEFAULT 0,
+    customer_approved_at TIMESTAMP NULL DEFAULT NULL,
+    customer_approved_by VARCHAR(120) NULL,
+    notes TEXT NULL,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_artworks_job (job_id, title, revision_number),
+    CONSTRAINT fk_job_artworks_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_artworks_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_artworks_user FOREIGN KEY (uploaded_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE artwork_approvals (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_artwork_id INT UNSIGNED NOT NULL,
+    approval_status VARCHAR(40) NOT NULL,
+    customer_name VARCHAR(120) NOT NULL,
+    approval_method VARCHAR(20) NOT NULL,
+    reference VARCHAR(120) NULL,
+    notes TEXT NULL,
+    approved_at TIMESTAMP NULL DEFAULT NULL,
+    recorded_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_artwork_approvals_art (job_artwork_id),
+    CONSTRAINT fk_artwork_approvals_art FOREIGN KEY (job_artwork_id) REFERENCES job_artworks (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_artwork_approvals_user FOREIGN KEY (recorded_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_material_requirements (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    product_id INT UNSIGNED NULL,
+    required_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    unit VARCHAR(20) NOT NULL DEFAULT 'unit',
+    calculated_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    manual_adjustment DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    final_required_quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    source VARCHAR(20) NOT NULL DEFAULT 'MANUAL',
+    notes VARCHAR(255) NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_requirements_job (job_id),
+    CONSTRAINT fk_job_requirements_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_requirements_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_requirements_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_requirements_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_material_usage (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    product_id INT UNSIGNED NULL,
+    usage_type VARCHAR(20) NOT NULL,
+    quantity DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    unit VARCHAR(20) NOT NULL DEFAULT 'unit',
+    unit_cost_snapshot DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    total_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    reason VARCHAR(40) NULL,
+    notes VARCHAR(255) NULL,
+    recorded_by INT UNSIGNED NULL,
+    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_usage_job (job_id),
+    KEY idx_job_usage_product (product_id),
+    CONSTRAINT fk_job_usage_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_usage_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_usage_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_usage_user FOREIGN KEY (recorded_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_time_entries (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    task_id INT UNSIGNED NULL,
+    user_id INT UNSIGNED NOT NULL,
+    work_type VARCHAR(40) NOT NULL DEFAULT 'OTHER',
+    started_at TIMESTAMP NULL DEFAULT NULL,
+    ended_at TIMESTAMP NULL DEFAULT NULL,
+    minutes INT UNSIGNED NOT NULL DEFAULT 0,
+    hourly_cost_snapshot DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    total_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    description VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_time_job (job_id),
+    KEY idx_job_time_user (user_id),
+    KEY idx_job_time_open (user_id, ended_at),
+    CONSTRAINT fk_job_time_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_time_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_time_task FOREIGN KEY (task_id) REFERENCES job_tasks (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_time_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_other_costs (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    cost_type VARCHAR(40) NOT NULL,
+    description VARCHAR(180) NOT NULL,
+    supplier_id INT UNSIGNED NULL,
+    quantity DECIMAL(14,4) NOT NULL DEFAULT 1.0000,
+    unit_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    total_cost DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    reference VARCHAR(80) NULL,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_other_job (job_id),
+    CONSTRAINT fk_job_other_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_other_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_other_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_installations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    scheduled_date DATE NULL,
+    scheduled_start_time TIME NULL,
+    estimated_duration_minutes INT UNSIGNED NULL,
+    site_address TEXT NULL,
+    site_contact_name VARCHAR(120) NULL,
+    site_contact_phone VARCHAR(40) NULL,
+    assigned_team_id INT UNSIGNED NULL,
+    assigned_user_id INT UNSIGNED NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'NOT_SCHEDULED',
+    arrival_time TIMESTAMP NULL DEFAULT NULL,
+    started_at TIMESTAMP NULL DEFAULT NULL,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    installation_notes TEXT NULL,
+    completion_notes TEXT NULL,
+    customer_signoff_name VARCHAR(120) NULL,
+    signoff_date DATE NULL,
+    signoff_notes VARCHAR(255) NULL,
+    version_number INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_installations_job (job_id),
+    KEY idx_job_installations_date (scheduled_date),
+    KEY idx_job_installations_status (status),
+    CONSTRAINT fk_job_installations_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_installations_team FOREIGN KEY (assigned_team_id) REFERENCES teams (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_installations_user FOREIGN KEY (assigned_user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_installations_created FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE installation_checklist_templates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(120) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE installation_checklist_template_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    template_id INT UNSIGNED NOT NULL,
+    label VARCHAR(180) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_install_template_items (template_id, sort_order),
+    CONSTRAINT fk_install_template_items FOREIGN KEY (template_id) REFERENCES installation_checklist_templates (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE installation_checklist_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    installation_id INT UNSIGNED NOT NULL,
+    label VARCHAR(180) NOT NULL,
+    checked TINYINT(1) NOT NULL DEFAULT 0,
+    checked_by INT UNSIGNED NULL,
+    checked_at TIMESTAMP NULL DEFAULT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_install_checks (installation_id, sort_order),
+    CONSTRAINT fk_install_checks_installation FOREIGN KEY (installation_id) REFERENCES job_installations (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_install_checks_user FOREIGN KEY (checked_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE qc_check_definitions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(120) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_qc_definitions_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_quality_checks (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    job_item_id INT UNSIGNED NULL,
+    check_type VARCHAR(120) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    notes VARCHAR(255) NULL,
+    rework_task_id INT UNSIGNED NULL,
+    checked_by INT UNSIGNED NULL,
+    checked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_qc_job (job_id),
+    CONSTRAINT fk_job_qc_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_qc_item FOREIGN KEY (job_item_id) REFERENCES job_items (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_qc_task FOREIGN KEY (rework_task_id) REFERENCES job_tasks (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_job_qc_user FOREIGN KEY (checked_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE job_status_history (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    job_id INT UNSIGNED NOT NULL,
+    old_status VARCHAR(40) NULL,
+    new_status VARCHAR(40) NOT NULL,
+    changed_by INT UNSIGNED NULL,
+    notes VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_job_status_job (job_id, created_at),
+    CONSTRAINT fk_job_status_job FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_job_status_user FOREIGN KEY (changed_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 ALTER TABLE crm_activities
     ADD CONSTRAINT fk_activities_opportunity

@@ -8,6 +8,8 @@ use App\Helpers\View;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DashboardRepository;
+use App\Repositories\JobRepository;
+use App\Repositories\OperationsRepository;
 use App\Repositories\OpportunityRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\QuoteRepository;
@@ -40,6 +42,8 @@ final class DashboardController
             'priceChanges' => can('products.view') ? (new ProductRepository())->recentPriceChanges(5) : [],
             'sales' => $sales,
             'pipeline' => $pipeline,
+            'operations' => can('jobs.view') ? (new JobRepository())->operationsDesk() : null,
+            'productionActivity' => can('jobs.view') ? (new OperationsRepository())->recentProduction() : [],
             'desk' => [
                 'vat' => SettingsService::get('default_vat_percent', '15'),
                 'currency' => SettingsService::get('currency_code', 'ZAR'),

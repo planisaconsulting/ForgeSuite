@@ -1,6 +1,6 @@
 # Sign-Forge Management System
 
-Staff application for **Sign-Forge Signs**. Phase 1 is the foundation: sign-in, company settings, customers, the catalogue, and the pricing engine. Later phases add quotations, jobs, stock, and invoices on top of these tables. They are not built yet.
+Staff application for **Sign-Forge Signs**. Phase 1 is the foundation: sign-in, company settings, customers, the catalogue, and the pricing engine. Phase 2 adds opportunities and quotations. Phase 3 runs the job after an accepted quote: artwork, production, materials actually used, labour, installation, and job costing. Stock movements and invoices are not built yet.
 
 The application name in the interface is Sign-Forge Management System. The company name (Sign-Forge Signs) comes from settings and can be changed without editing code.
 
@@ -157,13 +157,17 @@ ADMIN, SALES, DESIGN, PRODUCTION, ACCOUNTS, and INSTALLER. ADMIN can open every 
 ```bash
 php tests/calculations.php
 php tests/quotes.php
+php tests/operations.php
 php tests/sales_flow.php
+php tests/jobs_flow.php
 php tests/acceptance.php http://127.0.0.1:8741
 ```
 
 `calculations.php` does not need the database. It checks area, linear, unit, manufacturing waste, roll consumption, the threshold warning, actual / consumed-width / manual modes, sheet actual and full-sheet charging, markup, gross profit, and gross margin. It runs the checks with bcmath and again with the string fallback.
 
 `quotes.php` checks quote-line snapshots and quote totals: discounts, VAT modes, deposits, optional lines, and a saved cost that survives a later catalogue change. It does not need the database.
+
+`operations.php` checks job gross profit, gross margin, cost variance, material variance, and labour-time variance without a database. It also checks that a completed job stays locked and that collection work does not require installation.
 
 `sales_flow.php` needs the database. It creates a quotation, keeps the saved cost after the product price changes, refreshes prices onto a new revision, accepts the quote, converts it to one job, and checks the customer PDF.
 
@@ -198,7 +202,7 @@ VAT mode is exclusive, inclusive, or none. The rate is copied from settings when
 
 Customer PDFs are built with Dompdf from the saved quote. Costs, markup, gross profit, internal notes, waste, and supplier details stay off that document. Files are named `SFQ-2026-0001-R1.pdf`.
 
-An accepted quote is locked. Convert to job creates one `jobs` row in status NEW and, when the quote belongs to an opportunity, marks that opportunity won. Production is not implemented. The job page says production management arrives in Phase 3.
+An accepted quote is locked. Convert to job creates one `jobs` row in status NEW and, when the quote belongs to an opportunity, marks that opportunity won. The conversion also copies included quote lines into job items and stores the quoted revenue and quoted cost. Optional lines that were not included stay off the job.
 
 Deposit fields record what the customer must pay before work starts. They are not receipts, invoices, or ledger entries.
 
@@ -210,6 +214,32 @@ Then import `database/migrations/002_sales_and_quotes.sql` once. It adds opportu
 
 A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `002` on a database created from the current `schema.sql`.
 
-## Phase 3, when you ask for it
+## Phase 3 operations
 
-Turn the job hand-off into operational jobs: artwork, proofs, tasks, production stages, scheduling, stock reservations, installation, and job costing against the accepted quotation. Do not start that until Phase 2 is accepted. Invoicing and stock movements stay later as well.
+Accepted quote → job → artwork → customer approval → production route → material usage → labour → quality control → installation or collection → completion → actual cost.
+
+Job numbers stay on the Phase 2 counter: `SFJ-2026-0001`.
+
+The job page is tabbed: overview, artwork, tasks, production, materials, time and labour, installation, files, costing, and activity. Costing is hidden from roles without `costing.view`. The printable job card and its PDF leave markup, margin, and selling prices off the page.
+
+Quoted revenue is the accepted quotation's ex-VAT amount. It is not money received. Gross profit is quoted revenue minus actual cost. Gross margin is that profit divided by quoted revenue. Markup is not used on the costing tab.
+
+Actual cost is the sum of material usage, labour time, and other costs. Each material row stores the product cost at the moment it was recorded. Each time row stores the internal hourly cost. Later catalogue or wage changes do not rewrite those rows. Recording usage does not move stock. `MaterialUsageService` accepts a `StockConsumptionHook` so Phase 4 can attach stock movements without a second stock table.
+
+A production route template is copied onto the job. Editing the job's stages does not change the template. Tasks are not created automatically at conversion.
+
+Artwork revisions are kept. A new upload of the same title marks the older file superseded. Customer approval is a staff record of an email, phone call, or signed copy. It is not an electronic signature. Moving into production while required artwork is unapproved stops with "Artwork has not been approved by the customer." unless someone with `artwork.override_approval` records a reason.
+
+Collection, delivery, and courier jobs can be completed without an installation visit. Installation jobs cannot, unless someone with `jobs.complete` records an override reason.
+
+## Upgrading a Phase 2 database
+
+Back up the database first. Export it from the host panel and keep that file off the server. Confirm the export contains `users`, `quotes`, and `jobs` before you change anything.
+
+Then import `database/migrations/003_jobs_operations.sql` once. It widens job status, adds the operational tables, and inserts permissions, teams, stages, route templates, and checklists. It does not drop Phase 1 or Phase 2 rows. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `003` on a database created from the current `schema.sql`.
+
+## Phase 4, when you ask for it
+
+Stock locations, stock movements, roll and sheet tracking, offcuts, purchase orders, goods receiving, supplier orders, reservations, allocations, low-stock alerts, and stock valuation. Connect those movements through `StockConsumptionHook` on material usage. Invoicing, deposits as receipts, payments, credit notes, and statements stay after that. Do not start them until Phase 3 is accepted.

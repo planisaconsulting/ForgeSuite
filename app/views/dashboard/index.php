@@ -126,11 +126,43 @@
 </section>
 <?php endif; ?>
 
+<?php if ($operations !== null): ?>
+<section class="sf-panel mt-3">
+    <div class="sf-panel-head"><h2>Workshop desk</h2></div>
+    <div class="row g-3 p-3">
+        <?php foreach ([
+            'Jobs today' => $operations['today'],
+            'Overdue' => $operations['overdue'],
+            'Awaiting artwork' => $operations['artwork'],
+            'Awaiting approval' => $operations['approval'],
+            'Ready for production' => $operations['ready'],
+            'In production' => $operations['producing'],
+            'Quality control' => $operations['qc'],
+            'Installations today' => $operations['install_today'],
+            'Installations this week' => $operations['install_week'],
+            'Completed this month' => $operations['completed_month'],
+        ] as $label => $value): ?>
+            <div class="col-6 col-lg-3">
+                <p class="sf-kicker"><?= e($label) ?></p>
+                <p class="sf-stat-value"><?= e((string) $value) ?></p>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <?php if ($productionActivity !== []): ?>
+        <div class="px-3 pb-3">
+            <h3 class="h6">Recent production activity</h3>
+            <?php foreach ($productionActivity as $event): ?>
+                <p class="mb-1"><a href="<?= e(url('/jobs/' . $event['entity_id'])) ?>"><?= e((string) $event['job_number']) ?></a> · <?= e(str_replace('_', ' ', (string) $event['action'])) ?> · <?= e(format_datetime((string) $event['created_at'])) ?></p>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</section>
+<?php endif; ?>
+
 <section class="sf-panel mt-3">
     <div class="sf-panel-head"><h2>Later modules</h2></div>
     <div class="row g-3 p-3">
         <?php foreach ([
-            'Jobs in production' => 'Production stages are not stored yet. A job record only records the hand-off from an accepted quote.',
             'Outstanding invoices' => 'Invoices are not stored yet.',
             'Low stock' => 'Stock movements are not stored yet. A product can be flagged for tracking only.',
         ] as $label => $note): ?>

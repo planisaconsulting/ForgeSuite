@@ -35,6 +35,7 @@ final class SettingsService
         'job_prefix' => 'Job prefix',
         'default_quote_validity_days' => 'Default quote validity (days)',
         'default_quote_terms' => 'Default quotation terms',
+        'default_labour_hourly_cost' => 'Default internal labour cost per hour',
         'timezone' => 'Timezone',
     ];
 

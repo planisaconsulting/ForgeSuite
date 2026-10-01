@@ -16,7 +16,12 @@ $groups = [
     ]],
     ['label' => 'Operations', 'links' => [
         ['jobs', 'Jobs', '/jobs', 'fa-clipboard-list', 'jobs.view'],
-        ['production', 'Production', null, 'fa-industry', null],
+        ['workshop', 'Workshop', '/jobs/workshop', 'fa-industry', 'production.view'],
+        ['board', 'Production board', '/jobs/board', 'fa-table-columns', 'production.view'],
+        ['design', 'Design', '/jobs/design', 'fa-pen-ruler', 'jobs.view'],
+        ['schedule', 'Schedule', '/jobs/schedule', 'fa-calendar-day', 'production.view'],
+        ['installations', 'Installations', '/jobs/installations', 'fa-location-dot', 'installations.view'],
+        ['setup', 'Production setup', '/jobs/setup', 'fa-sliders', 'settings.manage'],
     ]],
     ['label' => 'Inventory', 'links' => [
         ['products', 'Products', '/products', 'fa-box', 'products.view'],

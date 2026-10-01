@@ -1,6 +1,10 @@
 // Shell behaviour only. Pricing math will live in calculator.js
 // so the browser total can never become the number that is saved.
 (function () {
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(function () {});
+    }
+
     var showPassword = document.getElementById("show_password");
     var password = document.getElementById("password");
     if (showPassword && password) {

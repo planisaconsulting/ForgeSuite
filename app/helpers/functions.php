@@ -505,6 +505,35 @@ function format_datetime(?string $value): string
     return $dt->format('d M Y H:i');
 }
 
+function priority_badge(string $priority): string
+{
+    $priority = strtoupper($priority);
+    $class = match ($priority) {
+        'URGENT' => 'sf-badge sf-badge-urgent',
+        'HIGH' => 'sf-badge sf-badge-high',
+        'LOW' => 'sf-badge sf-badge-low',
+        default => 'sf-badge',
+    };
+    $label = match ($priority) {
+        'URGENT' => 'Urgent',
+        'HIGH' => 'High',
+        'LOW' => 'Low',
+        default => 'Normal',
+    };
+
+    return '<span class="' . $class . '">' . e($label) . '</span>';
+}
+
+function job_overdue(array $job): bool
+{
+    $date = (string) ($job['target_date'] ?? '');
+    if ($date === '' || $date >= date('Y-m-d')) {
+        return false;
+    }
+
+    return !in_array((string) ($job['status'] ?? ''), ['COMPLETED', 'CANCELLED'], true);
+}
+
 function enum_label(string $class, string $value): string
 {
     if (!enum_exists($class)) {

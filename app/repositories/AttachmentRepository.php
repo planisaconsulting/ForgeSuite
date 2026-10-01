@@ -36,11 +36,12 @@ final class AttachmentRepository extends Repository
     {
         $this->run(
             'INSERT INTO attachments (
-                entity_type, entity_id, original_filename, stored_filename, mime_type, file_size, uploaded_by
-             ) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                entity_type, entity_id, original_filename, stored_filename, mime_type, purpose, notes, file_size, uploaded_by
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $data['entity_type'], $data['entity_id'], $data['original_filename'],
-                $data['stored_filename'], $data['mime_type'], $data['file_size'], $data['uploaded_by'],
+                $data['stored_filename'], $data['mime_type'], $data['purpose'] ?? 'GENERAL',
+                $data['notes'] ?? null, $data['file_size'], $data['uploaded_by'],
             ]
         );
 
