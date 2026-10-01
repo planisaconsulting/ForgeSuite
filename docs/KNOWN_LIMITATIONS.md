@@ -1,0 +1,21 @@
+# Known limitations
+
+v1.0.0 is a signage operations system. It is not a full accounting ledger, payroll, HR suite, CAD or CAM package, RIP, professional wrap-nesting tool, bank, or occupational safety system.
+
+- No live Sage, Xero, QuickBooks, or PayFast connection. The payment and accounting hooks are ready and stay off until configured.
+- No self-service password reset email. An administrator sets a new password.
+- Login limiting by address counts failures recorded for that address. It is not a distributed denial-of-service shield.
+- Content-Security-Policy allows inline scripts because several existing screens use them. A nonce migration is backlog.
+- Geometric nesting is a rectangular helper. It does not replace vehicle-wrap nesting software.
+- No route optimisation and no continuous GPS.
+- Offline mode does not edit prices, invoices, payments, stock, or approvals.
+- IndexedDB encryption is the phone browser’s, not a hardware claim.
+- Push notifications are stored. Nothing is sent to a lock screen until a provider is configured. `push_enabled` is off.
+- The server does not resize images. The phone compresses them. There is no GD or Imagick requirement.
+- Capacity planning hours can be passed on the query string for that screen.
+- Quote-created events can see a zero total until lines exist.
+- Workflow chains stop at depth three.
+- A changed phone clock can extend local viewing of a field pack until the next online sign-in.
+- The 1 October 2026 restore drill validated a SQL copy. It did not boot a second web server on that copy.
+- Physical label printers, iPhone Home Screen, and a workshop TV were not exercised in the build environment.
+- PageController still contains early “later phase” notes for modules that now exist. Those routes are not the live quote and job screens. Cleaning that copy is backlog, not a behaviour change.

@@ -2,6 +2,7 @@
     <img class="sf-auth-mark" src="<?= e(asset('assets/images/mark.svg')) ?>" alt="" width="48" height="48">
     <h1>Sign in</h1>
     <p class="sf-muted">Sign-Forge Management System. Use the staff account an administrator gave you.</p>
+    <p class="sf-muted"><?= e(\App\Services\RuntimeService::releaseLabel()) ?></p>
 
     <?php if (!empty($error)): ?>
         <div class="alert alert-danger sf-alert" role="alert"><?= e($error) ?></div>

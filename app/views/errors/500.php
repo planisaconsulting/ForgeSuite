@@ -15,7 +15,8 @@
 <body>
     <main>
         <h1>Something went wrong</h1>
-        <p>The pricing desk hit an error. The detail has been written to the application log.</p>
+        <p>The request was not completed. Quote the reference if you ask for help. Passwords and database details are not shown here.</p>
+        <p>Reference: <?= htmlspecialchars((string) ($GLOBALS['sf_error_id'] ?? 'ERR-UNKNOWN'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
         <?php if (!empty($debug) && isset($e) && $e instanceof Throwable): ?>
             <pre><?= htmlspecialchars($e->getMessage() . "\n" . $e->getFile() . ':' . $e->getLine(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></pre>
         <?php endif; ?>

@@ -45,7 +45,13 @@ final class SystemHealthService
             'app_version' => Version::NUMBER,
             'last_migration' => $migrations === [] ? '' : basename((string) end($migrations)),
             'last_cron' => (string) (SettingsService::get('last_cron_at', '') ?? ''),
+            'last_cron_status' => (string) (SettingsService::get('last_cron_status', '') ?? ''),
+            'last_cron_started' => (string) (SettingsService::get('last_cron_started_at', '') ?? ''),
             'last_backup' => $backup === null ? '' : (string) ($backup['completed_at'] ?? $backup['started_at']),
+            'failed_sync' => $this->failedSync(),
+            'environment' => (string) config('app.env', ''),
+            'maintenance' => SettingsService::get('maintenance_mode', '0') === '1',
+            'release' => Version::NAME . ' v' . Version::NUMBER,
             'failed_automations' => $this->automation->failedSince(date('Y-m-d H:i:s', time() - 7 * 86400)),
             'website_leads' => 'Healthy',
             'email_status' => $this->emailStatus(),
@@ -111,6 +117,19 @@ final class SystemHealthService
         }
 
         return $removed;
+    }
+
+    private function failedSync(): int
+    {
+        try {
+            $row = \App\Helpers\Database::connection()->query(
+                "SELECT COUNT(*) AS n FROM sync_operations WHERE status = 'FAILED'"
+            )->fetch();
+
+            return (int) ($row['n'] ?? 0);
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 
     private function emailStatus(): string

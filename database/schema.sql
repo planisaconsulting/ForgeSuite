@@ -1,5 +1,5 @@
 -- Sign-Forge Management System
--- Current schema (Phases 1 to 14)
+-- Current schema (Phases 1 to 15)
 --
 -- Import this into an EMPTY database, or run database/install.php --force
 -- on a development copy. It drops the Sign-Forge tables first.
@@ -2064,6 +2064,7 @@ CREATE TABLE login_events (
     PRIMARY KEY (id),
     KEY idx_login_events_user (user_id, created_at),
     KEY idx_login_events_created (created_at),
+    KEY idx_login_events_ip_created (ip_address, created_at),
     CONSTRAINT fk_login_events_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -21,7 +21,7 @@ final class AuthService
 
     public function attempt(string $email, string $password, bool $remember = false): string
     {
-        if ($this->isLocked()) {
+        if ($this->isLocked() || $this->ipLocked()) {
             return 'throttled';
         }
 
@@ -106,6 +106,16 @@ final class AuthService
             $_SESSION['login_locked_until'] = time() + self::LOCK_SECONDS;
             $_SESSION['login_attempts'] = 0;
         }
+    }
+
+    private function ipLocked(): bool
+    {
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+        if ($ip === '' || PHP_SAPI === 'cli') {
+            return false;
+        }
+
+        return (new \App\Repositories\SystemRepository())->recentFailedLogins($ip, 15) >= 20;
     }
 
     private function clearFailures(): void

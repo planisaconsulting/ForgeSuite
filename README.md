@@ -2,7 +2,9 @@
 
 Staff application for **Sign-Forge Signs**. Phases 1 to 6 cover customers, quotations, jobs, stock, invoices, and management reports. Phase 7 adds site surveys, signage recipes, and a customer portal at `/portal`.
 
-The application name in the interface is Sign-Forge Management System. The company name (Sign-Forge Signs) comes from settings and can be changed without editing code.
+The application name in the interface is Sign-Forge Management System. The release name is Sign-Forge ERP v1.0.0. The company name (Sign-Forge Signs) comes from settings and can be changed without editing code.
+
+Guides for install, deploy, backup, restore, security, and go-live are in `docs/`. The phase roadmap ends at v1.0.0. Later work uses v1.0.1, v1.1, and v2.0. There is no phase 16.
 
 ## Requirements
 

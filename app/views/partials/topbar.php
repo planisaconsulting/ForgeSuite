@@ -40,6 +40,7 @@ $user = auth_user();
             </button>
             <ul class="dropdown-menu dropdown-menu-end sf-menu">
                 <li><h6 class="dropdown-header"><?= e($user['email']) ?></h6></li>
+                <li><a class="dropdown-item" href="<?= e(url('/help')) ?>">Help</a></li>
                 <li><a class="dropdown-item" href="<?= e(url('/account/password')) ?>">Change password</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>

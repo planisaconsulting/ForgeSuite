@@ -9,5 +9,7 @@ namespace App;
  */
 final class Version
 {
-    public const NUMBER = '14.0.0';
+    public const NAME = 'Sign-Forge ERP';
+
+    public const NUMBER = '1.0.0';
 }

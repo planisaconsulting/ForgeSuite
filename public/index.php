@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/app/bootstrap.php';
 
+App\Services\RuntimeService::enforceHttps();
+App\Services\RuntimeService::enforceMaintenance();
+
 $router = new App\Helpers\Router();
 require base_path('app/routes.php');
 $router->dispatch();

@@ -62,6 +62,17 @@ final class SystemRepository extends Repository
         );
     }
 
+    public function recentFailedLogins(string $ip, int $minutes): int
+    {
+        $row = $this->one(
+            'SELECT COUNT(*) AS n FROM login_events
+             WHERE ip_address = ? AND success = 0 AND created_at >= DATE_SUB(NOW(), INTERVAL ' . max(1, $minutes) . ' MINUTE)',
+            [$ip]
+        );
+
+        return (int) ($row['n'] ?? 0);
+    }
+
     public function recordLogin(?int $userId, string $email, ?string $ip, bool $success): void
     {
         $this->run(

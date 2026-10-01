@@ -59,6 +59,28 @@ use App\Controllers\DispatchController;
 use App\Controllers\WorkshopController;
 use App\Controllers\MobileController;
 
+$router->get('/health', static function (): void {
+    json_response(\App\Services\RuntimeService::publicHealth());
+}, false);
+
+$router->get('/help', static function (): void {
+    $role = (string) (auth_user()['role_code'] ?? '');
+    \App\Helpers\View::render('help/index', [
+        'title' => 'Help',
+        'activeNav' => 'help',
+        'release' => \App\Services\RuntimeService::releaseLabel(),
+        'sections' => [
+            ['title' => 'Customer', 'body' => 'Open Customers, add the company or person, then a contact and a site address.', 'href' => '/customers', 'link' => 'Customers'],
+            ['title' => 'Quote', 'body' => 'Start from an opportunity or a customer. Send only after the lines and VAT look right. A revision keeps the old total.', 'href' => '/quotes', 'link' => 'Quotes'],
+            ['title' => 'Job', 'body' => 'Accept the quote, then convert it. The job keeps the accepted prices.', 'href' => '/jobs', 'link' => 'Jobs'],
+            ['title' => 'Material', 'body' => 'Issue material from the workshop scan while online. Stock moves only when the server accepts the issue.', 'href' => '/workshop/scan', 'link' => 'Scan'],
+            ['title' => 'Installation', 'body' => 'Download the field pack before you leave. A signature waits until sync confirms it.', 'href' => '/m', 'link' => 'My work'],
+            ['title' => 'Payment', 'body' => 'Record the payment, then allocate it. An overpayment stays as customer credit. It does not make an invoice negative.', 'href' => '/payments', 'link' => 'Payments'],
+            ['title' => 'Your role', 'body' => 'Signed in as ' . $role . '. The desk on the home screen lists the next places for this role.', 'href' => '/', 'link' => 'Dashboard'],
+        ],
+    ]);
+});
+
 $router->get('/login', static function (): void {
     (new AuthController())->showLogin();
 }, false);

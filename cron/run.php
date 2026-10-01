@@ -28,6 +28,13 @@ use App\Services\ScheduleAlertService;
 use App\Services\SettingsService;
 use App\Services\SystemHealthService;
 
+$settings = new SettingRepository();
+$started = microtime(true);
+$settings->put('last_cron_started_at', date('Y-m-d H:i:s'));
+$settings->put('last_cron_status', 'RUNNING');
+SettingsService::forget();
+
+try {
 $alerts = (new AlertService())->evaluate();
 $leadAlerts = (new LeadAlertService())->evaluate();
 $snagAlerts = (new \App\Services\SnagService())->flagOverdue();
@@ -39,7 +46,17 @@ $approvalReminders = (new \App\Services\ApprovalService())->escalate();
 $integrationRetries = (new \App\Services\IntegrationIssueService())->retryDue();
 $fieldPacks = (new \App\Services\FieldPackService())->cleanup();
 $removed = (new SystemHealthService())->cleanupTemporary();
-(new SettingRepository())->put('last_cron_at', date('Y-m-d H:i:s'));
+$settings->put('last_cron_at', date('Y-m-d H:i:s'));
+$settings->put('last_cron_status', 'SUCCESS');
+$settings->put('last_cron_seconds', (string) max(0, (int) round(microtime(true) - $started)));
 SettingsService::forget();
+} catch (Throwable $e) {
+    $settings->put('last_cron_status', 'FAILED');
+    $safe = preg_replace('/(password|secret|token)[^\\s]*/i', '[redacted]', $e->getMessage()) ?? 'cron failed';
+    $settings->put('last_cron_error', mb_substr($safe, 0, 180));
+    SettingsService::forget();
+    fwrite(STDERR, "cron_failed\n");
+    exit(1);
+}
 
 fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} snag_alerts={$snagAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} webhook_retries={$webhookRetries} approval_reminders={$approvalReminders} integration_retries={$integrationRetries} field_packs_closed={$fieldPacks} temp_removed={$removed}\n");

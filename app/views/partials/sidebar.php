@@ -250,5 +250,5 @@ $groups = [
             <?php endforeach; ?>
         </nav>
     <?php endforeach; ?>
-    <p class="sf-nav-label">Version <?= e(\App\Version::NUMBER) ?></p>
+    <p class="sf-nav-label"><a href="<?= e(url('/help')) ?>"><?= e(\App\Services\RuntimeService::releaseLabel()) ?></a></p>
 </div>

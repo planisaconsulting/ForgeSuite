@@ -54,7 +54,12 @@ spl_autoload_register(static function (string $class): void {
 });
 
 set_exception_handler(static function (Throwable $e): void {
-    error_log($e->__toString());
+    $errorId = 'ERR-' . strtoupper(bin2hex(random_bytes(4)));
+    $GLOBALS['sf_error_id'] = $errorId;
+    $message = preg_replace('/(password|secret|token|authorization)[^\\s,]*/i', '[redacted]', $e->getMessage()) ?? $e::class;
+    $userId = $_SESSION['user_id'] ?? 0;
+    $route = (string) ($_SERVER['REQUEST_URI'] ?? '');
+    error_log($errorId . ' ' . $e::class . ' user=' . (int) $userId . ' route=' . $route . ' ' . $message . ' at ' . $e->getFile() . ':' . $e->getLine());
 
     if (PHP_SAPI === 'cli') {
         fwrite(STDERR, $e->getMessage() . PHP_EOL);
@@ -71,10 +76,13 @@ set_exception_handler(static function (Throwable $e): void {
 });
 
 if (PHP_SAPI !== 'cli') {
+    header_remove('X-Powered-By');
     header('X-Frame-Options: SAMEORIGIN');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: same-origin');
     header('X-Robots-Tag: noindex, nofollow');
+    header('Permissions-Policy: camera=(self), geolocation=(self), microphone=()');
+    header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'");
 
     $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     session_name('SFSESSID');
