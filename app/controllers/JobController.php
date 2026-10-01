@@ -87,7 +87,9 @@ final class JobController
             'staff' => (new UserRepository())->listAll(),
             'items' => $ops->items($jobId),
         ];
-        if ($tab === 'overview') {
+        if ($tab === 'finance') {
+            $data['finance'] = (new \App\Services\JobFinancialService())->report($jobId);
+        } elseif ($tab === 'overview') {
             $data['choices'] = (new JobWorkflowService())->choices((string) $job['status'], (string) $job['delivery_method']);
             $data['checks'] = (new JobService())->checks($job);
             $data['costing'] = can('costing.view') ? (new JobCostingService())->report($jobId) : null;
@@ -630,8 +632,12 @@ final class JobController
             'installation' => 'Installation',
             'files' => 'Files',
             'costing' => 'Costing',
+            'finance' => 'Finance',
             'activity' => 'Activity',
         ];
+        if (!can('invoices.view')) {
+            unset($tabs['finance']);
+        }
         if (!can('materials.view') && !can('materials.record_usage')) {
             unset($tabs['materials']);
         }

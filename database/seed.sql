@@ -81,6 +81,23 @@ INSERT INTO permissions (code, name, module) VALUES
 ('purchasing.cancel', 'Cancel a purchase order', 'purchasing'),
 ('supplier_prices.view', 'View supplier prices', 'purchasing'),
 ('supplier_prices.edit', 'Edit supplier prices', 'purchasing'),
+('invoices.view', 'View invoices', 'finance'),
+('invoices.create', 'Create draft invoices', 'finance'),
+('invoices.edit_draft', 'Edit draft invoices', 'finance'),
+('invoices.issue', 'Issue invoices', 'finance'),
+('invoices.cancel', 'Cancel invoices', 'finance'),
+('payments.view', 'View payments', 'finance'),
+('payments.record', 'Record payments', 'finance'),
+('payments.allocate', 'Allocate payments', 'finance'),
+('payments.reverse', 'Reverse payments', 'finance'),
+('credit_notes.view', 'View credit notes', 'finance'),
+('credit_notes.create', 'Create credit notes', 'finance'),
+('credit_notes.issue', 'Issue credit notes', 'finance'),
+('statements.view', 'View statements', 'finance'),
+('statements.generate', 'Generate statements', 'finance'),
+('debtors.view', 'View debtor ageing', 'finance'),
+('finance.costing.view', 'See finance costing beside invoices', 'finance'),
+('finance.vat_report.view', 'View the operational VAT summary', 'finance'),
 ('users.manage', 'Manage users', 'admin'),
 ('settings.manage', 'Manage settings', 'admin'),
 ('audit.view', 'View audit history', 'admin');
@@ -106,7 +123,8 @@ WHERE r.code = 'SALES'
     'quotes.view', 'quotes.manage', 'quotes.discount', 'quotes.price_override',
     'quotes.accept', 'quotes.convert', 'costing.view',
     'jobs.view', 'jobs.create', 'jobs.edit', 'installations.view', 'artwork.approve_record',
-    'attachments.manage', 'inventory.view'
+    'attachments.manage', 'inventory.view',
+    'invoices.view', 'payments.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -143,7 +161,11 @@ WHERE r.code = 'ACCOUNTS'
     'customers.view', 'products.view', 'suppliers.view', 'pricing.view',
     'quotes.view', 'jobs.view', 'costing.view', 'costing.edit', 'time.view_all', 'materials.view',
     'inventory.view', 'inventory.view_cost', 'purchasing.view', 'purchasing.receive',
-    'supplier_prices.view', 'supplier_prices.edit'
+    'supplier_prices.view', 'supplier_prices.edit',
+    'invoices.view', 'invoices.create', 'invoices.edit_draft', 'invoices.issue', 'invoices.cancel',
+    'payments.view', 'payments.record', 'payments.allocate', 'payments.reverse',
+    'credit_notes.view', 'credit_notes.create', 'credit_notes.issue',
+    'statements.view', 'statements.generate', 'debtors.view', 'finance.costing.view', 'finance.vat_report.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -196,7 +218,21 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('batch_prefix', 'BAT'),
 ('default_costing_method', 'LAST_COST'),
 ('offcut_valuation', 'REDUCED_COST'),
-('offcut_value_percent', '50');
+('offcut_value_percent', '50'),
+('payment_prefix', 'SFPAY'),
+('credit_note_prefix', 'SFCN'),
+('bank_name', ''),
+('account_name', ''),
+('account_number', ''),
+('branch_code', ''),
+('account_type', '');
+
+INSERT INTO payment_terms (name, days_due, description, active) VALUES
+('COD', 0, 'Due on presentation', 1),
+('7 DAYS', 7, 'Due 7 days from the invoice date', 1),
+('14 DAYS', 14, 'Due 14 days from the invoice date', 1),
+('30 DAYS', 30, 'Due 30 days from the invoice date', 1),
+('50% DEPOSIT / BALANCE ON COMPLETION', 0, 'Half before work, the balance when the job is complete', 1);
 
 -- Markup percentages are starter data. Change them under Pricing levels.
 INSERT INTO pricing_levels (code, name, markup_percent, active, sort_order) VALUES

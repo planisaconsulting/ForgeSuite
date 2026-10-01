@@ -48,6 +48,7 @@ final class DashboardController
             'operations' => can('jobs.view') ? (new JobRepository())->operationsDesk() : null,
             'productionActivity' => can('jobs.view') ? (new OperationsRepository())->recentProduction() : [],
             'lowStock' => can('inventory.view') ? $this->lowStockCount() : null,
+            'financeDesk' => can('invoices.view') ? (new \App\Repositories\FinanceRepository())->desk() : null,
             'desk' => [
                 'vat' => SettingsService::get('default_vat_percent', '15'),
                 'currency' => SettingsService::get('currency_code', 'ZAR'),

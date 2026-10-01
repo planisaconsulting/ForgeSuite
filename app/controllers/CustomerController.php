@@ -68,6 +68,7 @@ final class CustomerController
             'contactOld' => ['active' => '1'],
             'activityErrors' => [],
             'activityOld' => ['activity_date' => date('Y-m-d'), 'activity_type' => 'NOTE'],
+            ...$this->financeContext($customerId),
         ]);
     }
 
@@ -188,6 +189,25 @@ final class CustomerController
      * @param array<string, string> $activityErrors
      * @param array<string, mixed> $activityOld
      */
+    /**
+     * @return array<string, mixed>
+     */
+    private function financeContext(int $customerId): array
+    {
+        if (!can('invoices.view') && !can('payments.view')) {
+            return ['account' => null, 'financeInvoices' => [], 'financePayments' => [], 'financeCredits' => [], 'paymentTerms' => []];
+        }
+        $finance = new \App\Repositories\FinanceRepository();
+
+        return [
+            'account' => $finance->account($customerId),
+            'financeInvoices' => can('invoices.view') ? $finance->invoices(['customer_id' => $customerId], 20) : [],
+            'financePayments' => can('payments.view') ? $finance->payments(['customer_id' => $customerId], 20) : [],
+            'financeCredits' => can('credit_notes.view') ? $finance->credits(['customer_id' => $customerId], 20) : [],
+            'paymentTerms' => $finance->terms(),
+        ];
+    }
+
     private function showWithErrors(
         int $customerId,
         array $contactErrors,
@@ -213,6 +233,7 @@ final class CustomerController
             'contactOld' => $contactOld,
             'activityErrors' => $activityErrors,
             'activityOld' => $activityOld === [] ? ['activity_date' => date('Y-m-d'), 'activity_type' => 'NOTE'] : $activityOld,
+            ...$this->financeContext($customerId),
         ]);
     }
 }

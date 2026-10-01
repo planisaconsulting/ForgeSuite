@@ -32,6 +32,13 @@ final class SettingsService
         'quote_prefix' => 'Quote prefix',
         'opportunity_prefix' => 'Opportunity prefix',
         'invoice_prefix' => 'Invoice prefix',
+        'payment_prefix' => 'Payment prefix',
+        'credit_note_prefix' => 'Credit note prefix',
+        'bank_name' => 'Bank name',
+        'account_name' => 'Account name',
+        'account_number' => 'Account number',
+        'branch_code' => 'Branch code',
+        'account_type' => 'Account type',
         'job_prefix' => 'Job prefix',
         'po_prefix' => 'Purchase order prefix',
         'grn_prefix' => 'Goods receipt prefix',
@@ -149,7 +156,7 @@ final class SettingsService
         if (!in_array($tz, timezone_identifiers_list(), true)) {
             $errors['timezone'] = 'Choose a timezone from the PHP list, such as Africa/Johannesburg.';
         }
-        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix'] as $prefix) {
+        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix', 'po_prefix', 'grn_prefix', 'roll_prefix', 'sheet_prefix', 'offcut_prefix', 'batch_prefix', 'payment_prefix', 'credit_note_prefix'] as $prefix) {
             $value = trim((string) ($input[$prefix] ?? ''));
             if (!preg_match('/^[A-Za-z0-9]{1,12}$/', $value)) {
                 $errors[$prefix] = 'Use 1 to 12 letters or numbers.';

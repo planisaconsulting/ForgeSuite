@@ -18,7 +18,11 @@ use App\Controllers\ActivityController;
 use App\Controllers\AttachmentController;
 use App\Controllers\AuthController;
 use App\Controllers\CalculatorController;
+use App\Controllers\CreditNoteController;
+use App\Controllers\FinanceReportController;
 use App\Controllers\InventoryController;
+use App\Controllers\InvoiceController;
+use App\Controllers\PaymentController;
 use App\Controllers\JobController;
 use App\Controllers\PurchasingController;
 use App\Controllers\OpportunityController;
@@ -547,9 +551,117 @@ $router->post('/jobs/{id}/stock-return', static function (string $id): void {
     redirect('/jobs/' . $jobId . '?tab=materials');
 }, true, true, 'jobs.view');
 
+$router->get('/invoices', static function (): void {
+    (new InvoiceController())->index();
+}, true, 'invoices.view');
+$router->get('/invoices/new', static function (): void {
+    (new InvoiceController())->createForm();
+}, true, 'invoices.create');
+$router->post('/invoices', static function (): void {
+    (new InvoiceController())->store();
+}, true, true, 'invoices.create');
+$router->get('/invoices/{id}/pdf', static function (string $id): void {
+    (new InvoiceController())->pdf($id);
+}, true, 'invoices.view');
+$router->get('/invoices/{id}', static function (string $id): void {
+    (new InvoiceController())->show($id);
+}, true, 'invoices.view');
+$router->post('/invoices/{id}/lines', static function (string $id): void {
+    (new InvoiceController())->addLine($id);
+}, true, true, 'invoices.view');
+$router->post('/invoices/{id}/issue', static function (string $id): void {
+    (new InvoiceController())->issue($id);
+}, true, true, 'invoices.view');
+$router->post('/invoices/{id}/cancel', static function (string $id): void {
+    (new InvoiceController())->cancel($id);
+}, true, true, 'invoices.view');
+$router->post('/invoices/{id}/flag', static function (string $id): void {
+    (new InvoiceController())->flag($id);
+}, true, true, 'invoices.view');
+$router->post('/invoices/{id}', static function (string $id): void {
+    (new InvoiceController())->save($id);
+}, true, true, 'invoices.view');
+
+$router->get('/payments', static function (): void {
+    (new PaymentController())->index();
+}, true, 'payments.view');
+$router->post('/payments', static function (): void {
+    (new PaymentController())->store();
+}, true, true, 'payments.view');
+$router->get('/payments/{id}/receipt', static function (string $id): void {
+    (new PaymentController())->receipt($id);
+}, true, 'payments.view');
+$router->get('/payments/{id}', static function (string $id): void {
+    (new PaymentController())->show($id);
+}, true, 'payments.view');
+$router->post('/payments/{id}/allocate', static function (string $id): void {
+    (new PaymentController())->allocate($id);
+}, true, true, 'payments.view');
+$router->post('/payments/{id}/reverse', static function (string $id): void {
+    (new PaymentController())->reverse($id);
+}, true, true, 'payments.view');
+
+$router->get('/credit-notes', static function (): void {
+    (new CreditNoteController())->index();
+}, true, 'credit_notes.view');
+$router->post('/credit-notes', static function (): void {
+    (new CreditNoteController())->store();
+}, true, true, 'credit_notes.view');
+$router->get('/credit-notes/{id}/pdf', static function (string $id): void {
+    (new CreditNoteController())->pdf($id);
+}, true, 'credit_notes.view');
+$router->get('/credit-notes/{id}', static function (string $id): void {
+    (new CreditNoteController())->show($id);
+}, true, 'credit_notes.view');
+$router->post('/credit-notes/{id}/issue', static function (string $id): void {
+    (new CreditNoteController())->issue($id);
+}, true, true, 'credit_notes.view');
+
+$router->get('/finance/debtors', static function (): void {
+    (new FinanceReportController())->debtors();
+}, true, 'debtors.view');
+$router->get('/finance/vat', static function (): void {
+    (new FinanceReportController())->vat();
+}, true, 'finance.vat_report.view');
+$router->get('/finance/statements', static function (): void {
+    if (($_GET['customer_id'] ?? '') !== '') {
+        (new FinanceReportController())->statement();
+        return;
+    }
+    (new FinanceReportController())->statementForm();
+}, true, 'statements.view');
+$router->post('/customers/{id}/account', static function (string $id): void {
+    (new FinanceReportController())->hold($id);
+}, true, true, 'customers.view');
+
+$router->post('/jobs/{id}/variations', static function (string $id): void {
+    $result = (new \App\Services\VariationService())->create(route_id($id), $_POST, (int) auth_user()['id']);
+    if ($result['errors'] !== []) {
+        flash('error', (string) ($result['errors']['_form'] ?? reset($result['errors'])));
+    } else {
+        flash('success', 'Variation drafted.');
+    }
+    redirect('/jobs/' . route_id($id) . '?tab=finance');
+}, true, true, 'jobs.view');
+$router->post('/jobs/{id}/variations/{variationId}/items', static function (string $id, string $variationId): void {
+    $errors = (new \App\Services\VariationService())->addItem(route_id($variationId), $_POST, (int) auth_user()['id']);
+    if ($errors !== []) {
+        flash('error', (string) ($errors['_form'] ?? reset($errors)));
+    } else {
+        flash('success', 'Variation line added.');
+    }
+    redirect('/jobs/' . route_id($id) . '?tab=finance');
+}, true, true, 'jobs.view');
+$router->post('/jobs/{id}/variations/{variationId}/approve', static function (string $id, string $variationId): void {
+    $errors = (new \App\Services\VariationService())->approve(route_id($variationId), (int) auth_user()['id'], (string) ($_POST['approved_by_name'] ?? ''), (string) ($_POST['approval_method'] ?? 'EMAIL'));
+    if ($errors !== []) {
+        flash('error', (string) ($errors['_form'] ?? reset($errors)));
+    } else {
+        flash('success', 'Variation approved.');
+    }
+    redirect('/jobs/' . route_id($id) . '?tab=finance');
+}, true, true, 'jobs.view');
+
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);
 };
-$router->get('/invoices', static function () use ($soon): void {
-    $soon('invoices');
-});

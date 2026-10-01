@@ -39,7 +39,12 @@ $groups = [
         ['suppliers', 'Suppliers', '/suppliers', 'fa-truck', 'suppliers.view'],
     ]],
     ['label' => 'Finance', 'links' => [
-        ['invoices', 'Invoices', null, 'fa-receipt', null],
+        ['invoices', 'Invoices', '/invoices', 'fa-receipt', 'invoices.view'],
+        ['payments', 'Payments', '/payments', 'fa-money-bill', 'payments.view'],
+        ['credits', 'Credit notes', '/credit-notes', 'fa-file-circle-minus', 'credit_notes.view'],
+        ['statements', 'Statements', '/finance/statements', 'fa-file-lines', 'statements.view'],
+        ['debtors', 'Debtors', '/finance/debtors', 'fa-scale-balanced', 'debtors.view'],
+        ['vat', 'VAT summary', '/finance/vat', 'fa-percent', 'finance.vat_report.view'],
     ]],
     ['label' => 'Administration', 'links' => [
         ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],

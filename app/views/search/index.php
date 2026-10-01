@@ -71,6 +71,24 @@
             <?php endif; ?>
         </section>
     <?php endif; ?>
+    <?php if (!empty($showFinance)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Finance</h2></div>
+            <?php if ($finance === []): ?><div class="sf-empty"><p>No invoices, credit notes, or payments.</p></div><?php else: ?>
+                <ul class="sf-feed">
+                    <?php foreach ($finance as $row):
+                        $href = match ($row['kind']) {
+                            'credit' => '/credit-notes/' . $row['id'],
+                            'payment' => '/payments/' . $row['id'],
+                            default => '/invoices/' . $row['id'],
+                        };
+                    ?>
+                        <li><a href="<?= e(url($href)) ?>"><?= e((string) $row['reference']) ?></a><small><?= e((string) $row['kind']) ?></small></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
     <?php if ($showSuppliers): ?>
         <section class="sf-panel mb-3">
             <div class="sf-panel-head"><h2>Suppliers</h2></div>

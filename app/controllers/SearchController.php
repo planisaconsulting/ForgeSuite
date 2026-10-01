@@ -49,6 +49,10 @@ final class SearchController
                 ? (new InventoryRepository())->searchItems(['q' => $term], 20)
                 : [],
             'showInventory' => can('inventory.view'),
+            'finance' => $term !== '' && (can('invoices.view') || can('payments.view') || can('credit_notes.view'))
+                ? (new \App\Repositories\FinanceRepository())->searchDocuments($term)
+                : [],
+            'showFinance' => can('invoices.view') || can('payments.view') || can('credit_notes.view'),
         ]);
     }
 }

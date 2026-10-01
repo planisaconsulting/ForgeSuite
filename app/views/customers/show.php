@@ -25,6 +25,33 @@ $activityValue = static function (string $key, string $default = '') use ($activ
     <?php endif; ?>
 </div>
 
+<?php if (!empty($account)): ?>
+<section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Account summary</h2></div>
+    <div class="row g-3 p-3">
+        <div class="col-6 col-md-4"><p class="sf-kicker">Invoiced</p><p class="mb-0"><?= e(money($account['invoiced'])) ?></p></div>
+        <div class="col-6 col-md-4"><p class="sf-kicker">Credits</p><p class="mb-0"><?= e(money($account['credits'])) ?></p></div>
+        <div class="col-6 col-md-4"><p class="sf-kicker">Payments</p><p class="mb-0"><?= e(money($account['payments'])) ?></p></div>
+        <div class="col-6 col-md-4"><p class="sf-kicker">Outstanding</p><p class="mb-0"><?= e(money($account['outstanding'])) ?></p></div>
+        <div class="col-6 col-md-4"><p class="sf-kicker">Overdue</p><p class="mb-0"><?= e(money($account['overdue'])) ?></p></div>
+        <div class="col-6 col-md-4"><p class="sf-kicker">Unallocated credit</p><p class="mb-0"><?= e(money($account['unallocated'])) ?></p></div>
+    </div>
+    <?php if ((int) ($customer['account_on_hold'] ?? 0) === 1): ?>
+        <p class="px-3">Account on hold.<?php if (can('invoices.issue')): ?> <?= e((string) ($customer['account_hold_reason'] ?? '')) ?><?php endif; ?></p>
+    <?php endif; ?>
+    <?php if (can('invoices.issue')): ?>
+    <form class="p-3 row g-2" method="post" action="<?= e(url('/customers/' . $customer['id'] . '/account')) ?>">
+        <?= csrf_field() ?>
+        <div class="col-md-3"><input class="form-control" name="credit_limit" value="<?= e((string) ($customer['credit_limit'] ?? '')) ?>" placeholder="Credit limit"></div>
+        <div class="col-md-3"><select class="form-select" name="payment_term_id"><option value="">Payment terms</option><?php foreach ($paymentTerms as $term): ?><option value="<?= e((string) $term['id']) ?>" <?= (int) ($customer['payment_term_id'] ?? 0) === (int) $term['id'] ? 'selected' : '' ?>><?= e((string) $term['name']) ?></option><?php endforeach; ?></select></div>
+        <div class="col-md-3"><input class="form-control" name="account_hold_reason" placeholder="Hold reason"></div>
+        <div class="col-md-3 form-check mt-2"><input class="form-check-input" type="checkbox" name="account_on_hold" value="1" id="hold" <?= (int) ($customer['account_on_hold'] ?? 0) === 1 ? 'checked' : '' ?>><label class="form-check-label" for="hold">Account on hold</label></div>
+        <div class="col-12"><button class="btn btn-outline-light" type="submit">Save account</button></div>
+    </form>
+    <?php endif; ?>
+</section>
+<?php endif; ?>
+
 <div class="row g-3">
     <div class="col-12 col-lg-7">
         <section class="sf-panel">

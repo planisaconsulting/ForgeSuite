@@ -35,6 +35,21 @@ final class NumberingService
         return $this->next('job', 'job_prefix', 'SFJ');
     }
 
+    public function invoice(): string
+    {
+        return $this->next('invoice', 'invoice_prefix', 'SFI');
+    }
+
+    public function payment(): string
+    {
+        return $this->next('payment', 'payment_prefix', 'SFPAY');
+    }
+
+    public function creditNote(): string
+    {
+        return $this->next('credit_note', 'credit_note_prefix', 'SFCN');
+    }
+
     public function purchaseOrder(): string
     {
         return $this->next('purchase_order', 'po_prefix', 'SFPO');

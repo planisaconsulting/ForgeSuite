@@ -270,6 +270,28 @@ Then import `database/migrations/004_inventory_purchasing.sql` once. It adds the
 
 A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `004` on a database created from the current `schema.sql`.
 
-## Phase 5, when you ask for it
+## Phase 5 invoices, payments, and debtors
 
-Invoices, deposits recorded as receipts, payments, credit notes, customer statements, and debtors. Do not start them until Phase 4 is accepted.
+Issued invoices, credit notes, and payments are historical documents. A later change to the customer, the company address, the VAT rate, or a product price does not rewrite them. The correction is a credit note or a new invoice.
+
+Draft invoices have no official number. Issuing assigns `SFI-2026-0001` through `NumberingService`. Payments use `SFPAY-2026-0001`. Credit notes use `SFCN-2026-0001`.
+
+VAT follows the quotation rules. Exclusive adds tax on the discounted subtotal. Inclusive treats that subtotal as the amount the customer pays and lifts the VAT out of it. No VAT leaves the subtotal as the total. The VAT amount is calculated once for the document. Line VAT shares are portions of that amount, and the last line takes the remainder so the lines add back to the header.
+
+Commercial value for a job is the accepted quotation total plus approved variations. Invoiced value is issued invoices minus credit notes. Payments received are allocations. Actual cost is material, labour, and other job costs. Operational gross profit is commercial value minus actual cost. Invoiced gross profit is invoiced net minus actual cost. Those labels are kept separate.
+
+A deposit invoice uses the deposit stored on the quotation and will not be created twice. A progress invoice is a percent or a fixed amount. A final invoice is the commercial value still uninvoiced. Issuing more than that needs a reason. Account hold and a credit limit also need a reason before a new invoice is issued. Existing jobs are not cancelled.
+
+Payments are not deleted. A reversal keeps the row, reverses the allocations, and restores the invoice balance. Money that is not allocated stays as unallocated customer credit.
+
+Customer outstanding is the sum of invoice balances. It is not an editable balance field. Ageing uses the due date: current, 1–30, 31–60, 61–90, and 90+ days. The operational VAT summary uses the invoice date and the credit-note date. It is not a VAT201 return.
+
+Customer PDFs omit internal notes, cost, markup, and hold reasons.
+
+## Upgrading a Phase 4 database
+
+Back up the database first. Export it from the host panel and keep that file off the server. Confirm the export contains `users`, `quotes`, `jobs`, and `stock_movements` before you change anything.
+
+Then import `database/migrations/005_finance.sql` once. It adds invoices, payments, credit notes, variations, payment terms, permissions, and bank settings. It does not drop earlier rows and it does not change password hashes. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `005` on a database created from the current `schema.sql`.

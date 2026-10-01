@@ -159,11 +159,22 @@
 </section>
 <?php endif; ?>
 
+<?php if (!empty($financeDesk) && can('debtors.view')): ?>
+<section class="sf-panel mt-3">
+    <div class="sf-panel-head"><h2>Finance</h2></div>
+    <div class="row g-3 p-3">
+        <div class="col-6 col-md-3"><p class="sf-kicker">Invoices this month</p><p class="sf-stat-value"><?= e((string) $financeDesk['month_count']) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Invoice value</p><p class="sf-stat-value"><?= e(money((string) $financeDesk['month_value'])) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Payments this month</p><p class="sf-stat-value"><?= e(money((string) $financeDesk['payments_month'])) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Unallocated</p><p class="sf-stat-value"><?= e(money((string) $financeDesk['unallocated'])) ?></p></div>
+    </div>
+</section>
+<?php endif; ?>
 <section class="sf-panel mt-3">
     <div class="sf-panel-head"><h2>Later modules</h2></div>
     <div class="row g-3 p-3">
         <?php foreach ([
-            'Outstanding invoices' => 'Invoices are not stored yet.',
+            'Outstanding invoices' => isset($financeDesk) ? 'Outstanding debtors ' . money((string) $financeDesk['outstanding']) . '. Overdue ' . money((string) $financeDesk['overdue']) . '.' : 'Outstanding invoices are calculated from issued documents.',
             'Low stock' => isset($lowStock) ? (string) $lowStock . ' tracked products are at or below minimum.' : 'Stock is available to roles that can view inventory.',
         ] as $label => $note): ?>
             <div class="col-12 col-md-6 col-xl-3">

@@ -15,6 +15,9 @@
         <a class="btn btn-outline-light" href="<?= e(url('/quotes/' . $job['quote_id'])) ?>">View source quote</a>
     </div>
 </div>
+<?php if ((int) ($job['account_on_hold'] ?? 0) === 1): ?>
+    <div class="alert alert-warning">This customer account is on hold. Existing jobs stay open. New invoices need a finance reason.</div>
+<?php endif; ?>
 <nav class="sf-tabs" aria-label="Job sections">
     <?php foreach ($tabs as $key => $label): ?>
         <a class="<?= $tab === $key ? 'is-active' : '' ?>" href="<?= e(url('/jobs/' . $job['id'] . '?tab=' . $key)) ?>"><?= e($label) ?></a>

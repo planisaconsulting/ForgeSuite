@@ -378,7 +378,7 @@ final class JobRepository extends Repository
 
     private function select(): string
     {
-        return 'SELECT j.*, c.company_name, c.first_name, c.last_name, c.customer_type,
+        return 'SELECT j.*, c.company_name, c.first_name, c.last_name, c.customer_type, c.account_on_hold,
                        c.phone AS customer_phone, c.email AS customer_email,
                        q.quote_number, u.name AS assignee_name, manager.name AS manager_name,
                        creator.name AS created_by_name,
