@@ -58,6 +58,14 @@ final class Database
         }
 
         http_response_code(500);
+        $message = $e->getMessage();
+        if (!is_file(SF_ROOT . '/app/config/config.local.php')) {
+            $reason = 'missing-config';
+        } elseif (str_contains($message, '1045') || str_contains($message, 'Access denied')) {
+            $reason = 'denied';
+        } else {
+            $reason = 'unreachable';
+        }
         require base_path('app/views/errors/database.php');
         exit;
     }
