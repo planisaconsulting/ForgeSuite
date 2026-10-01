@@ -18,6 +18,18 @@
         return;
     }
 
+    document.addEventListener("keydown", function (event) {
+        if ((event.ctrlKey || event.metaKey) && (event.key === "k" || event.key === "K")) {
+            var search = document.getElementById("global-search");
+            if (!search) {
+                return;
+            }
+            event.preventDefault();
+            search.focus();
+            search.select();
+        }
+    });
+
     nav.querySelectorAll(".sf-nav-link").forEach(function (link) {
         link.addEventListener("click", function () {
             if (!window.matchMedia("(max-width: 991.98px)").matches) {

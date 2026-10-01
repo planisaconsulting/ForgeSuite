@@ -33,11 +33,13 @@ final class AuthService
 
         if (!is_array($user) || !$valid || (int) $user['active'] !== 1) {
             $this->registerFailure();
+            $this->recordLogin(is_array($user) ? (int) $user['id'] : null, $email, false);
 
             return $this->isLocked() ? 'throttled' : 'invalid';
         }
 
         $this->clearFailures();
+        $this->recordLogin((int) $user['id'], $email, true);
         $users->touchLogin((int) $user['id']);
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
@@ -109,5 +111,20 @@ final class AuthService
     private function clearFailures(): void
     {
         unset($_SESSION['login_attempts'], $_SESSION['login_locked_until']);
+    }
+
+    private function recordLogin(?int $userId, string $email, bool $success): void
+    {
+        try {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+            (new \App\Repositories\SystemRepository())->recordLogin(
+                $userId,
+                mb_substr($email, 0, 190),
+                is_string($ip) ? mb_substr($ip, 0, 45) : null,
+                $success
+            );
+        } catch (\Throwable $e) {
+            error_log('Login history was not stored.');
+        }
     }
 }

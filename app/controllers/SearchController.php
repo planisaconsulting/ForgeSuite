@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Helpers\View;
 use App\Repositories\CustomerRepository;
 use App\Repositories\InventoryRepository;
+use App\Repositories\SystemRepository;
 use App\Repositories\OpportunityRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\QuoteRepository;
@@ -53,6 +54,14 @@ final class SearchController
                 ? (new \App\Repositories\FinanceRepository())->searchDocuments($term)
                 : [],
             'showFinance' => can('invoices.view') || can('payments.view') || can('credit_notes.view'),
+            'jobs' => $term !== '' && can('jobs.view') ? (new SystemRepository())->searchJobs($term) : [],
+            'contacts' => $term !== '' && can('customers.view') ? (new SystemRepository())->searchContacts($term) : [],
+            'orders' => $term !== '' && can('purchasing.view') ? (new SystemRepository())->searchOrders($term) : [],
+            'documents' => $term !== '' ? (new SystemRepository())->documents(['q' => $term, 'entity_type' => '', 'from' => '', 'to' => '']) : [],
+            'showJobs' => can('jobs.view'),
+            'showContacts' => can('customers.view'),
+            'showOrders' => can('purchasing.view'),
+            'showDocuments' => can('customers.view') || can('quotes.view') || can('jobs.view'),
         ]);
     }
 }

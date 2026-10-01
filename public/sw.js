@@ -1,8 +1,8 @@
 /**
- * App shell cache only. Job data, photos, and forms stay online.
- * A later phase can queue photos. This file does not sync them.
+ * App shell cache only. Reports, invoices, customers, and sign-in stay online.
+ * A later phase can queue site photos. This file does not sync them.
  */
-const SHELL = "signforge-shell-v1";
+const SHELL = "signforge-shell-v2";
 const FILES = [
   "/assets/css/app.css",
   "/assets/js/app.js",

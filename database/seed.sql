@@ -18,7 +18,8 @@ INSERT INTO roles (code, name, description) VALUES
 ('DESIGN', 'Design', 'View customers and products, and use the calculator.'),
 ('PRODUCTION', 'Production', 'View the catalogue.'),
 ('ACCOUNTS', 'Accounts', 'View customers, products, suppliers, and pricing levels.'),
-('INSTALLER', 'Installer', 'View customers.');
+('INSTALLER', 'Installer', 'View customers.'),
+('MANAGEMENT', 'Management', 'Dashboards, reports, and audit visibility. Not every operational edit.');
 
 INSERT INTO permissions (code, name, module) VALUES
 ('dashboard.view', 'View dashboard', 'dashboard'),
@@ -100,7 +101,20 @@ INSERT INTO permissions (code, name, module) VALUES
 ('finance.vat_report.view', 'View the operational VAT summary', 'finance'),
 ('users.manage', 'Manage users', 'admin'),
 ('settings.manage', 'Manage settings', 'admin'),
-('audit.view', 'View audit history', 'admin');
+('audit.view', 'View audit history', 'admin'),
+('reports.executive', 'View the executive dashboard', 'reports'),
+('reports.sales', 'View sales reports', 'reports'),
+('reports.operations', 'View operations reports', 'reports'),
+('reports.finance', 'View finance reports', 'reports'),
+('reports.inventory', 'View inventory reports', 'reports'),
+('reports.profitability', 'View profitability and labour cost', 'reports'),
+('reports.export', 'Export reports', 'reports'),
+('notifications.manage', 'Manage notification preferences', 'admin'),
+('automations.view', 'View automation rules', 'admin'),
+('automations.manage', 'Change automation rules', 'admin'),
+('system.health', 'View system health', 'admin'),
+('system.backup', 'Create and download backups', 'admin'),
+('system.logs', 'View application errors', 'admin');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
@@ -124,7 +138,8 @@ WHERE r.code = 'SALES'
     'quotes.accept', 'quotes.convert', 'costing.view',
     'jobs.view', 'jobs.create', 'jobs.edit', 'installations.view', 'artwork.approve_record',
     'attachments.manage', 'inventory.view',
-    'invoices.view', 'payments.view'
+    'invoices.view', 'payments.view',
+    'reports.sales', 'reports.export'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -148,7 +163,8 @@ WHERE r.code = 'PRODUCTION'
     'dashboard.view', 'products.view', 'suppliers.view',
     'jobs.view', 'jobs.change_status', 'production.view', 'production.update',
     'materials.view', 'materials.record_usage', 'time.record', 'attachments.manage',
-    'inventory.view', 'inventory.consume', 'inventory.transfer'
+    'inventory.view', 'inventory.consume', 'inventory.transfer',
+    'reports.operations'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -165,7 +181,23 @@ WHERE r.code = 'ACCOUNTS'
     'invoices.view', 'invoices.create', 'invoices.edit_draft', 'invoices.issue', 'invoices.cancel',
     'payments.view', 'payments.record', 'payments.allocate', 'payments.reverse',
     'credit_notes.view', 'credit_notes.create', 'credit_notes.issue',
-    'statements.view', 'statements.generate', 'debtors.view', 'finance.costing.view', 'finance.vat_report.view'
+    'statements.view', 'statements.generate', 'debtors.view', 'finance.costing.view', 'finance.vat_report.view',
+    'reports.finance', 'reports.export', 'reports.profitability'
+  );
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p
+WHERE r.code = 'MANAGEMENT'
+  AND p.code IN (
+    'dashboard.view', 'customers.view', 'activities.view', 'opportunities.view', 'quotes.view',
+    'jobs.view', 'production.view', 'installations.view', 'inventory.view', 'purchasing.view',
+    'invoices.view', 'payments.view', 'credit_notes.view', 'statements.view', 'debtors.view',
+    'costing.view', 'finance.costing.view', 'finance.vat_report.view',
+    'reports.executive', 'reports.sales', 'reports.operations', 'reports.finance',
+    'reports.inventory', 'reports.profitability', 'reports.export',
+    'audit.view', 'automations.view', 'notifications.manage'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -225,7 +257,23 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('account_name', ''),
 ('account_number', ''),
 ('branch_code', ''),
-('account_type', '');
+('account_type', ''),
+('quote_expiry_warning_days', '3'),
+('invoice_due_soon_days', '3'),
+('slow_stock_days', '180'),
+('large_balance_amount', '50000'),
+('backup_keep_daily', '7'),
+('backup_keep_weekly', '4'),
+('backup_keep_monthly', '6');
+
+INSERT INTO kpi_targets (kpi_code, name, target_value, comparison_type, period_type, active) VALUES
+('TARGET_GROSS_MARGIN', 'Target gross margin %', 35, 'MINIMUM', 'MONTH', 1),
+('TARGET_QUOTE_CONVERSION', 'Target quote count conversion %', 50, 'MINIMUM', 'MONTH', 1),
+('TARGET_WASTE_RATE', 'Target waste rate %', 10, 'MAXIMUM', 'MONTH', 1),
+('TARGET_DEBTOR_DAYS', 'Target days to payment', 30, 'MAXIMUM', 'MONTH', 1);
+
+INSERT INTO automation_rules (name, trigger_type, conditions_json, action_type, action_config_json, active)
+VALUES ('Follow up a sent quotation', 'QUOTE_SENT', '{"days":3}', 'CREATE_REMINDER', '{"days":3,"title":"Follow up sent quotation"}', 1);
 
 INSERT INTO payment_terms (name, days_due, description, active) VALUES
 ('COD', 0, 'Due on presentation', 1),

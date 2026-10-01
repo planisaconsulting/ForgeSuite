@@ -12,6 +12,51 @@
     </div>
 </div>
 
+<section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Your desk</h2></div>
+    <div class="p-3">
+        <?php if (in_array($roleCode, ['ADMIN', 'MANAGEMENT'], true) && can('reports.executive')): ?>
+            <p><a href="<?= e(url('/reports/executive')) ?>">Executive report</a> · <a href="<?= e(url('/reports/executive?board=1')) ?>">Full-screen board</a></p>
+        <?php endif; ?>
+        <?php if ($roleCode === 'SALES' || can('reports.sales')): ?>
+            <p><a href="<?= e(url('/opportunities')) ?>">Opportunities</a> · <a href="<?= e(url('/quotes')) ?>">Quotes</a> · <a href="<?= e(url('/reports/sales')) ?>">Sales report</a></p>
+        <?php endif; ?>
+        <?php if ($roleCode === 'DESIGN'): ?>
+            <p><a href="<?= e(url('/jobs/design')) ?>">Artwork queue</a></p>
+        <?php endif; ?>
+        <?php if ($roleCode === 'PRODUCTION' || can('reports.operations')): ?>
+            <p><a href="<?= e(url('/jobs')) ?>">Jobs</a> · <a href="<?= e(url('/jobs/workshop')) ?>">Production queue</a> · <a href="<?= e(url('/jobs?overdue=1')) ?>">Overdue jobs</a></p>
+        <?php endif; ?>
+        <?php if ($roleCode === 'INSTALLER'): ?>
+            <p><a href="<?= e(url('/jobs/installations')) ?>">Today's installations</a></p>
+            <ul class="sf-feed">
+                <?php foreach ($todayInstalls as $install): ?>
+                    <li><a href="<?= e(url('/jobs/' . $install['job_id'])) ?>"><?= e((string) $install['job_number']) ?></a><small><?= e((string) $install['status']) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+        <?php if ($roleCode === 'ACCOUNTS' || can('reports.finance')): ?>
+            <p><a href="<?= e(url('/invoices')) ?>">Invoices</a> · <a href="<?= e(url('/payments')) ?>">Payments</a> · <a href="<?= e(url('/reports/debtors')) ?>">Debtors</a></p>
+        <?php endif; ?>
+        <?php if ($followUps !== []): ?>
+            <h3 class="h6 mt-3">CRM follow-ups due</h3>
+            <ul class="sf-feed">
+                <?php foreach ($followUps as $row): ?>
+                    <li><a href="<?= e(url('/customers/' . $row['customer_id'])) ?>"><?= e(customer_label($row)) ?></a><small><?= e((string) $row['follow_up_date']) ?> · <?= e((string) $row['subject']) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+        <?php if ($quoteFollows !== []): ?>
+            <h3 class="h6 mt-3">Quotes to follow up</h3>
+            <ul class="sf-feed">
+                <?php foreach ($quoteFollows as $row): ?>
+                    <li><a href="<?= e(url('/quotes/' . $row['id'])) ?>"><?= e((string) $row['quote_number']) ?></a><small><?= e(customer_label($row)) ?> · <?= e(money((string) $row['total'])) ?> · <?= e((string) ($row['salesperson'] ?? '')) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+</section>
+
 <div class="row g-3 sf-stats">
     <div class="col-6 col-lg-3">
         <article class="sf-stat">

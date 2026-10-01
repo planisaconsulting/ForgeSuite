@@ -15,6 +15,7 @@ use App\Repositories\ProductRepository;
 use App\Repositories\QuoteRepository;
 use App\Helpers\Decimal;
 use App\Repositories\InventoryRepository;
+use App\Repositories\ReportingRepository;
 use App\Services\SettingsService;
 use App\Services\StockValuation;
 
@@ -49,6 +50,10 @@ final class DashboardController
             'productionActivity' => can('jobs.view') ? (new OperationsRepository())->recentProduction() : [],
             'lowStock' => can('inventory.view') ? $this->lowStockCount() : null,
             'financeDesk' => can('invoices.view') ? (new \App\Repositories\FinanceRepository())->desk() : null,
+            'roleCode' => (string) (auth_user()['role_code'] ?? ''),
+            'followUps' => can('activities.view') ? (new ReportingRepository())->followUps(date('Y-m-d')) : [],
+            'quoteFollows' => can('quotes.view') ? (new ReportingRepository())->quotesToFollow(date('Y-m-d')) : [],
+            'todayInstalls' => can('installations.view') ? (new ReportingRepository())->installationsOn(date('Y-m-d')) : [],
             'desk' => [
                 'vat' => SettingsService::get('default_vat_percent', '15'),
                 'currency' => SettingsService::get('currency_code', 'ZAR'),

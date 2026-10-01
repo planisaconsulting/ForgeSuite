@@ -67,12 +67,21 @@
             <dl class="sf-dl">
                 <div><dt>Date</dt><dd><?= e((string) $quote['quote_date']) ?></dd></div>
                 <div><dt>Expiry</dt><dd><?= e((string) ($quote['expiry_date'] ?? '—')) ?></dd></div>
+                <div><dt>Next follow-up</dt><dd><?= e((string) ($quote['next_follow_up_date'] ?? '—')) ?></dd></div>
                 <div><dt>Salesperson</dt><dd><?= e((string) ($quote['salesperson_name'] ?? '—')) ?></dd></div>
                 <div><dt>Contact</dt><dd><?= e((string) ($quote['contact_name'] ?? '—')) ?></dd></div>
                 <?php if (!empty($quote['accepted_at'])): ?>
                     <div><dt>Accepted</dt><dd><?= e((string) $quote['accepted_by_name']) ?> · <?= e((string) $quote['acceptance_method']) ?></dd></div>
                 <?php endif; ?>
             </dl>
+            <?php if (!empty($canManage) && (string) $quote['status'] === 'SENT'): ?>
+                <form class="p-3" method="post" action="<?= e(url('/quotes/' . $quote['id'] . '/follow-up')) ?>">
+                    <?= csrf_field() ?>
+                    <label class="form-label" for="next_follow_up_date">Next follow-up</label>
+                    <input class="form-control" id="next_follow_up_date" type="date" name="next_follow_up_date" value="<?= e((string) ($quote['next_follow_up_date'] ?? '')) ?>">
+                    <button class="btn btn-outline-light mt-2" type="submit">Save follow-up</button>
+                </form>
+            <?php endif; ?>
         </section>
         <?php if ($canCost): ?>
             <section class="sf-panel mt-3">

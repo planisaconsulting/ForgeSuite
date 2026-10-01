@@ -11,5 +11,8 @@
 /storage/temp/*
 !/storage/temp/.gitkeep
 !/storage/temp/.htaccess
+/storage/backups/*
+!/storage/backups/.gitkeep
+!/storage/backups/.htaccess
 .DS_Store
 Thumbs.db

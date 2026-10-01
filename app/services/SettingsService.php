@@ -53,6 +53,13 @@ final class SettingsService
         'default_quote_terms' => 'Default quotation terms',
         'default_labour_hourly_cost' => 'Default internal labour cost per hour',
         'timezone' => 'Timezone',
+        'quote_expiry_warning_days' => 'Quote expiry warning (days)',
+        'invoice_due_soon_days' => 'Invoice due-soon warning (days)',
+        'slow_stock_days' => 'Slow stock with no consumption (days)',
+        'large_balance_amount' => 'Large outstanding balance amount',
+        'backup_keep_daily' => 'Backup copies to keep, daily',
+        'backup_keep_weekly' => 'Backup copies to keep, weekly',
+        'backup_keep_monthly' => 'Backup copies to keep, monthly',
     ];
 
     /** @var array<string, string|null>|null */
@@ -173,6 +180,23 @@ final class SettingsService
         $offcutPercent = str_replace(',', '.', trim((string) ($input['offcut_value_percent'] ?? '50')));
         if ($offcutPercent === '' || !is_numeric($offcutPercent) || (float) $offcutPercent < 0 || (float) $offcutPercent > 100) {
             $errors['offcut_value_percent'] = 'Offcut value percent must be between 0 and 100.';
+        }
+        foreach ([
+            'quote_expiry_warning_days' => [1, 30],
+            'invoice_due_soon_days' => [1, 30],
+            'slow_stock_days' => [30, 730],
+            'backup_keep_daily' => [1, 30],
+            'backup_keep_weekly' => [1, 52],
+            'backup_keep_monthly' => [1, 24],
+        ] as $key => [$min, $max]) {
+            $value = trim((string) ($input[$key] ?? ''));
+            if ($value === '' || !ctype_digit($value) || (int) $value < $min || (int) $value > $max) {
+                $errors[$key] = 'Enter a whole number from ' . $min . ' to ' . $max . '.';
+            }
+        }
+        $balance = str_replace(',', '.', trim((string) ($input['large_balance_amount'] ?? '')));
+        if ($balance === '' || !is_numeric($balance) || (float) $balance < 0) {
+            $errors['large_balance_amount'] = 'Enter an amount of zero or more.';
         }
         $email = trim((string) ($input['email'] ?? ''));
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {

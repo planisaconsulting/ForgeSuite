@@ -46,9 +46,32 @@ $groups = [
         ['debtors', 'Debtors', '/finance/debtors', 'fa-scale-balanced', 'debtors.view'],
         ['vat', 'VAT summary', '/finance/vat', 'fa-percent', 'finance.vat_report.view'],
     ]],
+    ['label' => 'Reports', 'links' => [
+        ['report-executive', 'Executive', '/reports/executive', 'fa-chart-line', 'reports.executive'],
+        ['report-sales', 'Sales', '/reports/sales', 'fa-chart-simple', 'reports.sales'],
+        ['report-customers', 'Customers', '/reports/customers', 'fa-user-group', 'reports.sales'],
+        ['report-jobs', 'Jobs', '/reports/jobs', 'fa-clipboard-list', 'reports.operations'],
+        ['report-profitability', 'Profitability', '/reports/profitability', 'fa-chart-pie', 'reports.profitability'],
+        ['report-production', 'Production', '/reports/production', 'fa-industry', 'reports.operations'],
+        ['report-waste', 'Materials and waste', '/reports/waste', 'fa-recycle', 'reports.operations'],
+        ['report-inventory', 'Inventory', '/reports/inventory', 'fa-warehouse', 'reports.inventory'],
+        ['report-purchasing', 'Purchasing', '/reports/purchasing', 'fa-truck', 'reports.inventory'],
+        ['report-finance', 'Finance', '/reports/finance', 'fa-coins', 'reports.finance'],
+        ['report-debtors', 'Debtors', '/reports/debtors', 'fa-scale-balanced', 'reports.finance'],
+        ['documents', 'Documents', '/documents', 'fa-folder-open', 'dashboard.view'],
+    ]],
     ['label' => 'Administration', 'links' => [
         ['pricing', 'Pricing levels', '/pricing-levels', 'fa-layer-group', 'pricing.view'],
         ['users', 'Users', '/users', 'fa-user-gear', 'users.manage'],
+        ['roles', 'Roles', '/admin/roles', 'fa-user-shield', 'users.manage'],
+        ['notifications', 'Notifications', '/notifications', 'fa-bell', null],
+        ['automations', 'Automations', '/admin/automations', 'fa-robot', 'automations.view'],
+        ['audit', 'Audit log', '/admin/audit', 'fa-list-check', 'audit.view'],
+        ['backups', 'Backups', '/admin/backups', 'fa-database', 'system.backup'],
+        ['health', 'System health', '/admin/health', 'fa-heart-pulse', 'system.health'],
+        ['logs', 'Error log', '/admin/logs', 'fa-bug', 'system.logs'],
+        ['targets', 'KPI targets', '/admin/targets', 'fa-bullseye', 'settings.manage'],
+        ['export', 'Data export', '/admin/export', 'fa-file-export', 'reports.export'],
         ['settings', 'Settings', '/settings', 'fa-gear', 'settings.manage'],
     ]],
 ];
@@ -102,4 +125,5 @@ $groups = [
             <?php endforeach; ?>
         </nav>
     <?php endforeach; ?>
+    <p class="sf-nav-label">Version <?= e(\App\Version::NUMBER) ?></p>
 </div>

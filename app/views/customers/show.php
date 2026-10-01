@@ -25,6 +25,46 @@ $activityValue = static function (string $key, string $default = '') use ($activ
     <?php endif; ?>
 </div>
 
+<?php if (!empty($management)): ?>
+<section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Management summary</h2></div>
+    <div class="row g-3 p-3">
+        <div class="col-6 col-md-3"><p class="sf-kicker">First quote</p><p class="mb-0"><?= e((string) ($management['history']['first_quote'] ?? '—')) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Last quote</p><p class="mb-0"><?= e((string) ($management['history']['last_quote'] ?? '—')) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Quotes</p><p class="mb-0"><?= e((string) ($management['history']['quotes'] ?? 0)) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Jobs</p><p class="mb-0"><?= e((string) ($management['history']['jobs'] ?? 0)) ?></p></div>
+        <?php if (!empty($management['show_cost'])): ?>
+            <div class="col-6 col-md-3"><p class="sf-kicker">Commercial value</p><p class="mb-0"><?= e(money($management['profit']['commercial'])) ?></p></div>
+            <div class="col-6 col-md-3"><p class="sf-kicker">Actual cost</p><p class="mb-0"><?= e(money($management['profit']['actual'])) ?></p></div>
+            <div class="col-6 col-md-3"><p class="sf-kicker">Gross profit</p><p class="mb-0"><?= e(money($management['profit']['profit'])) ?></p></div>
+            <div class="col-6 col-md-3"><p class="sf-kicker">Gross margin</p><p class="mb-0"><?= $management['profit']['margin'] === null ? '—' : e($management['profit']['margin'] . '%') ?></p></div>
+        <?php endif; ?>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Invoiced</p><p class="mb-0"><?= e(money((string) ($management['invoices']['invoiced'] ?? '0'))) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Payments</p><p class="mb-0"><?= e(money((string) ($management['invoices']['paid'] ?? '0'))) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Outstanding</p><p class="mb-0"><?= e(money((string) ($management['invoices']['outstanding'] ?? '0'))) ?></p></div>
+        <div class="col-6 col-md-3"><p class="sf-kicker">Average payment time</p><p class="mb-0"><?= isset($management['invoices']['pay_days']) && $management['invoices']['pay_days'] !== null ? e(\App\Helpers\Decimal::round((string) $management['invoices']['pay_days'], 1) . ' days from invoice date') : '—' ?></p></div>
+    </div>
+    <p class="px-3 sf-muted">Gross profit is commercial value minus actual job cost. It is not cash received.</p>
+</section>
+<?php if ($canActivity): ?>
+<section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Communications</h2></div>
+    <form class="p-3 row g-2" method="post" action="<?= e(url('/customers/' . $customer['id'] . '/communications')) ?>">
+        <?= csrf_field() ?>
+        <div class="col-md-3"><select class="form-select" name="channel"><?php foreach (['PHONE','EMAIL','WHATSAPP','SMS','IN_PERSON','OTHER'] as $channel): ?><option value="<?= e($channel) ?>"><?= e($channel) ?></option><?php endforeach; ?></select></div>
+        <div class="col-md-4"><input class="form-control" name="subject" placeholder="Subject" required></div>
+        <div class="col-md-5"><input class="form-control" name="message_summary" placeholder="Summary"></div>
+        <div class="col-12"><button class="btn btn-outline-light" type="submit">Log communication</button></div>
+    </form>
+    <ul class="sf-feed">
+        <?php foreach ($management['communications'] as $note): ?>
+            <li><strong><?= e((string) $note['subject']) ?></strong><small><?= e((string) $note['channel']) ?> · <?= e((string) ($note['user_name'] ?? '')) ?> · <?= e((string) $note['created_at']) ?></small><p class="mb-0"><?= e((string) ($note['message_summary'] ?? '')) ?></p></li>
+        <?php endforeach; ?>
+    </ul>
+    <p class="px-3 sf-muted">Logging a call or WhatsApp note does not connect to WhatsApp.</p>
+</section>
+<?php endif; ?>
+<?php endif; ?>
 <?php if (!empty($account)): ?>
 <section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Account summary</h2></div>

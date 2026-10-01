@@ -494,6 +494,14 @@ final class QuoteService
             return $e->errors;
         }
 
+        if ($status === 'SENT') {
+            try {
+                (new AutomationService())->fire('QUOTE_SENT', 'quote', $quoteId, $userId);
+            } catch (\Throwable $e) {
+                error_log('Quote follow-up automation failed: ' . $e->getMessage());
+            }
+        }
+
         return [];
     }
 

@@ -14,6 +14,9 @@ declare(strict_types=1);
  */
 
 use App\Controllers\AccountController;
+use App\Controllers\AdminController;
+use App\Controllers\NotificationController;
+use App\Controllers\ReportController;
 use App\Controllers\ActivityController;
 use App\Controllers\AttachmentController;
 use App\Controllers\AuthController;
@@ -661,6 +664,105 @@ $router->post('/jobs/{id}/variations/{variationId}/approve', static function (st
     }
     redirect('/jobs/' . route_id($id) . '?tab=finance');
 }, true, true, 'jobs.view');
+
+$reports = [
+    'executive' => 'reports.executive',
+    'sales' => 'reports.sales',
+    'customers' => 'reports.sales',
+    'jobs' => 'reports.operations',
+    'profitability' => 'reports.profitability',
+    'production' => 'reports.operations',
+    'waste' => 'reports.operations',
+    'inventory' => 'reports.inventory',
+    'purchasing' => 'reports.inventory',
+    'finance' => 'reports.finance',
+    'debtors' => 'reports.finance',
+];
+foreach ($reports as $code => $permission) {
+    $router->get('/reports/' . $code, static function () use ($code): void {
+        (new ReportController())->show($code);
+    }, true, $permission);
+    $router->get('/reports/' . $code . '.csv', static function () use ($code): void {
+        (new ReportController())->csv($code);
+    }, true, $permission);
+    $router->get('/reports/' . $code . '.pdf', static function () use ($code): void {
+        (new ReportController())->pdf($code);
+    }, true, $permission);
+}
+
+$router->get('/notifications', static function (): void {
+    (new NotificationController())->index();
+});
+$router->post('/notifications/read-all', static function (): void {
+    (new NotificationController())->readAll();
+}, true, true);
+$router->post('/notifications/{id}/read', static function (string $id): void {
+    (new NotificationController())->read($id);
+}, true, true);
+$router->get('/notifications/preferences', static function (): void {
+    (new NotificationController())->preferences();
+});
+$router->post('/notifications/preferences', static function (): void {
+    (new NotificationController())->savePreferences();
+}, true, true);
+$router->get('/reminders', static function (): void {
+    (new NotificationController())->reminders();
+});
+$router->post('/reminders/{id}/status', static function (string $id): void {
+    (new NotificationController())->completeReminder($id);
+}, true, true);
+
+$router->get('/documents', static function (): void {
+    (new AdminController())->documents();
+});
+$router->get('/admin/audit', static function (): void {
+    (new AdminController())->audit();
+}, true, 'audit.view');
+$router->get('/admin/logins', static function (): void {
+    (new AdminController())->logins();
+}, true, 'audit.view');
+$router->get('/admin/health', static function (): void {
+    (new AdminController())->health();
+}, true, 'system.health');
+$router->get('/admin/logs', static function (): void {
+    (new AdminController())->logs();
+}, true, 'system.logs');
+$router->get('/admin/backups', static function (): void {
+    (new AdminController())->backups();
+}, true, 'system.backup');
+$router->post('/admin/backups', static function (): void {
+    (new AdminController())->createBackup();
+}, true, true, 'system.backup');
+$router->get('/admin/backups/{id}/download', static function (string $id): void {
+    (new AdminController())->downloadBackup($id);
+}, true, 'system.backup');
+$router->get('/admin/automations', static function (): void {
+    (new AdminController())->automations();
+}, true, 'automations.view');
+$router->post('/admin/automations', static function (): void {
+    (new AdminController())->saveAutomation();
+}, true, true, 'automations.manage');
+$router->get('/admin/roles', static function (): void {
+    (new AdminController())->roles();
+}, true, 'users.manage');
+$router->get('/admin/targets', static function (): void {
+    (new AdminController())->targets();
+}, true, 'settings.manage');
+$router->post('/admin/targets', static function (): void {
+    (new AdminController())->saveTargets();
+}, true, true, 'settings.manage');
+$router->get('/admin/export', static function (): void {
+    (new AdminController())->exportForm();
+}, true, 'reports.export');
+$router->get('/admin/export.csv', static function (): void {
+    (new AdminController())->exportCsv();
+}, true, 'reports.export');
+$router->post('/quotes/{id}/follow-up', static function (string $id): void {
+    (new QuoteController())->followUp($id);
+}, true, true, 'quotes.manage');
+$router->post('/customers/{id}/communications', static function (string $id): void {
+    (new CustomerController())->storeCommunication($id);
+}, true, true, 'activities.manage');
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

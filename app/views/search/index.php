@@ -1,7 +1,7 @@
 <?php require base_path('app/views/partials/flashes.php'); ?>
 <div class="sf-page-head">
     <h1>Search</h1>
-    <p class="sf-muted mb-0">Customers, opportunities, quotations, products, suppliers, and inventory codes.</p>
+    <p class="sf-muted mb-0">Customers, contacts, opportunities, quotations, jobs, products, purchase orders, invoices, and documents.</p>
 </div>
 <form class="sf-filters" method="get" action="<?= e(url('/search')) ?>">
     <label class="visually-hidden" for="search-q">Search</label>
@@ -86,6 +86,38 @@
                         <li><a href="<?= e(url($href)) ?>"><?= e((string) $row['reference']) ?></a><small><?= e((string) $row['kind']) ?></small></li>
                     <?php endforeach; ?>
                 </ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showContacts)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Contacts</h2></div>
+            <?php if ($contacts === []): ?><div class="sf-empty"><p>No contacts.</p></div><?php else: ?>
+                <ul class="sf-feed"><?php foreach ($contacts as $row): ?><li><a href="<?= e(url('/customers/' . $row['customer_id'])) ?>"><?= e((string) $row['name']) ?></a><small><?= e(customer_label($row)) ?></small></li><?php endforeach; ?></ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showJobs)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Jobs</h2></div>
+            <?php if ($jobs === []): ?><div class="sf-empty"><p>No jobs.</p></div><?php else: ?>
+                <ul class="sf-feed"><?php foreach ($jobs as $row): ?><li><a href="<?= e(url('/jobs/' . $row['id'])) ?>"><?= e((string) $row['job_number']) ?></a><small><?= e((string) $row['title']) ?></small></li><?php endforeach; ?></ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showOrders)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Purchase orders</h2></div>
+            <?php if ($orders === []): ?><div class="sf-empty"><p>No purchase orders.</p></div><?php else: ?>
+                <ul class="sf-feed"><?php foreach ($orders as $row): ?><li><a href="<?= e(url('/purchasing/orders/' . $row['id'])) ?>"><?= e((string) $row['po_number']) ?></a><small><?= e((string) $row['supplier_name']) ?></small></li><?php endforeach; ?></ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if (!empty($showDocuments)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Documents</h2></div>
+            <?php if ($documents === []): ?><div class="sf-empty"><p>No documents.</p></div><?php else: ?>
+                <ul class="sf-feed"><?php foreach (array_slice($documents, 0, 20) as $row): ?><li><a href="<?= e(url('/attachments/' . $row['id'])) ?>"><?= e((string) $row['original_filename']) ?></a><small><?= e((string) $row['entity_type']) ?></small></li><?php endforeach; ?></ul>
             <?php endif; ?>
         </section>
     <?php endif; ?>

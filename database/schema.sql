@@ -495,6 +495,7 @@ CREATE TABLE quotes (
     contact_id INT UNSIGNED NULL,
     quote_date DATE NOT NULL,
     expiry_date DATE NULL,
+    next_follow_up_date DATE NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     pricing_level_id INT UNSIGNED NULL,
     subtotal DECIMAL(14,2) NOT NULL DEFAULT 0.00,
@@ -533,6 +534,7 @@ CREATE TABLE quotes (
     KEY idx_quotes_status (status, expiry_date),
     KEY idx_quotes_assigned (assigned_to),
     KEY idx_quotes_dates (quote_date),
+    KEY idx_quotes_follow_up (next_follow_up_date),
     CONSTRAINT fk_quotes_opportunity
         FOREIGN KEY (opportunity_id) REFERENCES sales_opportunities (id)
         ON DELETE SET NULL ON UPDATE CASCADE,
@@ -1800,4 +1802,168 @@ CREATE TABLE job_variation_items (
 ALTER TABLE customers
     ADD CONSTRAINT fk_customers_payment_term FOREIGN KEY (payment_term_id) REFERENCES payment_terms (id) ON DELETE SET NULL ON UPDATE CASCADE,
     ADD CONSTRAINT fk_customers_hold_user FOREIGN KEY (account_hold_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Phase 6 supporting tables. Reports still read the operational tables above.
+
+CREATE TABLE kpi_targets (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    kpi_code VARCHAR(40) NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    target_value DECIMAL(14,4) NOT NULL DEFAULT 0.0000,
+    comparison_type VARCHAR(20) NOT NULL DEFAULT 'MINIMUM',
+    period_type VARCHAR(20) NOT NULL DEFAULT 'MONTH',
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_kpi_targets_code (kpi_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE notifications (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NULL,
+    role_id INT UNSIGNED NULL,
+    type VARCHAR(40) NOT NULL,
+    title VARCHAR(180) NOT NULL,
+    message VARCHAR(500) NOT NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    priority VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
+    dedupe_key VARCHAR(190) NULL,
+    read_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_notifications_dedupe (dedupe_key),
+    KEY idx_notifications_user (user_id, read_at, created_at),
+    KEY idx_notifications_role (role_id, read_at),
+    CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_notifications_role FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE notification_preferences (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL,
+    notification_type VARCHAR(40) NOT NULL,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_notification_pref (user_id, notification_type),
+    CONSTRAINT fk_notification_pref_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE reminders (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL,
+    entity_type VARCHAR(40) NOT NULL,
+    entity_id INT UNSIGNED NOT NULL,
+    title VARCHAR(180) NOT NULL,
+    description VARCHAR(500) NULL,
+    remind_at DATETIME NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    dedupe_key VARCHAR(190) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_reminders_dedupe (dedupe_key),
+    KEY idx_reminders_user (user_id, status, remind_at),
+    CONSTRAINT fk_reminders_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE scheduled_reports (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    report_type VARCHAR(40) NOT NULL,
+    recipient_user_id INT UNSIGNED NOT NULL,
+    frequency VARCHAR(20) NOT NULL DEFAULT 'WEEKLY',
+    filters_json JSON NULL,
+    last_run_at TIMESTAMP NULL DEFAULT NULL,
+    next_run_at DATETIME NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_scheduled_reports_next (active, next_run_at),
+    CONSTRAINT fk_scheduled_reports_user FOREIGN KEY (recipient_user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE communications (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    customer_id INT UNSIGNED NULL,
+    contact_id INT UNSIGNED NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    channel VARCHAR(20) NOT NULL,
+    direction VARCHAR(20) NOT NULL DEFAULT 'OUTBOUND',
+    subject VARCHAR(180) NOT NULL,
+    message_summary VARCHAR(500) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'LOGGED',
+    sent_by INT UNSIGNED NULL,
+    sent_at DATETIME NULL,
+    external_reference VARCHAR(120) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_communications_customer (customer_id, created_at),
+    KEY idx_communications_entity (entity_type, entity_id),
+    CONSTRAINT fk_communications_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_communications_contact FOREIGN KEY (contact_id) REFERENCES customer_contacts (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_communications_user FOREIGN KEY (sent_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE automation_rules (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(120) NOT NULL,
+    trigger_type VARCHAR(40) NOT NULL,
+    conditions_json JSON NULL,
+    action_type VARCHAR(40) NOT NULL,
+    action_config_json JSON NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_automation_rules_trigger (trigger_type, active),
+    CONSTRAINT fk_automation_rules_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE automation_log (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    automation_rule_id INT UNSIGNED NULL,
+    entity_type VARCHAR(40) NULL,
+    entity_id INT UNSIGNED NULL,
+    status VARCHAR(20) NOT NULL,
+    message VARCHAR(255) NULL,
+    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_automation_log_rule (automation_rule_id, executed_at),
+    CONSTRAINT fk_automation_log_rule FOREIGN KEY (automation_rule_id) REFERENCES automation_rules (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE system_backups (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    backup_type VARCHAR(20) NOT NULL DEFAULT 'DATABASE',
+    filename VARCHAR(180) NOT NULL,
+    file_size BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'STARTED',
+    created_by INT UNSIGNED NULL,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    notes VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    KEY idx_system_backups_started (started_at),
+    CONSTRAINT fk_system_backups_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE login_events (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NULL,
+    email VARCHAR(190) NOT NULL,
+    ip_address VARCHAR(45) NULL,
+    success TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_login_events_user (user_id, created_at),
+    KEY idx_login_events_created (created_at),
+    CONSTRAINT fk_login_events_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

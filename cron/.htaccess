@@ -1,0 +1,2 @@
+# Cron is a command-line script. Do not serve it from the web.
+Require all denied

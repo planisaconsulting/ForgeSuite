@@ -97,6 +97,22 @@ final class QuoteController
         ]));
     }
 
+    public function followUp(string $id): void
+    {
+        $quote = $this->quote($id);
+        if (!can('quotes.manage') || (string) $quote['status'] !== 'SENT') {
+            deny_access('A follow-up date can be set on a sent quotation.');
+        }
+        $date = trim((string) ($_POST['next_follow_up_date'] ?? ''));
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            flash('error', 'Enter a follow-up date.');
+            redirect('/quotes/' . $quote['id']);
+        }
+        (new QuoteRepository())->setFollowUp((int) $quote['id'], $date);
+        flash('success', 'Follow-up date saved.');
+        redirect('/quotes/' . $quote['id']);
+    }
+
     public function save(string $id): void
     {
         $this->mutate((int) $id, function (QuoteService $service, int $quoteId, int $version, int $userId): array {

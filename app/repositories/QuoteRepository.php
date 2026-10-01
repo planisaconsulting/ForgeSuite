@@ -153,6 +153,17 @@ final class QuoteRepository extends Repository
     /**
      * @param array<string, mixed> $data
      */
+    public function setFollowUp(int $id, string $date): void
+    {
+        $this->run(
+            'UPDATE quotes SET next_follow_up_date = ? WHERE id = ? AND (next_follow_up_date IS NULL OR next_follow_up_date <> ?)',
+            [$date, $id, $date]
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
     public function updateHeader(int $id, array $data): void
     {
         $this->run(

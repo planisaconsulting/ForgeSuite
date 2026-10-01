@@ -166,6 +166,8 @@ php tests/inventory_math.php
 php tests/inventory_flow.php
 php tests/finance_math.php
 php tests/finance_flow.php
+php tests/reporting.php
+php tests/reporting_flow.php
 php tests/acceptance.php http://127.0.0.1:8741
 ```
 
@@ -297,3 +299,44 @@ Back up the database first. Export it from the host panel and keep that file off
 Then import `database/migrations/005_finance.sql` once. It adds invoices, payments, credit notes, variations, payment terms, permissions, and bank settings. It does not drop earlier rows and it does not change password hashes. Do not import `schema.sql` on that database.
 
 A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `005` on a database created from the current `schema.sql`.
+
+## Phase 6 reports, alerts, and administration
+
+Reports read quotations, jobs, invoices, stock, and purchases. They do not keep a second copy of those transactions.
+
+Count conversion is accepted decided quotes divided by accepted plus declined. Draft, ready, and sent quotes are not treated as lost. Value conversion uses the same statuses with quote totals. Gross profit is commercial value minus actual job cost. Gross margin is that profit divided by commercial value. Cash collected is payments received in the period and is not labelled revenue. Waste rate is waste quantity divided by production quantity plus waste quantity. Waste cost uses the cost stored when the waste was recorded. Debtor ageing uses the invoice due date. Average days to payment is the paid date minus the invoice date.
+
+KPI targets live in `kpi_targets` and can be changed under Administration. A difference from target is shown without a pass or fail label.
+
+Notifications, reminders, and automation rules are internal. Marking a quote sent creates one follow-up reminder for the assigned salesperson. Running the check again does not create another. Email is not sent. The communication log on a customer records a phone, email, or WhatsApp note. It does not connect to WhatsApp.
+
+Scheduled work is `php cron/run.php` from the command line. On Xneelo, schedule that command hourly. The `cron` folder denies web access, and the script exits unless it is run from PHP CLI. It creates alerts, delivers scheduled report notices into the notification centre, and deletes temporary files older than 14 days. It does not delete quotes, jobs, invoices, payments, stock movements, or audit history.
+
+Backups are created from Administration → Backups and stored in `storage/backups`, which the web server does not serve. Download is limited to a user with `system.backup`. Restore is a manual import of that SQL file after you have a newer successful backup. There is no restore button.
+
+The installable app caches only the CSS and JavaScript shell. Reports, invoices, customers, and sign-in responses are not cached.
+
+Application version is `App\Version::NUMBER`.
+
+## Upgrading a Phase 5 database
+
+Back up the database first. Then import `database/migrations/006_reporting_automation.sql` once. It adds reporting support tables, the Management role, and report permissions. It does not copy invoices or jobs into another ledger. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `006` on a database created from the current `schema.sql`.
+
+## Cron on Xneelo
+
+In the hosting control panel, add a cron job that runs every hour:
+
+```bash
+php /usr/www/users/USERNAME/public_html/cron/run.php
+```
+
+Use the real path to this project. Do not point the cron URL at the website. Confirm `storage` and `storage/backups` are writable by PHP.
+
+## Restore
+
+1. Create a fresh backup and confirm the history row says SUCCESS and the file is larger than zero.
+2. Download that file while signed in as an administrator.
+3. On a copy of the database, import the SQL file with the mysql client.
+4. Check a known customer, quote, and invoice on that copy before considering the live database.

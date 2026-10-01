@@ -69,7 +69,38 @@ final class CustomerController
             'activityErrors' => [],
             'activityOld' => ['activity_date' => date('Y-m-d'), 'activity_type' => 'NOTE'],
             ...$this->financeContext($customerId),
+            ...$this->managementContext($customerId),
         ]);
+    }
+
+    public function storeCommunication(string $id): void
+    {
+        $customerId = route_id($id);
+        if ((new CustomerRepository())->find($customerId) === null) {
+            abort_not_found('That customer was not found.');
+        }
+        $channel = strtoupper(trim((string) ($_POST['channel'] ?? 'PHONE')));
+        if (!in_array($channel, ['EMAIL', 'WHATSAPP', 'PHONE', 'SMS', 'IN_PERSON', 'OTHER'], true)) {
+            $channel = 'OTHER';
+        }
+        $subject = trim((string) ($_POST['subject'] ?? ''));
+        if ($subject === '') {
+            flash('error', 'Add a subject for the communication.');
+            redirect('/customers/' . $customerId);
+        }
+        (new \App\Repositories\SystemRepository())->insertCommunication([
+            'customer_id' => $customerId,
+            'contact_id' => null,
+            'entity_type' => 'customer',
+            'entity_id' => $customerId,
+            'channel' => $channel,
+            'direction' => 'OUTBOUND',
+            'subject' => mb_substr($subject, 0, 180),
+            'message_summary' => mb_substr(trim((string) ($_POST['message_summary'] ?? '')), 0, 500),
+            'sent_by' => (int) auth_user()['id'],
+        ]);
+        flash('success', 'Communication logged. This does not send a message.');
+        redirect('/customers/' . $customerId);
     }
 
     public function edit(string $id): void
@@ -184,12 +215,6 @@ final class CustomerController
     }
 
     /**
-     * @param array<string, string> $contactErrors
-     * @param array<string, mixed> $contactOld
-     * @param array<string, string> $activityErrors
-     * @param array<string, mixed> $activityOld
-     */
-    /**
      * @return array<string, mixed>
      */
     private function financeContext(int $customerId): array
@@ -234,6 +259,51 @@ final class CustomerController
             'activityErrors' => $activityErrors,
             'activityOld' => $activityOld === [] ? ['activity_date' => date('Y-m-d'), 'activity_type' => 'NOTE'] : $activityOld,
             ...$this->financeContext($customerId),
+            ...$this->managementContext($customerId),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function managementContext(int $customerId): array
+    {
+        $reports = new \App\Repositories\ReportingRepository();
+        $history = $reports->customerHistory($customerId) ?? [];
+        $showCost = can('reports.profitability') || can('costing.view') || can('finance.costing.view');
+        $jobs = [];
+        if ($showCost) {
+            foreach ($reports->jobsForProfit('2000-01-01', '2999-12-31') as $row) {
+                if ((int) $row['customer_id'] !== $customerId) {
+                    continue;
+                }
+                $figures = \App\Services\ReportService::jobProfit(
+                    (string) $row['quote_total'],
+                    (string) $row['variation_total'],
+                    (string) $row['actual_material_cost'],
+                    (string) $row['actual_labour_cost'],
+                    (string) $row['actual_other_cost'],
+                    (string) $row['quoted_cost_snapshot']
+                );
+                $jobs[] = ['commercial' => $figures['commercial'], 'actual' => $figures['actual']];
+            }
+        }
+        $profit = \App\Services\ReportService::customerProfit($jobs);
+        $invoices = [];
+        foreach ($reports->customerInvoices() as $row) {
+            if ((int) $row['customer_id'] === $customerId) {
+                $invoices = $row;
+            }
+        }
+
+        return [
+            'management' => [
+                'history' => $history,
+                'profit' => $profit,
+                'invoices' => $invoices,
+                'show_cost' => $showCost,
+                'communications' => (new \App\Repositories\SystemRepository())->communications($customerId),
+            ],
+        ];
     }
 }
