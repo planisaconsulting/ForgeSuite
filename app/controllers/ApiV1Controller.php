@@ -8,7 +8,10 @@ use App\Repositories\InventoryRepository;
 use App\Repositories\ForecastRepository;
 use App\Services\ApiClientService;
 use App\Services\LeadService;
+use App\Services\ProjectFinancialService;
+use App\Services\ProjectService;
 use App\Services\RateLimiter;
+use App\Repositories\ProjectRepository;
 
 /**
  * Versioned API. A client needs a matching scope. Errors do not include a stack trace.
@@ -86,6 +89,108 @@ final class ApiV1Controller
     /**
      * @param callable(int): ?array<string, mixed> $loader
      */
+    public function project(string $id): void
+    {
+        $this->read('projects.read', 'project', (int) $id, static function (int $id): ?array {
+            $row = (new ProjectRepository())->find($id);
+
+            return $row === null ? null : [
+                'id' => (int) $row['id'],
+                'project_number' => (string) $row['project_number'],
+                'name' => (string) $row['name'],
+                'status' => (string) $row['status'],
+                'health' => (string) $row['project_health'],
+            ];
+        });
+    }
+
+    public function projectSites(string $id): void
+    {
+        $this->read('projects.read', 'project', (int) $id, static function (int $id): ?array {
+            if ((new ProjectRepository())->find($id) === null) {
+                return null;
+            }
+
+            return ['sites' => (new ProjectRepository())->sites($id)];
+        });
+    }
+
+    public function projectMilestones(string $id): void
+    {
+        $this->read('projects.read', 'project', (int) $id, static function (int $id): ?array {
+            if ((new ProjectRepository())->find($id) === null) {
+                return null;
+            }
+
+            return ['milestones' => (new ProjectRepository())->milestones($id)];
+        });
+    }
+
+    public function projectJobs(string $id): void
+    {
+        $this->read('projects.read', 'project', (int) $id, static function (int $id): ?array {
+            if ((new ProjectRepository())->find($id) === null) {
+                return null;
+            }
+
+            return ['jobs' => (new ProjectRepository())->jobs($id, null)];
+        });
+    }
+
+    public function projectSummary(string $id): void
+    {
+        $auth = $this->gate('projects.read');
+        if ($auth === null) {
+            return;
+        }
+        $projectId = (int) $id;
+        $project = (new ProjectRepository())->find($projectId);
+        if ($project === null) {
+            $this->finish($auth, 404, false, null, ['record' => 'That record was not found.'], 'project', $projectId);
+
+            return;
+        }
+        $workspace = (new ProjectService())->workspace($projectId);
+        $data = [
+            'id' => $projectId,
+            'project_number' => (string) $project['project_number'],
+            'status' => (string) $project['status'],
+            'health' => $workspace['health']['health'],
+            'reasons' => $workspace['health']['reasons'],
+            'sites' => $workspace['counts']['sites'],
+            'jobs' => $workspace['counts']['jobs'],
+            'progress' => $workspace['progress']['percent'],
+        ];
+        if ((new ApiClientService())->allows($auth['scopes'], 'projects.financials')) {
+            $money = (new ProjectFinancialService())->statement($projectId);
+            $data['commercial_value'] = $money['commercial_value'];
+            $data['actual_cost'] = $money['actual_cost'];
+            $data['gross_profit'] = $money['gross_profit'];
+            $data['margin_percent'] = $money['margin_percent'];
+            $data['invoiced'] = $money['invoiced'];
+            $data['paid'] = $money['paid'];
+        }
+        $this->finish($auth, 200, true, $data, [], 'project', $projectId);
+    }
+
+    public function projectSite(string $id): void
+    {
+        $this->read('projects.read', 'project_site', (int) $id, static function (int $id): ?array {
+            $site = (new ProjectRepository())->site($id);
+            if ($site === null) {
+                return null;
+            }
+
+            return [
+                'id' => (int) $site['id'],
+                'project_id' => (int) $site['project_id'],
+                'site_code' => (string) $site['site_code'],
+                'site_name' => (string) $site['site_name'],
+                'status' => (string) $site['status'],
+            ];
+        });
+    }
+
     private function read(string $scope, string $entity, int $id, callable $loader): void
     {
         $auth = $this->gate($scope);

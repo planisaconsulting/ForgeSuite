@@ -52,6 +52,17 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Approve or reject a queued approval
 - [ ] Confirm a user without costing permission cannot open the costing URL
 
+## Projects
+
+- [ ] Create ABC Retail and the project 25 Branch Rebrand
+- [ ] Import 25 sites across 3 waves and confirm duplicate codes are refused
+- [ ] Create draft jobs and confirm they are not in production and have not consumed stock
+- [ ] Record a project contract and site allocations and confirm the project value is the contract, not the contract plus the allocations
+- [ ] Move the current target and confirm the original date is unchanged
+- [ ] Complete 24 sites, leave one critical snag, and confirm closeout blocks
+- [ ] Open the handover pack and confirm it has no costs, margin, or internal risks
+- [ ] Sign in as an installer and confirm the project financial page is refused
+
 ## Admin
 
 - [ ] Create a user and force a password change

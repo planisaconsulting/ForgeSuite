@@ -5,7 +5,8 @@ $number = (string) ($invoice['invoice_number'] ?: 'Draft ' . $invoice['id']);
 ?>
 <div class="sf-page-head sf-page-head-row">
     <div>
-        <p class="sf-kicker mb-1"><?= e((string) $invoice['invoice_type']) ?> · <?= e($presented) ?></p>
+        <?php $projectLink = project_context($invoice); ?>
+        <p class="sf-kicker mb-1"><?= e((string) $invoice['invoice_type']) ?> · <?= e($presented) ?><?php if ($projectLink): ?> · <a href="<?= e(url('/projects/' . $projectLink['id'])) ?>"><?= e((string) $projectLink['project_number']) ?></a><?php endif; ?></p>
         <h1><?= e($number) ?></h1>
         <p class="sf-muted mb-0"><?= e(customer_label($invoice)) ?><?php if ((int) ($invoice['account_on_hold'] ?? 0) === 1): ?> · Account on hold<?php endif; ?></p>
     </div>

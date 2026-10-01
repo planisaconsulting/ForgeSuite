@@ -61,6 +61,7 @@ $groups = [
     ]],
     ['label' => 'Operations', 'links' => [
         ['jobs', 'Jobs', '/jobs', 'fa-clipboard-list', 'jobs.view'],
+        ['projects', 'Projects', '/projects', 'fa-diagram-project', 'projects.view_assigned'],
         ['today', 'Today', '/today', 'fa-sun', 'schedule.view'],
         ['workshop', 'Production', '/jobs/workshop', 'fa-industry', 'production.view'],
         ['schedule', 'Schedule', '/schedule', 'fa-calendar-day', 'schedule.view'],

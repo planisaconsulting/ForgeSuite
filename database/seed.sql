@@ -1391,6 +1391,142 @@ INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
 ('urgent_push_during_quiet', '0'),
 ('clock_skew_hours', '12'),
 ('installation_safety_ack', '1'),
-('schema_version', '14');
+('schema_version', '15');
 
 UPDATE feature_flags SET enabled = 1 WHERE feature_key = 'OFFLINE_FIELD_MODE';
+
+-- v1.1 Phase 1 project reference data.
+INSERT INTO project_types (code, name) VALUES
+('MULTI_SITE_ROLLOUT', 'Multi-site rollout'),
+('FLEET_BRANDING', 'Fleet branding'),
+('CORPORATE_REBRAND', 'Corporate rebrand'),
+('SIGNAGE_PROGRAMME', 'Signage programme'),
+('CAMPAIGN', 'Campaign'),
+('NEW_STORE', 'New store'),
+('REFURBISHMENT', 'Refurbishment'),
+('MAINTENANCE_PROGRAMME', 'Maintenance programme'),
+('CUSTOM', 'Custom');
+
+INSERT INTO milestone_types (code, name, default_weight) VALUES
+('CONTRACT_AWARDED', 'Contract awarded', 5.00),
+('SITE_SURVEYS_COMPLETE', 'Site surveys complete', 10.00),
+('MEASUREMENTS_APPROVED', 'Measurements approved', 5.00),
+('ARTWORK_SUBMITTED', 'Artwork submitted', 5.00),
+('ARTWORK_APPROVED', 'Artwork approved', 10.00),
+('PROCUREMENT_COMPLETE', 'Procurement complete', 10.00),
+('PRODUCTION_STARTED', 'Production started', 5.00),
+('PRODUCTION_COMPLETE', 'Production complete', 20.00),
+('INSTALLATION_STARTED', 'Installation started', 5.00),
+('INSTALLATION_COMPLETE', 'Installation complete', 15.00),
+('SNAGS_RESOLVED', 'Snags resolved', 5.00),
+('PROJECT_HANDOVER', 'Project handover', 5.00),
+('CUSTOM', 'Custom', 0.00);
+
+INSERT INTO delay_reasons (code, name) VALUES
+('CUSTOMER_DELAY', 'Customer delay'),
+('ARTWORK_DELAY', 'Artwork delay'),
+('MATERIAL_DELAY', 'Material delay'),
+('WEATHER', 'Weather'),
+('SITE_NOT_READY', 'Site not ready'),
+('INTERNAL_CAPACITY', 'Internal capacity'),
+('SCOPE_CHANGE', 'Scope change'),
+('OTHER', 'Other');
+
+INSERT INTO risk_categories (code, name) VALUES
+('CUSTOMER', 'Customer'),
+('ARTWORK', 'Artwork'),
+('MATERIAL', 'Material'),
+('SUPPLIER', 'Supplier'),
+('PRODUCTION', 'Production'),
+('INSTALLATION', 'Installation'),
+('SITE', 'Site'),
+('WEATHER', 'Weather'),
+('FINANCIAL', 'Financial'),
+('SCHEDULE', 'Schedule'),
+('OTHER', 'Other');
+
+INSERT INTO issue_categories (code, name) VALUES
+('CUSTOMER', 'Customer'),
+('ARTWORK', 'Artwork'),
+('MATERIAL', 'Material'),
+('PRODUCTION', 'Production'),
+('INSTALLATION', 'Installation'),
+('SITE', 'Site'),
+('FINANCIAL', 'Financial'),
+('OTHER', 'Other');
+
+INSERT INTO project_templates (name, project_type_id, description, template_version)
+SELECT 'Multi-branch rebrand', id, 'Survey, artwork, production, installation, and handover for a branch rebrand.', 1
+FROM project_types WHERE code = 'CORPORATE_REBRAND';
+
+INSERT INTO project_template_milestones (template_id, name, milestone_type, weight, sequence, blocking)
+SELECT t.id, m.name, m.milestone_type, m.weight, m.sequence, m.blocking
+FROM project_templates t
+JOIN (
+    SELECT 'Site surveys' AS name, 'SITE_SURVEYS_COMPLETE' AS milestone_type, 10.00 AS weight, 1 AS sequence, 1 AS blocking
+    UNION ALL SELECT 'Artwork approved', 'ARTWORK_APPROVED', 15.00, 2, 1
+    UNION ALL SELECT 'Production complete', 'PRODUCTION_COMPLETE', 40.00, 3, 1
+    UNION ALL SELECT 'Installation complete', 'INSTALLATION_COMPLETE', 30.00, 4, 1
+    UNION ALL SELECT 'Handover', 'PROJECT_HANDOVER', 5.00, 5, 0
+) m
+WHERE t.name = 'Multi-branch rebrand';
+
+INSERT INTO project_templates (name, project_type_id, description, template_version)
+SELECT 'Fleet branding programme', id, 'Repeat vehicle branding across a fleet.', 1 FROM project_types WHERE code = 'FLEET_BRANDING';
+INSERT INTO project_templates (name, project_type_id, description, template_version)
+SELECT 'Store opening', id, 'Signage for a new store opening.', 1 FROM project_types WHERE code = 'NEW_STORE';
+INSERT INTO project_templates (name, project_type_id, description, template_version)
+SELECT 'Signage refresh', id, 'Replacement of existing signage.', 1 FROM project_types WHERE code = 'REFURBISHMENT';
+INSERT INTO project_templates (name, project_type_id, description, template_version)
+SELECT 'National rollout', id, 'Phased national signage rollout.', 1 FROM project_types WHERE code = 'MULTI_SITE_ROLLOUT';
+
+INSERT INTO permissions (code, name, module) VALUES
+('projects.view', 'View all projects', 'projects'),
+('projects.view_assigned', 'View assigned projects', 'projects'),
+('projects.create', 'Create projects', 'projects'),
+('projects.edit', 'Edit projects', 'projects'),
+('projects.archive', 'Archive projects', 'projects'),
+('projects.complete', 'Complete projects', 'projects'),
+('projects.view_financials', 'View project financials', 'projects'),
+('projects.manage_team', 'Manage the project team', 'projects'),
+('projects.manage_sites', 'Manage project sites', 'projects'),
+('projects.import_sites', 'Import project sites', 'projects'),
+('projects.bulk_create_jobs', 'Create draft rollout jobs', 'projects'),
+('projects.manage_milestones', 'Manage project milestones', 'projects'),
+('projects.manage_risks', 'Manage project risks', 'projects'),
+('projects.manage_issues', 'Manage project issues', 'projects'),
+('projects.manage_budget', 'Manage the project budget', 'projects'),
+('projects.manage_changes', 'Manage project changes', 'projects'),
+('projects.generate_handover', 'Generate a handover pack', 'projects'),
+('projects.view_reports', 'View project reports', 'projects');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ADMIN' AND p.module = 'projects';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'MANAGEMENT' AND p.module = 'projects';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN (
+    'projects.view', 'projects.view_assigned', 'projects.create', 'projects.view_financials', 'projects.manage_sites'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN (
+    'projects.view', 'projects.view_assigned', 'projects.view_financials', 'projects.view_reports'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('DESIGN', 'PRODUCTION', 'INSTALLER') AND p.code = 'projects.view_assigned';
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('project_prefix', 'SFP'),
+('project_closeout_block_critical_snags', '1'),
+('project_closeout_block_open_invoices', '0'),
+('project_date_reason_required', '0');
+

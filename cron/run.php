@@ -45,6 +45,7 @@ $webhookRetries = (new \App\Services\OutboundWebhookService())->processDue();
 $approvalReminders = (new \App\Services\ApprovalService())->escalate();
 $integrationRetries = (new \App\Services\IntegrationIssueService())->retryDue();
 $fieldPacks = (new \App\Services\FieldPackService())->cleanup();
+$projectMilestones = (new \App\Services\ProjectHealthService())->notifyDue();
 $removed = (new SystemHealthService())->cleanupTemporary();
 $settings->put('last_cron_at', date('Y-m-d H:i:s'));
 $settings->put('last_cron_status', 'SUCCESS');

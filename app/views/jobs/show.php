@@ -1,7 +1,8 @@
 <?php require base_path('app/views/partials/flashes.php'); ?>
 <div class="sf-page-head d-flex flex-wrap justify-content-between gap-3">
     <div>
-        <p class="sf-kicker mb-1"><?= e((string) $job['job_number']) ?> · <?= e(customer_label($job)) ?></p>
+        <?php $projectLink = project_context($job); ?>
+        <p class="sf-kicker mb-1"><?= e((string) $job['job_number']) ?> · <?= e(customer_label($job)) ?><?php if ($projectLink): ?> · <a href="<?= e(url('/projects/' . $projectLink['id'])) ?>"><?= e((string) $projectLink['project_number']) ?></a><?php if (!empty($projectLink['site'])): ?> · <?= e((string) $projectLink['site']['site_code']) ?><?php endif; ?><?php if (!empty($projectLink['wave'])): ?> · <?= e((string) $projectLink['wave']['name']) ?><?php endif; ?><?php endif; ?></p>
         <h1 class="mb-1"><?= e((string) $job['title']) ?></h1>
         <p class="mb-0 d-flex flex-wrap gap-2 align-items-center">
             <span class="sf-badge"><?= e(enum_label(\App\Domain\JobStatus::class, (string) $job['status'])) ?></span>

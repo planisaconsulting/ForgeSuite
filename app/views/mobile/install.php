@@ -1,6 +1,7 @@
 <?php require base_path('app/views/partials/flashes.php'); ?>
 <div class="sf-page-head">
-    <p class="sf-kicker mb-1"><?= e((string) $job['job_number']) ?> · <?= e((string) $installation['status']) ?></p>
+    <?php $projectLink = project_context($job); ?>
+    <p class="sf-kicker mb-1"><?= e((string) $job['job_number']) ?> · <?= e((string) $installation['status']) ?><?php if ($projectLink): ?> · <?= e((string) $projectLink['project_number']) ?><?php endif; ?></p>
     <h1><?= e(customer_label($job)) ?></h1>
 </div>
 <?php if ($fresh !== null && !empty($fresh['critical'])): ?>

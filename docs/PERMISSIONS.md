@@ -1,17 +1,21 @@
 # Permissions
 
-v1.0.0 has 232 permission codes. ADMIN holds all 190 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 250 permission codes. ADMIN holds all 208 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 91 |
-| SALES | 78 |
-| ACCOUNTS | 57 |
-| PRODUCTION | 47 |
-| INSTALLER | 30 |
+| MANAGEMENT | 109 |
+| SALES | 83 |
+| ACCOUNTS | 61 |
+| PRODUCTION | 48 |
+| INSTALLER | 31 |
 | DISPATCH | 21 |
-| DESIGN | 16 |
+| DESIGN | 17 |
 | MARKETING | 11 |
+
+Project codes are `projects.view`, `projects.view_assigned`, `projects.create`, `projects.edit`, `projects.archive`, `projects.complete`, `projects.view_financials`, `projects.manage_team`, `projects.manage_sites`, `projects.import_sites`, `projects.bulk_create_jobs`, `projects.manage_milestones`, `projects.manage_risks`, `projects.manage_issues`, `projects.manage_budget`, `projects.manage_changes`, `projects.generate_handover`, and `projects.view_reports`.
+
+SALES can create projects and see commercial figures. ACCOUNTS can see project financials and reports. DESIGN, PRODUCTION, and INSTALLER only open projects they are assigned to, and they cannot open financials. MANAGEMENT receives the project codes. ADMIN is allowed through in code.
 
 There is no separate SURVEYOR, FINANCE, WORKSHOP, or PURCHASING role. Survey work sits with SALES and INSTALLER. Finance sits with ACCOUNTS. Workshop sits with PRODUCTION. Purchasing sits with the roles that have `purchasing.*`. The customer portal is a different login, not a staff role.
 

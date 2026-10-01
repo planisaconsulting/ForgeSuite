@@ -27,6 +27,7 @@ use App\Controllers\InventoryController;
 use App\Controllers\InvoiceController;
 use App\Controllers\PaymentController;
 use App\Controllers\JobController;
+use App\Controllers\ProjectController;
 use App\Controllers\PurchasingController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
@@ -1662,6 +1663,109 @@ $router->post('/api/v1/push-subscriptions', static function (): void {
 $router->post('/api/v1/mobile/report', static function (): void {
     (new MobileController())->report();
 }, true, true, 'mobile.use');
+
+$router->get('/projects', static function (): void {
+    (new ProjectController())->index();
+}, true, 'projects.view_assigned');
+$router->get('/projects/new', static function (): void {
+    (new ProjectController())->createForm();
+}, true, 'projects.create');
+$router->post('/projects', static function (): void {
+    (new ProjectController())->store();
+}, true, true, 'projects.create');
+$router->get('/projects/reports/{slug}', static function (string $slug): void {
+    (new ProjectController())->report($slug);
+}, true, 'projects.view_assigned');
+$router->get('/projects/{id}', static function (string $id): void {
+    (new ProjectController())->show($id);
+}, true, 'projects.view_assigned');
+$router->post('/projects/{id}', static function (string $id): void {
+    (new ProjectController())->update($id);
+}, true, true, 'projects.edit');
+$router->post('/projects/{id}/date', static function (string $id): void {
+    (new ProjectController())->shiftDate($id);
+}, true, true, 'projects.edit');
+$router->post('/projects/{id}/sites', static function (string $id): void {
+    (new ProjectController())->addSite($id);
+}, true, true, 'projects.manage_sites');
+$router->get('/projects/{id}/import', static function (string $id): void {
+    (new ProjectController())->importForm($id);
+}, true, 'projects.import_sites');
+$router->post('/projects/{id}/import', static function (string $id): void {
+    (new ProjectController())->import($id);
+}, true, true, 'projects.import_sites');
+$router->post('/projects/{id}/jobs', static function (string $id): void {
+    (new ProjectController())->bulkJobs($id);
+}, true, true, 'projects.bulk_create_jobs');
+$router->post('/projects/{id}/waves', static function (string $id): void {
+    (new ProjectController())->addWave($id);
+}, true, true, 'projects.manage_sites');
+$router->post('/projects/{id}/milestones', static function (string $id): void {
+    (new ProjectController())->addMilestone($id);
+}, true, true, 'projects.manage_milestones');
+$router->post('/projects/{id}/milestones/{milestoneId}', static function (string $id, string $milestoneId): void {
+    (new ProjectController())->milestoneStatus($id, $milestoneId);
+}, true, true, 'projects.manage_milestones');
+$router->post('/projects/{id}/risks', static function (string $id): void {
+    (new ProjectController())->addRisk($id);
+}, true, true, 'projects.manage_risks');
+$router->post('/projects/{id}/issues', static function (string $id): void {
+    (new ProjectController())->addIssue($id);
+}, true, true, 'projects.manage_issues');
+$router->post('/projects/{id}/issues/{issueId}', static function (string $id, string $issueId): void {
+    (new ProjectController())->issueStatus($id, $issueId);
+}, true, true, 'projects.manage_issues');
+$router->post('/projects/{id}/notes', static function (string $id): void {
+    (new ProjectController())->addNote($id);
+}, true, true, 'projects.edit');
+$router->post('/projects/{id}/changes', static function (string $id): void {
+    (new ProjectController())->addChange($id);
+}, true, true, 'projects.manage_changes');
+$router->post('/projects/{id}/changes/{changeId}', static function (string $id, string $changeId): void {
+    (new ProjectController())->decideChange($id, $changeId);
+}, true, true, 'projects.manage_changes');
+$router->post('/projects/{id}/budget', static function (string $id): void {
+    (new ProjectController())->saveBudget($id);
+}, true, true, 'projects.manage_budget');
+$router->post('/projects/{id}/costs', static function (string $id): void {
+    (new ProjectController())->addCost($id);
+}, true, true, 'projects.manage_budget');
+$router->post('/projects/{id}/complete', static function (string $id): void {
+    (new ProjectController())->complete($id);
+}, true, true, 'projects.complete');
+$router->get('/projects/{id}/handover', static function (string $id): void {
+    (new ProjectController())->handover($id);
+}, true, 'projects.generate_handover');
+$router->post('/projects/{id}/documents', static function (string $id): void {
+    (new ProjectController())->upload($id);
+}, true, true, 'projects.edit');
+$router->get('/project-sites/{id}', static function (string $id): void {
+    (new ProjectController())->site($id);
+}, true, 'projects.view_assigned');
+$router->get('/m/projects', static function (): void {
+    (new ProjectController())->mobileIndex();
+}, true, 'projects.view_assigned');
+$router->get('/m/projects/{id}', static function (string $id): void {
+    (new ProjectController())->mobileProject($id);
+}, true, 'projects.view_assigned');
+$router->get('/api/v1/projects/{id}', static function (string $id): void {
+    (new ApiV1Controller())->project($id);
+}, false);
+$router->get('/api/v1/projects/{id}/sites', static function (string $id): void {
+    (new ApiV1Controller())->projectSites($id);
+}, false);
+$router->get('/api/v1/projects/{id}/milestones', static function (string $id): void {
+    (new ApiV1Controller())->projectMilestones($id);
+}, false);
+$router->get('/api/v1/projects/{id}/jobs', static function (string $id): void {
+    (new ApiV1Controller())->projectJobs($id);
+}, false);
+$router->get('/api/v1/projects/{id}/summary', static function (string $id): void {
+    (new ApiV1Controller())->projectSummary($id);
+}, false);
+$router->get('/api/v1/project-sites/{id}', static function (string $id): void {
+    (new ApiV1Controller())->projectSite($id);
+}, false);
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

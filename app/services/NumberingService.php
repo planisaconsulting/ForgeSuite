@@ -30,6 +30,11 @@ final class NumberingService
         return $this->next('quote', 'quote_prefix', 'SFQ');
     }
 
+    public function project(): string
+    {
+        return $this->next('project', 'project_prefix', 'SFP');
+    }
+
     public function job(): string
     {
         return $this->next('job', 'job_prefix', 'SFJ');

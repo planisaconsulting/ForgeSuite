@@ -24,6 +24,14 @@ A workflow can notify, create a task, or call an existing service. It cannot run
 
 Connectors, API clients, and mail settings are under Administration. Take a backup before a deployment and copy it off the server. Revoke a lost phone under Mobile and devices. Trust does not skip the password.
 
+## Projects
+
+Project types, milestone types, delay reasons, risk categories, and templates are loaded by the v1.1 migration. A template change does not rewrite milestones already copied onto a project.
+
+`project_prefix` defaults to SFP. `project_closeout_block_critical_snags` defaults to 1, so a critical snag blocks operational completion. `project_closeout_block_open_invoices` defaults to 0, so an unpaid invoice is a warning, not a block. `project_date_reason_required` defaults to 0.
+
+Project changes use the existing approval engine when a policy exists for entity PROJECT and action CHANGE. With no policy, a user who has `projects.manage_changes` can approve the change.
+
 ## System health
 
 Administration → System health shows the release, PHP, database, storage, last cron, last backup, failed automations, and failed field sync. It does not show passwords.

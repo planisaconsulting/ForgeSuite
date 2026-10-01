@@ -11,5 +11,5 @@ final class Version
 {
     public const NAME = 'Sign-Forge ERP';
 
-    public const NUMBER = '1.0.0';
+    public const NUMBER = '1.1.0';
 }

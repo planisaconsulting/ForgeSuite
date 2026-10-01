@@ -260,6 +260,18 @@ $activityValue = static function (string $key, string $default = '') use ($activ
 <div class="row g-3 mt-1">
     <div class="col-12 col-lg-4">
         <section class="sf-panel h-100">
+            <div class="sf-panel-head"><h2>Projects</h2></div>
+            <?php if (($projects ?? []) === []): ?><div class="sf-empty"><p>No projects yet.</p></div><?php endif; ?>
+            <ul class="sf-feed">
+                <?php foreach (($projects ?? []) as $project): ?>
+                    <li><a href="<?= e(url('/projects/' . $project['id'])) ?>"><?= e((string) $project['project_number']) ?></a><small><?= e((string) $project['name']) ?> · <?= e((string) $project['status']) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+            <?php if (can('projects.create')): ?><p><a href="<?= e(url('/projects/new?customer_id=' . $customer['id'])) ?>">New project</a></p><?php endif; ?>
+        </section>
+    </div>
+    <div class="col-12 col-lg-4">
+        <section class="sf-panel h-100">
             <div class="sf-panel-head"><h2>Opportunities</h2></div>
             <?php if (($opportunities ?? []) === []): ?><div class="sf-empty"><p>No opportunities yet.</p></div><?php endif; ?>
             <ul class="sf-feed">

@@ -26,7 +26,7 @@ $eq = static function (string $label, mixed $expected, mixed $actual) use (&$fai
 };
 
 $eq('release name', 'Sign-Forge ERP', Version::NAME);
-$eq('release number', '1.0.0', Version::NUMBER);
+$eq('release number', '1.1.0', Version::NUMBER);
 $eq('login index', 1, (new PlatformRepository())->countIndex('idx_login_events_ip_created'));
 
 $schema = (string) file_get_contents(dirname(__DIR__) . '/database/schema.sql');

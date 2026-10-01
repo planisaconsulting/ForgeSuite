@@ -1,7 +1,8 @@
 <?php require base_path('app/views/partials/flashes.php'); ?>
 <div class="sf-page-head sf-page-head-row">
     <div>
-        <p class="sf-kicker mb-1"><?= e((string) $quote['quote_number']) ?> · Revision <?= e((string) ($revisionNumber ?? $quote['revision_number'])) ?></p>
+        <?php $projectLink = project_context($quote); ?>
+        <p class="sf-kicker mb-1"><?= e((string) $quote['quote_number']) ?> · Revision <?= e((string) ($revisionNumber ?? $quote['revision_number'])) ?><?php if ($projectLink): ?> · <a href="<?= e(url('/projects/' . $projectLink['id'])) ?>"><?= e((string) $projectLink['project_number']) ?></a><?php endif; ?></p>
         <h1><?= e(customer_label($quote)) ?></h1>
         <p class="mb-0"><?= e(enum_label(App\Domain\QuoteStatus::class, (string) $quote['status'])) ?>
             <?php if ($expiry === 'EXPIRED'): ?> · Expired<?php elseif ($expiry === 'EXPIRING'): ?> · Expiring soon<?php endif; ?>

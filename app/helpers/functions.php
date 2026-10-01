@@ -136,6 +136,16 @@ function asset(string $path): string
  * Display a stored decimal as South African currency, for example R 1,234.56.
  * This only formats. It is not used to calculate totals.
  */
+function project_context(array $row): ?array
+{
+    $projectId = (int) ($row['project_id'] ?? 0);
+    if ($projectId < 1) {
+        return null;
+    }
+
+    return (new App\Repositories\ProjectRepository())->label($projectId, (int) ($row['project_site_id'] ?? 0));
+}
+
 function money(string|int|float|null $amount): string
 {
     $symbol = 'R';

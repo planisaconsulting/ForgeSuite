@@ -22,6 +22,14 @@ Open the workshop scan while the tablet is online. Scan the roll, sheet, or item
 
 On the phone, open My work, download the field pack, and check the approved artwork revision. Travel, arrive, complete the checklist, add photos, and capture the signature. If you are offline, the signature waits until sync. The office does not treat it as signed until that sync succeeds.
 
+## How to run a multi-site project
+
+Open Projects and create a project for the customer, or start one from the customer page. Add sites one by one or paste a spreadsheet on Import. A repeated site code stops the import so you do not get a partial list.
+
+Create draft jobs from the sites when the package is agreed. Those jobs stay New until someone reviews them. They do not consume stock or raise invoices. Artwork, production, and installation still happen on each job.
+
+The overview shows how many sites are complete, which are late, the next milestone, open snags, and, if you are allowed, commercial value, actual cost, gross profit, margin, invoiced, and cash collected. Moving the current target keeps the original date and stores the reason.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

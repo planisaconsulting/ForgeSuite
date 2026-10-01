@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+v1.1 Phase 1 adds projects and multi-site rollouts above the existing job.
+
+A project can hold many sites, and a site can hold many jobs. Jobs still own artwork, materials, production, stock, installation, and actual cost. One-off jobs stay valid with no project.
+
+Project numbers are `SFP-YYYY-####`. Commercial value comes from accepted project lines and approved changes. Allocations of a contract do not get added again. Payments stay cash collected. Health is calculated separately from status and includes the reasons.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.
