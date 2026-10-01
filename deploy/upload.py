@@ -46,6 +46,7 @@ RUNTIME_PREFIXES = (
     "storage/temp/",
     "storage/documents/",
     "storage/signatures/",
+    "storage/field-photos/",
 )
 
 
