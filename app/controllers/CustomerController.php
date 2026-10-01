@@ -9,6 +9,9 @@ use App\Repositories\ActivityRepository;
 use App\Repositories\AuditRepository;
 use App\Repositories\ContactRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\JobRepository;
+use App\Repositories\OpportunityRepository;
+use App\Repositories\QuoteRepository;
 use App\Services\CustomerService;
 
 final class CustomerController
@@ -60,6 +63,7 @@ final class CustomerController
             'audit' => (new AuditRepository())->forEntity('customer', $customerId),
             'canManage' => can('customers.manage'),
             'canActivity' => can('activities.manage'),
+            ...$this->salesLists($customerId),
             'contactErrors' => [],
             'contactOld' => ['active' => '1'],
             'activityErrors' => [],
@@ -166,6 +170,19 @@ final class CustomerController
     }
 
     /**
+     * @return array{opportunities: list<array<string, mixed>>, quotes: list<array<string, mixed>>, jobs: list<array<string, mixed>>, canQuote: bool}
+     */
+    private function salesLists(int $customerId): array
+    {
+        return [
+            'opportunities' => can('opportunities.view') ? (new OpportunityRepository())->forCustomer($customerId) : [],
+            'quotes' => can('quotes.view') ? (new QuoteRepository())->forCustomer($customerId) : [],
+            'jobs' => can('jobs.view') ? (new JobRepository())->forCustomer($customerId) : [],
+            'canQuote' => can('quotes.manage'),
+        ];
+    }
+
+    /**
      * @param array<string, string> $contactErrors
      * @param array<string, mixed> $contactOld
      * @param array<string, string> $activityErrors
@@ -191,6 +208,7 @@ final class CustomerController
             'audit' => (new AuditRepository())->forEntity('customer', $customerId),
             'canManage' => can('customers.manage'),
             'canActivity' => can('activities.manage'),
+            ...$this->salesLists($customerId),
             'contactErrors' => $contactErrors,
             'contactOld' => $contactOld,
             'activityErrors' => $activityErrors,

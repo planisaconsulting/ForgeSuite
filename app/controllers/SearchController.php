@@ -6,12 +6,13 @@ namespace App\Controllers;
 
 use App\Helpers\View;
 use App\Repositories\CustomerRepository;
+use App\Repositories\OpportunityRepository;
 use App\Repositories\ProductRepository;
+use App\Repositories\QuoteRepository;
 use App\Repositories\SupplierRepository;
 
 /**
- * Phase 1 search covers customers, products, and suppliers.
- * Quotes, jobs, and invoices will be added here when those modules exist.
+ * Search covers customers, opportunities, quotations, products, and suppliers.
  * Each block is omitted when the signed-in role cannot view it.
  */
 final class SearchController
@@ -26,6 +27,12 @@ final class SearchController
             'customers' => $term !== '' && can('customers.view')
                 ? (new CustomerRepository())->search($term, 'all', 20)
                 : [],
+            'opportunities' => $term !== '' && can('opportunities.view')
+                ? (new OpportunityRepository())->search($term, 'all')
+                : [],
+            'quotes' => $term !== '' && can('quotes.view')
+                ? (new QuoteRepository())->search(['q' => $term])
+                : [],
             'products' => $term !== '' && can('products.view')
                 ? (new ProductRepository())->search($term, 'all', null, 20)
                 : [],
@@ -33,6 +40,8 @@ final class SearchController
                 ? (new SupplierRepository())->search($term, 'all', 20)
                 : [],
             'showCustomers' => can('customers.view'),
+            'showOpportunities' => can('opportunities.view'),
+            'showQuotes' => can('quotes.view'),
             'showProducts' => can('products.view'),
             'showSuppliers' => can('suppliers.view'),
         ]);

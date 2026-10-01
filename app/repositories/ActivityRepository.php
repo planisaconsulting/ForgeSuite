@@ -59,11 +59,11 @@ final class ActivityRepository extends Repository
     {
         $this->run(
             'INSERT INTO crm_activities
-                (customer_id, user_id, activity_type, subject, description, activity_date, follow_up_date, completed)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                (customer_id, opportunity_id, user_id, activity_type, subject, description, activity_date, follow_up_date, completed)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
-                $data['customer_id'], $data['user_id'], $data['activity_type'], $data['subject'],
-                $data['description'], $data['activity_date'], $data['follow_up_date'], $data['completed'],
+                $data['customer_id'], $data['opportunity_id'] ?? null, $data['user_id'], $data['activity_type'],
+                $data['subject'], $data['description'], $data['activity_date'], $data['follow_up_date'], $data['completed'],
             ]
         );
 

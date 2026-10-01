@@ -8,13 +8,14 @@ $groups = [
     ['label' => 'CRM', 'links' => [
         ['customers', 'Customers', '/customers', 'fa-users', 'customers.view'],
         ['activities', 'Activities', '/activities', 'fa-comments', 'activities.view'],
+        ['opportunities', 'Opportunities', '/opportunities', 'fa-bullseye', 'opportunities.view'],
     ]],
     ['label' => 'Sales', 'links' => [
         ['calculator', 'Calculator', '/calculator', 'fa-calculator', 'calculator.use'],
-        ['quotes', 'Quotes', null, 'fa-file-invoice', null],
+        ['quotes', 'Quotes', '/quotes', 'fa-file-invoice', 'quotes.view'],
     ]],
     ['label' => 'Operations', 'links' => [
-        ['jobs', 'Jobs', null, 'fa-clipboard-list', null],
+        ['jobs', 'Jobs', '/jobs', 'fa-clipboard-list', 'jobs.view'],
         ['production', 'Production', null, 'fa-industry', null],
     ]],
     ['label' => 'Inventory', 'links' => [

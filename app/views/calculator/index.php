@@ -59,6 +59,30 @@
                 <p class="sf-muted mb-0" id="calc-hint">Select a product to see the inputs it needs.</p>
             </div>
         </form>
+        <?php if (!empty($canQuote)): ?>
+            <form class="sf-panel sf-form mt-3" method="post" action="<?= e(url('/calculator/quote')) ?>" id="calc-quote-form">
+                <?= csrf_field() ?>
+                <div class="p-3">
+                    <p class="sf-kicker">Add this price to a quotation</p>
+                    <label class="form-label" for="calc-customer">Customer</label>
+                    <select class="form-select mb-2" id="calc-customer" name="customer_id">
+                        <option value="">Choose for a new quotation</option>
+                        <?php foreach ($customers as $customer): ?>
+                            <option value="<?= e((string) $customer['id']) ?>"><?= e(customer_label($customer)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <label class="form-label" for="calc-draft">Or an existing draft</label>
+                    <select class="form-select mb-3" id="calc-draft" name="quote_id">
+                        <option value="">New quotation</option>
+                        <?php foreach ($drafts as $draft): ?>
+                            <option value="<?= e((string) $draft['id']) ?>"><?= e((string) $draft['quote_number']) ?> · <?= e(customer_label($draft)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button class="btn btn-sf" type="submit">Add to quotation</button>
+                    <p class="form-text mb-0">The server prices the line again from the catalogue. A cost typed here is ignored.</p>
+                </div>
+            </form>
+        <?php endif; ?>
     </div>
     <div class="col-12 col-lg-7">
         <section class="sf-panel sf-calc-result" id="calc-result" aria-live="polite">

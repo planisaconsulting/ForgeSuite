@@ -56,14 +56,19 @@ final class Database
     public static function transaction(callable $callback): mixed
     {
         $pdo = self::connection();
-        $pdo->beginTransaction();
+        $owned = !$pdo->inTransaction();
+        if ($owned) {
+            $pdo->beginTransaction();
+        }
         try {
             $result = $callback($pdo);
-            $pdo->commit();
+            if ($owned) {
+                $pdo->commit();
+            }
 
             return $result;
         } catch (\Throwable $e) {
-            if ($pdo->inTransaction()) {
+            if ($owned && $pdo->inTransaction()) {
                 $pdo->rollBack();
             }
             throw $e;

@@ -191,9 +191,43 @@ $activityValue = static function (string $key, string $default = '') use ($activ
 </section>
 
 <div class="row g-3 mt-1">
+    <div class="col-12 col-lg-4">
+        <section class="sf-panel h-100">
+            <div class="sf-panel-head"><h2>Opportunities</h2></div>
+            <?php if (($opportunities ?? []) === []): ?><div class="sf-empty"><p>No opportunities yet.</p></div><?php endif; ?>
+            <ul class="sf-feed">
+                <?php foreach (($opportunities ?? []) as $opportunity): ?>
+                    <li><a href="<?= e(url('/opportunities/' . $opportunity['id'])) ?>"><?= e((string) $opportunity['opportunity_number']) ?></a><small><?= e((string) $opportunity['title']) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
+    </div>
+    <div class="col-12 col-lg-4">
+        <section class="sf-panel h-100">
+            <div class="sf-panel-head"><h2>Quotes</h2></div>
+            <?php if (($quotes ?? []) === []): ?><div class="sf-empty"><p>No quotations yet.</p></div><?php endif; ?>
+            <ul class="sf-feed">
+                <?php foreach (($quotes ?? []) as $quote): ?>
+                    <li><a href="<?= e(url('/quotes/' . $quote['id'])) ?>"><?= e((string) $quote['quote_number']) ?></a><small><?= e((string) $quote['status']) ?> · <?= e(money((string) $quote['total'])) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+            <?php if (!empty($canQuote)): ?><div class="p-3"><a href="<?= e(url('/quotes/new?customer_id=' . $customer['id'])) ?>">New quotation</a></div><?php endif; ?>
+        </section>
+    </div>
+    <div class="col-12 col-lg-4">
+        <section class="sf-panel h-100">
+            <div class="sf-panel-head"><h2>Jobs</h2></div>
+            <?php if (($jobs ?? []) === []): ?><div class="sf-empty"><p>No jobs yet.</p></div><?php endif; ?>
+            <ul class="sf-feed">
+                <?php foreach (($jobs ?? []) as $job): ?>
+                    <li><a href="<?= e(url('/jobs/' . $job['id'])) ?>"><?= e((string) $job['job_number']) ?></a><small><?= e((string) $job['status']) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
+    </div>
+</div>
+<div class="row g-3 mt-1">
     <?php foreach ([
-        'Quotes' => 'Quotations for this customer will be listed here.',
-        'Jobs' => 'Jobs will be listed here after a quote is accepted.',
         'Invoices' => 'Invoices will be listed here.',
         'Payments' => 'Payments will be listed here.',
         'Files' => 'Artwork and site files will be listed here.',

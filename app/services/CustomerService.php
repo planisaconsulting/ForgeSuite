@@ -175,6 +175,7 @@ final class CustomerService
 
         $data = [
             'customer_id' => $customerId,
+            'opportunity_id' => ((int) ($input['opportunity_id'] ?? 0)) > 0 ? (int) $input['opportunity_id'] : null,
             'user_id' => $userId,
             'activity_type' => $type,
             'subject' => $subject,

@@ -9,10 +9,10 @@
     <div class="row g-3">
         <?php foreach ($fields as $key => $label): ?>
             <?php $current = old_value($old, $key); ?>
-            <div class="<?= in_array($key, ['address'], true) ? 'col-12' : 'col-md-6' ?>">
+            <div class="<?= in_array($key, ['address', 'default_quote_terms'], true) ? 'col-12' : 'col-md-6' ?>">
                 <label class="form-label" for="<?= e($key) ?>"><?= e($label) ?></label>
-                <?php if ($key === 'address'): ?>
-                    <textarea class="form-control" id="<?= e($key) ?>" name="<?= e($key) ?>" rows="3"><?= e($current) ?></textarea>
+                <?php if (in_array($key, ['address', 'default_quote_terms'], true)): ?>
+                    <textarea class="form-control" id="<?= e($key) ?>" name="<?= e($key) ?>" rows="<?= $key === 'default_quote_terms' ? '6' : '3' ?>"><?= e($current) ?></textarea>
                 <?php elseif ($key === 'timezone'): ?>
                     <input class="form-control" id="<?= e($key) ?>" name="<?= e($key) ?>" list="timezones" value="<?= e($current) ?>">
                     <datalist id="timezones">

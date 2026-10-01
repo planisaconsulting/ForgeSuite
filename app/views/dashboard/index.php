@@ -101,12 +101,36 @@
     </div>
 </div>
 
+<?php if ($sales !== null || $pipeline !== null): ?>
+<section class="sf-panel mt-3">
+    <div class="sf-panel-head"><h2>Sales</h2></div>
+    <p class="px-3 mb-0 sf-muted">These are quotation values, not paid revenue. An accepted quote is not an invoice.</p>
+    <div class="row g-3 p-3">
+        <?php if ($pipeline !== null): ?>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Open opportunities</p><p class="sf-stat-value"><?= e((string) $pipeline['open_count']) ?></p><p class="sf-muted mb-0"><?= e(money((string) $pipeline['open_value'])) ?> estimated</p></div>
+        <?php endif; ?>
+        <?php if ($sales !== null): ?>
+            <?php
+            $decided = (int) $sales['decided_accepted'] + (int) $sales['declined'];
+            $rate = $decided > 0 ? number_format(((int) $sales['decided_accepted'] / $decided) * 100, 0) : null;
+            ?>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Draft quotes</p><p class="sf-stat-value"><?= e((string) $sales['drafts']) ?></p></div>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Awaiting response</p><p class="sf-stat-value"><?= e((string) $sales['awaiting']) ?></p></div>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Accepted, not converted</p><p class="sf-stat-value"><?= e((string) $sales['accepted']) ?></p></div>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Expiring soon</p><p class="sf-stat-value"><?= e((string) $sales['expiring']) ?></p></div>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Quoted this month</p><p class="mb-0"><?= e(money((string) $sales['quoted_value'])) ?></p></div>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Accepted this month</p><p class="mb-0"><?= e(money((string) $sales['accepted_value'])) ?></p></div>
+            <div class="col-6 col-lg-3"><p class="sf-kicker">Conversion</p><p class="mb-0"><?= $rate === null ? 'No decided quotes this month' : e($rate . '% of decided quotes') ?></p></div>
+        <?php endif; ?>
+    </div>
+</section>
+<?php endif; ?>
+
 <section class="sf-panel mt-3">
     <div class="sf-panel-head"><h2>Later modules</h2></div>
     <div class="row g-3 p-3">
         <?php foreach ([
-            'Open quotes' => 'Quotations are not stored yet.',
-            'Jobs in production' => 'Jobs are not stored yet.',
+            'Jobs in production' => 'Production stages are not stored yet. A job record only records the hand-off from an accepted quote.',
             'Outstanding invoices' => 'Invoices are not stored yet.',
             'Low stock' => 'Stock movements are not stored yet. A product can be flagged for tracking only.',
         ] as $label => $note): ?>

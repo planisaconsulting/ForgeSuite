@@ -1,11 +1,11 @@
 <?php require base_path('app/views/partials/flashes.php'); ?>
 <div class="sf-page-head">
     <h1>Search</h1>
-    <p class="sf-muted mb-0">Customers, products, and suppliers. Quotes, jobs, and invoices will join this search later.</p>
+    <p class="sf-muted mb-0">Customers, opportunities, quotations, products, and suppliers.</p>
 </div>
 <form class="sf-filters" method="get" action="<?= e(url('/search')) ?>">
     <label class="visually-hidden" for="search-q">Search</label>
-    <input class="form-control" id="search-q" type="search" name="q" value="<?= e($term) ?>" placeholder="Name, email, SKU, supplier">
+    <input class="form-control" id="search-q" type="search" name="q" value="<?= e($term) ?>" placeholder="Name, quote number, opportunity, SKU">
     <button class="btn btn-sf" type="submit">Search</button>
 </form>
 <?php if ($term === ''): ?>
@@ -18,6 +18,30 @@
                 <ul class="sf-feed">
                     <?php foreach ($customers as $row): ?>
                         <li><a href="<?= e(url('/customers/' . $row['id'])) ?>"><?= e(customer_label($row)) ?></a><small><?= e((string) ($row['email'] ?? '')) ?></small></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if ($showOpportunities): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Opportunities</h2></div>
+            <?php if ($opportunities === []): ?><div class="sf-empty"><p>No opportunities.</p></div><?php else: ?>
+                <ul class="sf-feed">
+                    <?php foreach ($opportunities as $row): ?>
+                        <li><a href="<?= e(url('/opportunities/' . $row['id'])) ?>"><?= e((string) $row['opportunity_number']) ?></a><small><?= e((string) $row['title']) ?></small></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <?php if ($showQuotes): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Quotations</h2></div>
+            <?php if ($quotes === []): ?><div class="sf-empty"><p>No quotations.</p></div><?php else: ?>
+                <ul class="sf-feed">
+                    <?php foreach ($quotes as $row): ?>
+                        <li><a href="<?= e(url('/quotes/' . $row['id'])) ?>"><?= e((string) $row['quote_number']) ?></a><small><?= e(customer_label($row)) ?> · <?= e((string) $row['status']) ?></small></li>
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>

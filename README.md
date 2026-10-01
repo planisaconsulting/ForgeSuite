@@ -134,18 +134,18 @@ These are starter credentials for a local database. Change them before any real 
 
 There is no public registration page. An administrator adds staff under Users. A password an administrator sets must be changed at the next sign-in.
 
-Demo product costs are training numbers, not Sign-Forge's buy prices. The product notes say so. Pricing levels start at Q1 65%, Q2 50%, Q3 35%, Q4 25%. Edit them under Pricing levels. Company defaults are Sign-Forge Signs, ZAR, symbol R, VAT 15%, timezone Africa/Johannesburg, prefixes SFQ / SFI / SFJ, quote validity 14 days.
+Demo product costs are training numbers, not Sign-Forge's buy prices. The product notes say so. Pricing levels start at Q1 65%, Q2 50%, Q3 35%, Q4 25%. Edit them under Pricing levels. Company defaults are Sign-Forge Signs, ZAR, symbol R, VAT 15%, timezone Africa/Johannesburg, prefixes SFO / SFQ / SFI / SFJ, quote validity 14 days. Default quotation terms are copied onto each new quote.
 
 ## Roles
 
-ADMIN, SALES, DESIGN, PRODUCTION, ACCOUNTS, and INSTALLER. ADMIN can open every current screen even if a permission row is missing. Other roles only get the codes in `role_permissions`. The router checks the code before the controller runs. Coming-soon items are shown in the menu as disabled text so they do not 404. Opening `/quotes` directly shows a short note and no invented numbers.
+ADMIN, SALES, DESIGN, PRODUCTION, ACCOUNTS, and INSTALLER. ADMIN can open every current screen even if a permission row is missing. Other roles only get the codes in `role_permissions`. SALES can build quotations, apply a discount, override a selling price, accept a quote, and convert it to a job. Discounting below cost stays with ADMIN. The router checks the code before the controller runs. Production, stock, and invoices stay disabled in the menu until those phases exist.
 
 ## Xneelo deployment
 
 1. In the Xneelo panel, create a MySQL database and user. Note the host (often `sqlXX.jnb1.host-h.net`, not `localhost`).
 2. Point the domain's document root at `public_html/public` if the panel allows it. If it does not, upload the project into `public_html` and leave the root `.htaccess` in place.
 3. Copy `config.example.php` to `config.local.php` on the server only. Set `app.debug` to `false`, `app.url` to the https address, and the database details. Do not commit that file. Permissions `600` are enough.
-4. Import `database/schema.sql` then `database/seed.sql` from the panel, or with a one-off PHP script that you delete afterwards. `schema.sql` drops existing Sign-Forge tables. Import it only into an empty application database, or when you mean to replace them.
+4. On an empty database, import `database/schema.sql` then `database/seed.sql`. `schema.sql` drops existing Sign-Forge tables. Do not import it over a database that already has customers. A database that already has Phase 1 tables should receive `database/migrations/002_sales_and_quotes.sql` once, and nothing else.
 5. Upload the project by SFTP. Passive FTP from some networks cannot open a data port. `deploy/upload.py` uses SFTP on port 22 and skips `config.local.php` unless you pass `SF_CONFIG_LOCAL`.
 6. Confirm `https://your-domain/login` loads, sign in, and change the admin password.
 7. Delete any one-off import script. Confirm `README.md`, `database/`, and `app/config/config.local.php` are not downloadable (the `.htaccess` rules return 403).
@@ -156,12 +156,18 @@ ADMIN, SALES, DESIGN, PRODUCTION, ACCOUNTS, and INSTALLER. ADMIN can open every 
 
 ```bash
 php tests/calculations.php
+php tests/quotes.php
+php tests/sales_flow.php
 php tests/acceptance.php http://127.0.0.1:8741
 ```
 
 `calculations.php` does not need the database. It checks area, linear, unit, manufacturing waste, roll consumption, the threshold warning, actual / consumed-width / manual modes, sheet actual and full-sheet charging, markup, gross profit, and gross margin. It runs the checks with bcmath and again with the string fallback.
 
-`acceptance.php` needs the dev server. It signs in, changes the password, walks customers, products, suppliers, and the calculator, then puts the seed password back.
+`quotes.php` checks quote-line snapshots and quote totals: discounts, VAT modes, deposits, optional lines, and a saved cost that survives a later catalogue change. It does not need the database.
+
+`sales_flow.php` needs the database. It creates a quotation, keeps the saved cost after the product price changes, refreshes prices onto a new revision, accepts the quote, converts it to one job, and checks the customer PDF.
+
+`acceptance.php` needs the dev server. It signs in, changes the password, walks customers, products, suppliers, the calculator, and the quotation list, then puts the seed password back.
 
 ## Security
 
@@ -174,13 +180,36 @@ php tests/acceptance.php http://127.0.0.1:8741
 - Foreign keys use RESTRICT where a delete would destroy history. `created_by` uses SET NULL.
 - `config.local.php` is gitignored. Production passwords do not belong in this repository.
 
-## Phase 2, when you ask for it
+## Phase 2 sales workflow
 
-Quotations only. Not jobs, stock, or invoices.
+A lead can be an opportunity, and a quotation can also be raised directly from a customer, the calculator, or New quotation.
 
-- `quotes`, `quote_items`, and a number sequence, in `002_quotes.sql`
-- Each line stores the cost, waste mode, billable quantity, markup, and sell price from the day it was priced, by calling `PricingService` and copying the result. A later cost change must not rewrite the quote.
-- Line prices stay ex-VAT. The quote stores the VAT mode and rate.
-- Revisions, PDF, acceptance, and conversion to a job come after the first saved quote works.
+Opportunity → quotation → revision → acceptance → job hand-off.
 
-Do not start that work until Phase 1 is accepted.
+Numbers come from a locked counter in `number_sequences`, not from `COUNT(*) + 1`.
+
+- Opportunities: `SFO-2026-0001` (`opportunity_prefix`)
+- Quotations: `SFQ-2026-0001` (`quote_prefix`). A revision keeps that number and increments `revision_number`.
+- Jobs: `SFJ-2026-0001` (`job_prefix`)
+
+Each quote line calls `PricingService` and stores the cost, waste choice, markup, calculated price, and final sell price. Opening the quote again uses those saved figures. Refresh current prices shows the difference and, after confirmation, writes the live catalogue cost onto a new revision.
+
+VAT mode is exclusive, inclusive, or none. The rate is copied from settings when the quote is created. A later change to the company VAT rate does not rewrite old quotations. Posted VAT rates are ignored.
+
+Customer PDFs are built with Dompdf from the saved quote. Costs, markup, gross profit, internal notes, waste, and supplier details stay off that document. Files are named `SFQ-2026-0001-R1.pdf`.
+
+An accepted quote is locked. Convert to job creates one `jobs` row in status NEW and, when the quote belongs to an opportunity, marks that opportunity won. Production is not implemented. The job page says production management arrives in Phase 3.
+
+Deposit fields record what the customer must pay before work starts. They are not receipts, invoices, or ledger entries.
+
+## Upgrading a Phase 1 database
+
+Back up the database first. From the host panel, export the MySQL database to a `.sql` file and keep that file off the server. Confirm the export opens and contains the `users` and `customers` tables before you change anything.
+
+Then import `database/migrations/002_sales_and_quotes.sql` once. It adds opportunities, quotations, revisions, jobs, attachments, and the new permissions. It does not drop Phase 1 rows. Do not import `schema.sql` on that database.
+
+A brand-new database uses `schema.sql` and `seed.sql` only. Do not also run `002` on a database created from the current `schema.sql`.
+
+## Phase 3, when you ask for it
+
+Turn the job hand-off into operational jobs: artwork, proofs, tasks, production stages, scheduling, stock reservations, installation, and job costing against the accepted quotation. Do not start that until Phase 2 is accepted. Invoicing and stock movements stay later as well.

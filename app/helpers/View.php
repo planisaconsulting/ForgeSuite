@@ -42,4 +42,17 @@ final class View
 
         require $layoutFile;
     }
+
+    /**
+     * The customer quotation document, as HTML, with no application chrome.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function capture(string $view, array $data = []): string
+    {
+        ob_start();
+        self::render($view, $data, null);
+
+        return (string) ob_get_clean();
+    }
 }

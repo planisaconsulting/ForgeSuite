@@ -32,6 +32,10 @@ if (config('app.debug')) {
     error_reporting(E_ALL);
 }
 
+if (is_file(SF_ROOT . '/vendor/autoload.php')) {
+    require SF_ROOT . '/vendor/autoload.php';
+}
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {

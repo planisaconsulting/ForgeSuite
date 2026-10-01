@@ -6,9 +6,12 @@ namespace App\Controllers;
 
 use App\Helpers\View;
 use App\Repositories\CategoryRepository;
+use App\Repositories\CustomerRepository;
 use App\Repositories\PricingLevelRepository;
 use App\Repositories\ProductRepository;
+use App\Repositories\QuoteRepository;
 use App\Services\PricingService;
+use App\Services\QuoteService;
 
 /**
  * The calculator shows a live price, but every figure comes back from
@@ -23,8 +26,42 @@ final class CalculatorController
             'activeNav' => 'calculator',
             'categories' => (new CategoryRepository())->allWithParent(),
             'products' => (new ProductRepository())->calculatorCatalogue(),
+            'customers' => can('quotes.manage') ? (new CustomerRepository())->search('', 'active', 300) : [],
+            'drafts' => can('quotes.manage') ? (new QuoteRepository())->recentDrafts() : [],
+            'canQuote' => can('quotes.manage'),
             'scripts' => ['assets/js/calculator.js'],
         ]);
+    }
+
+    public function addToQuote(): void
+    {
+        $userId = (int) auth_user()['id'];
+        $service = new QuoteService();
+        $quotes = new QuoteRepository();
+        $quoteId = (int) ($_POST['quote_id'] ?? 0);
+        if ($quoteId > 0) {
+            $existing = $quotes->find($quoteId);
+            if ($existing === null || (string) $existing['status'] !== 'DRAFT') {
+                flash('error', 'Choose a draft quotation.');
+                redirect('/calculator');
+            }
+            $version = (int) $existing['version_number'];
+        } else {
+            $created = $service->create($_POST, $userId);
+            if ($created['id'] === null) {
+                flash('error', (string) reset($created['errors']));
+                redirect('/calculator');
+            }
+            $quoteId = (int) $created['id'];
+            $version = 1;
+        }
+        $result = $service->addProductLine($quoteId, $_POST, $version, $userId);
+        if ($result['errors'] !== []) {
+            flash('error', implode(' ', $result['errors']));
+        } else {
+            flash('success', 'The line was priced on the server and added to the quotation.');
+        }
+        redirect('/quotes/' . $quoteId . '/edit');
     }
 
     public function price(): void

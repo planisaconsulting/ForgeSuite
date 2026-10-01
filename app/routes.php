@@ -15,8 +15,12 @@ declare(strict_types=1);
 
 use App\Controllers\AccountController;
 use App\Controllers\ActivityController;
+use App\Controllers\AttachmentController;
 use App\Controllers\AuthController;
 use App\Controllers\CalculatorController;
+use App\Controllers\JobController;
+use App\Controllers\OpportunityController;
+use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
 use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
@@ -204,6 +208,10 @@ $router->post('/calculator/price', static function (): void {
     (new CalculatorController())->price();
 }, true, true, 'calculator.use');
 
+$router->post('/calculator/quote', static function (): void {
+    (new CalculatorController())->addToQuote();
+}, true, true, 'quotes.manage');
+
 $router->get('/users', static function (): void {
     (new UserController())->index();
 }, true, 'users.manage');
@@ -236,15 +244,133 @@ $router->post('/settings', static function (): void {
     (new SettingsController())->update();
 }, true, true, 'settings.manage');
 
+$router->get('/opportunities', static function (): void {
+    (new OpportunityController())->index();
+}, true, 'opportunities.view');
+$router->get('/opportunities/new', static function (): void {
+    (new OpportunityController())->create();
+}, true, 'opportunities.manage');
+$router->post('/opportunities', static function (): void {
+    (new OpportunityController())->store();
+}, true, true, 'opportunities.manage');
+$router->get('/opportunities/{id}', static function (string $id): void {
+    (new OpportunityController())->show($id);
+}, true, 'opportunities.view');
+$router->get('/opportunities/{id}/edit', static function (string $id): void {
+    (new OpportunityController())->edit($id);
+}, true, 'opportunities.manage');
+$router->post('/opportunities/{id}', static function (string $id): void {
+    (new OpportunityController())->update($id);
+}, true, true, 'opportunities.manage');
+$router->post('/opportunities/{id}/win', static function (string $id): void {
+    (new OpportunityController())->win($id);
+}, true, true, 'opportunities.manage');
+$router->post('/opportunities/{id}/lose', static function (string $id): void {
+    (new OpportunityController())->lose($id);
+}, true, true, 'opportunities.manage');
+$router->post('/opportunities/{id}/activity', static function (string $id): void {
+    (new OpportunityController())->activity($id);
+}, true, true, 'activities.manage');
+
+$router->get('/quotes', static function (): void {
+    (new QuoteController())->index();
+}, true, 'quotes.view');
+$router->get('/quotes/new', static function (): void {
+    (new QuoteController())->create();
+}, true, 'quotes.manage');
+$router->post('/quotes', static function (): void {
+    (new QuoteController())->store();
+}, true, true, 'quotes.manage');
+$router->get('/quotes/{id}', static function (string $id): void {
+    (new QuoteController())->show($id);
+}, true, 'quotes.view');
+$router->get('/quotes/{id}/edit', static function (string $id): void {
+    (new QuoteController())->edit($id);
+}, true, 'quotes.manage');
+$router->post('/quotes/{id}', static function (string $id): void {
+    (new QuoteController())->save($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/autosave', static function (string $id): void {
+    (new QuoteController())->autosave($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/lines', static function (string $id): void {
+    (new QuoteController())->addLine($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/lines/custom', static function (string $id): void {
+    (new QuoteController())->addCustom($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/lines/{lineId}', static function (string $id, string $lineId): void {
+    (new QuoteController())->updateLine($id, $lineId);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/lines/{lineId}/duplicate', static function (string $id, string $lineId): void {
+    (new QuoteController())->duplicateLine($id, $lineId);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/lines/{lineId}/delete', static function (string $id, string $lineId): void {
+    (new QuoteController())->removeLine($id, $lineId);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/reorder', static function (string $id): void {
+    (new QuoteController())->reorder($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/sections', static function (string $id): void {
+    (new QuoteController())->addSection($id);
+}, true, true, 'quotes.manage');
+$router->get('/quotes/{id}/refresh', static function (string $id): void {
+    (new QuoteController())->refresh($id);
+}, true, 'quotes.manage');
+$router->post('/quotes/{id}/refresh', static function (string $id): void {
+    (new QuoteController())->applyRefresh($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/revision', static function (string $id): void {
+    (new QuoteController())->revise($id);
+}, true, true, 'quotes.manage');
+$router->get('/quotes/{id}/revisions/{number}', static function (string $id, string $number): void {
+    (new QuoteController())->revision($id, $number);
+}, true, 'quotes.view');
+$router->get('/quotes/{id}/duplicate', static function (string $id): void {
+    (new QuoteController())->duplicateForm($id);
+}, true, 'quotes.manage');
+$router->post('/quotes/{id}/duplicate', static function (string $id): void {
+    (new QuoteController())->duplicate($id);
+}, true, true, 'quotes.manage');
+$router->post('/quotes/{id}/status', static function (string $id): void {
+    (new QuoteController())->status($id);
+}, true, true, 'quotes.manage');
+$router->get('/quotes/{id}/accept', static function (string $id): void {
+    (new QuoteController())->acceptForm($id);
+}, true, 'quotes.accept');
+$router->post('/quotes/{id}/accept', static function (string $id): void {
+    (new QuoteController())->accept($id);
+}, true, true, 'quotes.accept');
+$router->get('/quotes/{id}/convert', static function (string $id): void {
+    (new QuoteController())->convertForm($id);
+}, true, 'quotes.convert');
+$router->post('/quotes/{id}/convert', static function (string $id): void {
+    (new QuoteController())->convert($id);
+}, true, true, 'quotes.convert');
+$router->get('/quotes/{id}/pdf', static function (string $id): void {
+    (new QuoteController())->pdf($id);
+}, true, 'quotes.view');
+$router->get('/quotes/{id}/print', static function (string $id): void {
+    (new QuoteController())->printView($id);
+}, true, 'quotes.view');
+
+$router->get('/jobs', static function (): void {
+    (new JobController())->index();
+}, true, 'jobs.view');
+$router->get('/jobs/{id}', static function (string $id): void {
+    (new JobController())->show($id);
+}, true, 'jobs.view');
+
+$router->post('/attachments/{type}/{id}', static function (string $type, string $id): void {
+    (new AttachmentController())->store($type, $id);
+}, true, true, 'attachments.manage');
+$router->get('/attachments/{id}', static function (string $id): void {
+    (new AttachmentController())->download($id);
+}, true, 'attachments.manage');
+
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);
 };
-$router->get('/quotes', static function () use ($soon): void {
-    $soon('quotes');
-});
-$router->get('/jobs', static function () use ($soon): void {
-    $soon('jobs');
-});
 $router->get('/production', static function () use ($soon): void {
     $soon('production');
 });

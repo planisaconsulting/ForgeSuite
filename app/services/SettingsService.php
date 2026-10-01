@@ -30,9 +30,11 @@ final class SettingsService
         'currency_symbol' => 'Currency symbol',
         'default_vat_percent' => 'VAT rate (%)',
         'quote_prefix' => 'Quote prefix',
+        'opportunity_prefix' => 'Opportunity prefix',
         'invoice_prefix' => 'Invoice prefix',
         'job_prefix' => 'Job prefix',
         'default_quote_validity_days' => 'Default quote validity (days)',
+        'default_quote_terms' => 'Default quotation terms',
         'timezone' => 'Timezone',
     ];
 
@@ -137,7 +139,7 @@ final class SettingsService
         if (!in_array($tz, timezone_identifiers_list(), true)) {
             $errors['timezone'] = 'Choose a timezone from the PHP list, such as Africa/Johannesburg.';
         }
-        foreach (['quote_prefix', 'invoice_prefix', 'job_prefix'] as $prefix) {
+        foreach (['quote_prefix', 'opportunity_prefix', 'invoice_prefix', 'job_prefix'] as $prefix) {
             $value = trim((string) ($input[$prefix] ?? ''));
             if (!preg_match('/^[A-Za-z0-9]{1,12}$/', $value)) {
                 $errors[$prefix] = 'Use 1 to 12 letters or numbers.';

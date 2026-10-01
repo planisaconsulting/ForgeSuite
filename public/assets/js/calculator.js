@@ -238,4 +238,24 @@
         showInputs();
         schedule();
     });
+
+    var quoteForm = document.getElementById("calc-quote-form");
+    if (quoteForm) {
+        quoteForm.addEventListener("submit", function () {
+            Array.prototype.forEach.call(form.elements, function (field) {
+                if (!field.name || field.type === "submit") {
+                    return;
+                }
+                var existing = quoteForm.querySelector('[data-copied="' + field.name + '"]');
+                if (!existing) {
+                    existing = document.createElement("input");
+                    existing.type = "hidden";
+                    existing.name = field.name;
+                    existing.setAttribute("data-copied", field.name);
+                    quoteForm.appendChild(existing);
+                }
+                existing.value = field.value;
+            });
+        });
+    }
 })();

@@ -174,6 +174,23 @@ function money(string|int|float|null $amount): string
     return ($negative ? '-' : '') . $symbol . ' ' . $whole . '.' . $cents;
 }
 
+/** Size text for a customer quotation. Costs and waste are not included. */
+function quote_line_size(array $line): string
+{
+    $method = (string) ($line['pricing_method_snapshot'] ?? '');
+    $width = trim((string) ($line['width_mm'] ?? ''));
+    $height = trim((string) ($line['height_mm'] ?? ''));
+    $length = trim((string) ($line['length_mm'] ?? ''));
+    if (in_array($method, ['AREA', 'SHEET'], true) && $width !== '' && $height !== '') {
+        return $width . ' × ' . $height . ' mm';
+    }
+    if ($method === 'LINEAR_METRE' && $length !== '') {
+        return $length . ' mm';
+    }
+
+    return '';
+}
+
 function format_date(?string $date): string
 {
     if ($date === null || $date === '') {

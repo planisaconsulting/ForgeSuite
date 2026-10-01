@@ -34,6 +34,18 @@ INSERT INTO permissions (code, name, module) VALUES
 ('pricing.view', 'View pricing levels', 'pricing'),
 ('pricing.manage', 'Manage pricing levels', 'pricing'),
 ('calculator.use', 'Use pricing calculator', 'sales'),
+('opportunities.view', 'View opportunities', 'sales'),
+('opportunities.manage', 'Manage opportunities', 'sales'),
+('quotes.view', 'View quotations', 'sales'),
+('quotes.manage', 'Build quotations', 'sales'),
+('quotes.discount', 'Apply quote discounts', 'sales'),
+('quotes.discount_below_cost', 'Discount a quote below cost', 'sales'),
+('quotes.price_override', 'Override a calculated selling price', 'sales'),
+('quotes.accept', 'Record quote acceptance', 'sales'),
+('quotes.convert', 'Convert an accepted quote to a job', 'sales'),
+('costing.view', 'See internal quote costing', 'sales'),
+('jobs.view', 'View job hand-off records', 'operations'),
+('attachments.manage', 'Upload customer and quote files', 'crm'),
 ('users.manage', 'Manage users', 'admin'),
 ('settings.manage', 'Manage settings', 'admin'),
 ('audit.view', 'View audit history', 'admin');
@@ -54,7 +66,10 @@ WHERE r.code = 'SALES'
     'customers.view', 'customers.manage',
     'activities.view', 'activities.manage',
     'products.view', 'suppliers.view',
-    'calculator.use'
+    'calculator.use',
+    'opportunities.view', 'opportunities.manage',
+    'quotes.view', 'quotes.manage', 'quotes.discount', 'quotes.price_override',
+    'quotes.accept', 'quotes.convert', 'costing.view', 'jobs.view', 'attachments.manage'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -82,7 +97,8 @@ JOIN permissions p
 WHERE r.code = 'ACCOUNTS'
   AND p.code IN (
     'dashboard.view',
-    'customers.view', 'products.view', 'suppliers.view', 'pricing.view'
+    'customers.view', 'products.view', 'suppliers.view', 'pricing.view',
+    'quotes.view', 'jobs.view', 'costing.view'
   );
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -118,7 +134,9 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('quote_prefix', 'SFQ'),
 ('invoice_prefix', 'SFI'),
 ('job_prefix', 'SFJ'),
+('opportunity_prefix', 'SFO'),
 ('default_quote_validity_days', '14'),
+('default_quote_terms', 'This quotation is valid until the expiry date. Prices are in the currency shown and exclude VAT unless the quotation says otherwise. Work starts after written acceptance and any deposit shown above. A site measure that differs from the sizes in this quotation may change the price. Artwork supplied by the customer is their responsibility. Goods remain the property of the company until paid in full.'),
 ('timezone', 'Africa/Johannesburg');
 
 -- Markup percentages are starter data. Change them under Pricing levels.

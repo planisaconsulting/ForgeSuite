@@ -139,15 +139,15 @@ try {
     }
 
     [$status, , $body] = $http('GET', '/');
-    if ($status === 200 && str_contains($body, 'Workshop desk') && str_contains($body, 'Open quotes') && str_contains($body, 'not stored yet')) {
+    if ($status === 200 && str_contains($body, 'Workshop desk') && str_contains($body, 'Invoices are not stored yet') && str_contains($body, 'Stock movements are not stored yet') && str_contains($body, 'not paid revenue')) {
         $ok('dashboard shows real counts and does not invent quote totals');
     } else {
         $fail('dashboard did not render as expected, status ' . $status);
     }
 
     [$status, , $body] = $http('GET', '/quotes');
-    if ($status === 200 && str_contains($body, 'Nothing is stored for them yet')) {
-        $ok('coming soon quotes page does not error');
+    if ($status === 200 && str_contains($body, 'Quotations')) {
+        $ok('quotes list opens');
     } else {
         $fail('quotes coming soon status ' . $status);
     }
@@ -219,7 +219,7 @@ try {
         'completed' => '0',
     ]);
     [$status, , $body] = $http('GET', '/customers/' . $customerId);
-    if ($status === 200 && str_contains($body, 'John Smith') && str_contains($body, 'Discussed shopfront') && str_contains($body, 'Quotations for this customer')) {
+    if ($status === 200 && str_contains($body, 'John Smith') && str_contains($body, 'Discussed shopfront') && str_contains($body, 'No quotations yet') && str_contains($body, 'Invoices will be listed here')) {
         $ok('contact, activity, and future placeholders show on the customer');
     } else {
         $fail('customer detail is missing contact, activity, or placeholders');
