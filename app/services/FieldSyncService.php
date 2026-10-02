@@ -26,6 +26,10 @@ final class FieldSyncService
         'PRICE_CHANGE' => ['OFFLINE_NOT_ALLOWED', 'This action needs a connection. Nothing was saved on the server.'],
         'QUOTE_APPROVE' => ['OFFLINE_NOT_ALLOWED', 'This action needs a connection. Nothing was saved on the server.'],
         'QUOTE_ISSUE' => ['OFFLINE_NOT_ALLOWED', 'This action needs a connection. Nothing was saved on the server.'],
+        'DISPATCH_CONFIRM' => ['CONNECTION_REQUIRED', 'Dispatch confirmation needs a connection. Nothing was dispatched.'],
+        'CONTRACTOR_APPROVE' => ['OFFLINE_NOT_ALLOWED', 'Contractor approval needs a connection.'],
+        'COST_APPROVE' => ['OFFLINE_NOT_ALLOWED', 'Cost approval needs a connection.'],
+        'JOB_COMPLETE' => ['OFFLINE_NOT_ALLOWED', 'Closing a job needs a connection.'],
     ];
 
     /** @var array<string, string> */
@@ -179,7 +183,8 @@ final class FieldSyncService
             'SURVEY_PHOTO' => $this->photo($userId, 'SITE_SURVEY', $entityId, $payload, $operation, $local, can('site_surveys.edit')),
             'SURVEY_COMPLETE' => $this->completeSurvey($userId, $entityId, $operation),
             'INSTALL_NOTE' => $this->installNote($userId, $entityId, $payload, $operation, $local),
-            'INSTALL_CHECKLIST' => $this->checklist($userId, $entityId, $payload, $operation, $local),
+            'INSTALL_CHECKLIST', 'LOGISTICS_CHECKLIST' => $this->checklist($userId, $entityId, $payload, $operation, $local),
+            'LOGISTICS_SIGNATURE' => $this->signature($userId, 'INSTALLATION', $entityId, $payload, $operation, can('installations.complete') || can('installation.signoff')),
             'INSTALL_PHOTO' => $this->photo($userId, 'JOB_INSTALLATION', $entityId, $payload, $operation, $local, can('installations.complete')),
             'INSTALL_SNAG' => $this->snag($userId, $entityId, $payload, $operation, $local),
             'INSTALL_SIGNATURE' => $this->signature($userId, 'INSTALLATION', $entityId, $payload, $operation, can('installations.complete')),

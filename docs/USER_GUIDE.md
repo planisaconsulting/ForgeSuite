@@ -82,6 +82,28 @@ Open the proof from the portal or from the proof link. The page says PROOF and i
 
 The artwork library lists artwork Sign-Forge has marked for your account. An older logo stays on file when a new primary logo is uploaded.
 
+## How to dispatch a shipment
+
+Open Logistics. Create a shipment for the job after QC and packing. Add the packages and the quantity that is actually leaving. You cannot ship more than the good quantity.
+
+Book the courier by typing the courier, waybill, and tracking number. That booking does not mean the goods have left, and it does not mean they have arrived. Dispatch moves the quantity to dispatched. Mark collected when the courier or driver takes it. Mark delivered only when it has arrived, and capture the recipient, signature, and photo for the proof of delivery.
+
+A failed delivery stays unfulfilled and opens an exception. A collection stays collected. It is not recorded as a courier delivery.
+
+The customer portal can show dispatched, the courier name, the tracking number, and delivered. It does not show the courier cost.
+
+## How an installer records the site
+
+Open the installation pack. It has the site, contact, approved artwork, drawings, items, and checklist. It does not have margin or the customer’s balance.
+
+Arrive, start, tick the checklist, and add before, during, and after photos. A blocking snag stops sign-off. The customer or site representative signs when the work they can accept is done. Signing one item does not complete the whole job. The office still decides when the job is complete.
+
+## How a contractor uses the portal
+
+Sign in at `/contractor/`. You see work that has been sent to your company. Accept, decline, or ask for a change. A decline does not cancel the customer job.
+
+On site, start the work, add notes and photos, complete the checklist, and submit. Submission asks Sign-Forge to review. It does not mark the job finished and it does not pay the invoice you upload. You do not see other contractors’ jobs, quote prices, or margin.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

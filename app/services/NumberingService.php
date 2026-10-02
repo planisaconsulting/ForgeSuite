@@ -170,6 +170,16 @@ final class NumberingService
         return $this->next('artwork', 'artwork_prefix', 'SFAW');
     }
 
+    public function shipment(): string
+    {
+        return $this->next('shipment', 'shipment_prefix', 'SFSHP');
+    }
+
+    public function contractorWorkOrder(): string
+    {
+        return $this->next('contractor_work_order', 'contractor_work_order_prefix', 'SFCWO');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

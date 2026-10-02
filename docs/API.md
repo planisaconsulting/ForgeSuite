@@ -88,6 +88,16 @@ Artwork reads use scope `artwork.read`:
 
 `GET /api/v1/portal/artwork` uses the portal session and returns that customer’s library. No portal session returns 401. These routes were not called over HTTP. `tests/v11_phase7.php` covers revision, proof, annotation, and production-file rules in process. Creating a revision or approving a proof is done in the workspace and the portal, which call `ArtworkProofingService`.
 
+Logistics reads use scope `logistics.read`:
+
+- `GET /api/v1/logistics/shipments`
+- `GET /api/v1/logistics/shipments/{id}`
+- `GET /api/v1/logistics/tracking`
+- `GET /api/v1/logistics/deliveries`
+- `GET /api/v1/logistics/exceptions`
+
+The shipment object omits internal notes and courier cost. Installations use scope `installations.read` on `GET /api/v1/installations`. Contractors and work orders use scope `contractors.read` on `GET /api/v1/contractors` and `GET /api/v1/contractor-work-orders`. `GET /api/v1/contractor/work` uses the contractor session and returns 401 without it. These routes were not called over HTTP. `tests/v11_phase8.php` covers shipment quantity, delivery, proof of delivery, contractor isolation, and cost posting in process.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

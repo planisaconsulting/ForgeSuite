@@ -32,6 +32,16 @@ $groups = [
         ['workshop-ready', 'Ready for dispatch', '/dispatch', 'fa-truck-ramp-box', 'dispatch.view'],
         ['workshop-reprints', 'Reprints', '/workshop/reprints', 'fa-rotate-right', 'production.reprint'],
     ]],
+    ['label' => 'Logistics', 'links' => [
+        ['logistics', 'Dispatch', '/logistics', 'fa-truck', 'logistics.view'],
+        ['logistics-shipments', 'Shipments', '/logistics', 'fa-boxes-stacked', 'logistics.view'],
+        ['logistics-deliveries', 'Deliveries', '/logistics', 'fa-route', 'logistics.delivery.manage'],
+        ['logistics-collections', 'Collections', '/logistics', 'fa-hand-holding', 'logistics.collection.manage'],
+        ['logistics-installations', 'Installations', '/installations/planner', 'fa-location-dot', 'installations.view'],
+        ['contractor-work', 'Contractor work', '/logistics/work-orders', 'fa-helmet-safety', 'contractor.manage'],
+        ['contractors', 'Contractors', '/logistics/contractors', 'fa-people-carry-box', 'contractor.manage'],
+        ['logistics-reports', 'Exceptions', '/logistics/reports', 'fa-triangle-exclamation', 'logistics.exceptions.manage'],
+    ]],
     ['label' => 'CRM', 'links' => [
         ['leads', 'Lead inbox', '/leads', 'fa-inbox', 'leads.view'],
         ['customers', 'Customers', '/customers', 'fa-users', 'customers.view'],

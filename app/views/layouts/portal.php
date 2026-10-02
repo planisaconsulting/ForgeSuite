@@ -29,6 +29,7 @@
             ['Order signage', '/portal/orders', $hubUser !== null && $hubAllows->allows($hubUser, 'portal.orders.create')],
             ['Assets', '/portal/assets', $hubUser !== null && $hubAllows->allows($hubUser, 'portal.assets.view')],
             ['Artwork', '/portal/artwork-library', $hubUser !== null && ($hubAllows->allows($hubUser, 'portal.artwork.view') || $hubAllows->allows($hubUser, 'portal.artwork.approve'))],
+            ['Deliveries', '/portal/deliveries', true],
             ['Statement', '/portal/statement', $hubUser !== null && $hubAllows->allows($hubUser, 'portal.finance.view')],
         ];
     ?>

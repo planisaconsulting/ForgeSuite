@@ -1980,3 +1980,111 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('artwork_upload_max_mb', '32'),
 ('artwork_retention_note', 'Approved artwork and production files are retained. Nothing is deleted automatically.')
 ON DUPLICATE KEY UPDATE setting_key = setting_key;
+
+-- v1.1 Phase 8 logistics and contractors
+INSERT INTO installation_checklist_templates (name, applies_to, applies_value, active)
+SELECT 'Lightbox installation', 'PRODUCT', 'LIGHTBOX', 1
+WHERE NOT EXISTS (SELECT 1 FROM installation_checklist_templates WHERE name = 'Lightbox installation');
+
+INSERT INTO installation_checklist_template_items (template_id, label, sort_order)
+SELECT t.id, i.label, i.sort_order
+FROM installation_checklist_templates t
+JOIN (
+    SELECT 'Mounting secure' AS label, 10 AS sort_order
+    UNION ALL SELECT 'Level checked', 20
+    UNION ALL SELECT 'Electrical connections completed', 30
+    UNION ALL SELECT 'Cable protected', 40
+    UNION ALL SELECT 'Power test completed', 50
+    UNION ALL SELECT 'Illumination tested', 60
+    UNION ALL SELECT 'Face cleaned', 70
+    UNION ALL SELECT 'Site cleaned', 80
+    UNION ALL SELECT 'Photos captured', 90
+) i
+WHERE t.name = 'Lightbox installation'
+  AND NOT EXISTS (
+      SELECT 1 FROM installation_checklist_template_items x WHERE x.template_id = t.id AND x.label = i.label
+  );
+
+INSERT INTO installation_checklist_templates (name, applies_to, applies_value, active)
+SELECT 'Vehicle branding', 'PRODUCT', 'VEHICLE', 1
+WHERE NOT EXISTS (SELECT 1 FROM installation_checklist_templates WHERE name = 'Vehicle branding');
+
+INSERT INTO installation_checklist_template_items (template_id, label, sort_order)
+SELECT t.id, i.label, i.sort_order
+FROM installation_checklist_templates t
+JOIN (
+    SELECT 'Vehicle inspected before install' AS label, 10 AS sort_order
+    UNION ALL SELECT 'Existing damage photographed', 20
+    UNION ALL SELECT 'Surface cleaned', 30
+    UNION ALL SELECT 'Panels verified', 40
+    UNION ALL SELECT 'Artwork orientation checked', 50
+    UNION ALL SELECT 'Application completed', 60
+    UNION ALL SELECT 'Edges inspected', 70
+    UNION ALL SELECT 'Final photos', 80
+    UNION ALL SELECT 'Customer handover', 90
+) i
+WHERE t.name = 'Vehicle branding'
+  AND NOT EXISTS (
+      SELECT 1 FROM installation_checklist_template_items x WHERE x.template_id = t.id AND x.label = i.label
+  );
+
+INSERT IGNORE INTO permissions (code, name, module) VALUES
+('logistics.view', 'View logistics', 'logistics'),
+('logistics.shipment.create', 'Create a shipment', 'logistics'),
+('logistics.shipment.dispatch', 'Dispatch a shipment', 'logistics'),
+('logistics.shipment.manage', 'Manage shipments and couriers', 'logistics'),
+('logistics.delivery.manage', 'Manage own deliveries', 'logistics'),
+('logistics.collection.manage', 'Manage customer collections', 'logistics'),
+('logistics.exceptions.manage', 'Manage logistics exceptions', 'logistics'),
+('installation.schedule', 'Schedule an installation pack', 'logistics'),
+('installation.execute', 'Record installation field work', 'logistics'),
+('installation.signoff', 'Record an installation sign-off', 'logistics'),
+('contractor.manage', 'Manage contractor profiles', 'logistics'),
+('contractor.assign', 'Assign a contractor', 'logistics'),
+('contractor.work_order.create', 'Create a contractor work order', 'logistics'),
+('contractor.work_order.approve', 'Review contractor completion', 'logistics'),
+('contractor.cost.view', 'View contractor cost', 'logistics'),
+('contractor.cost.approve', 'Approve contractor cost onto a job', 'logistics'),
+('contractor.portal.manage', 'Manage contractor portal users', 'logistics');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.module = 'logistics';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'DISPATCH' AND p.code IN (
+    'logistics.view', 'logistics.shipment.create', 'logistics.shipment.dispatch',
+    'logistics.delivery.manage', 'logistics.collection.manage', 'logistics.exceptions.manage'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'INSTALLER' AND p.code IN (
+    'logistics.view', 'installation.execute', 'installation.signoff'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'PRODUCTION' AND p.code = 'logistics.view';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code = 'logistics.view';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN ('logistics.view', 'contractor.cost.view');
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('shipment_prefix', 'SFSHP'),
+('contractor_work_order_prefix', 'SFCWO'),
+('map_url_template', 'https://www.google.com/maps/search/?api=1&query={query}'),
+('travel_cost_per_km', '0.00'),
+('contractor_variance_amount', '0.00'),
+('logistics_incomplete_policy', 'OVERRIDE'),
+('tracking_token_days', '30'),
+('courier_webhook_secret', ''),
+('pod_statement_version', 'POD-1'),
+('install_statement_version', 'INSTALL-1')
+ON DUPLICATE KEY UPDATE setting_key = setting_key;

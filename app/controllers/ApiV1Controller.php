@@ -641,6 +641,105 @@ final class ApiV1Controller
         $this->finish($auth, 200, true, $row, [], $entity, $id);
     }
 
+    public function shipments(): void
+    {
+        $auth = $this->gate('logistics.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Services\LogisticsService())->page([], 50, 0);
+        $this->finish($auth, 200, true, ['shipments' => $rows], [], 'shipment', null);
+    }
+
+    public function shipment(string $id): void
+    {
+        $auth = $this->gate('logistics.read');
+        if ($auth === null) {
+            return;
+        }
+        $row = (new \App\Repositories\LogisticsRepository())->shipment((int) $id);
+        if ($row === null) {
+            $this->finish($auth, 404, false, null, ['shipment' => 'That shipment was not found.'], 'shipment', (int) $id);
+
+            return;
+        }
+        unset($row['internal_notes'], $row['estimated_courier_cost'], $row['actual_courier_cost']);
+        $this->finish($auth, 200, true, ['shipment' => $row], [], 'shipment', (int) $id);
+    }
+
+    public function shipmentTracking(): void
+    {
+        $auth = $this->gate('logistics.read');
+        if ($auth === null) {
+            return;
+        }
+        $id = (int) ($_GET['shipment_id'] ?? 0);
+        $events = $id > 0 ? (new \App\Repositories\LogisticsRepository())->events($id) : [];
+        $this->finish($auth, 200, true, ['events' => $events], [], 'shipment', $id > 0 ? $id : null);
+    }
+
+    public function deliveries(): void
+    {
+        $auth = $this->gate('logistics.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Services\LogisticsService())->page(['status' => 'IN_TRANSIT'], 50, 0);
+        $this->finish($auth, 200, true, ['deliveries' => $rows], [], 'shipment', null);
+    }
+
+    public function logisticsExceptions(): void
+    {
+        $auth = $this->gate('logistics.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\LogisticsRepository())->exceptions([], 50, 0);
+        $this->finish($auth, 200, true, ['exceptions' => $rows], [], 'logistics_exception', null);
+    }
+
+    public function installations(): void
+    {
+        $auth = $this->gate('installations.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\OperationsRepository())->installationBoard();
+        $this->finish($auth, 200, true, ['installations' => $rows], [], 'installation', null);
+    }
+
+    public function contractors(): void
+    {
+        $auth = $this->gate('contractors.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\ContractorRepository())->list(50, 0);
+        $this->finish($auth, 200, true, ['contractors' => $rows], [], 'contractor', null);
+    }
+
+    public function contractorWorkOrders(): void
+    {
+        $auth = $this->gate('contractors.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\ContractorRepository())->recentWork(50);
+        $this->finish($auth, 200, true, ['work_orders' => $rows], [], 'contractor_work', null);
+    }
+
+    public function contractorPortalWork(): void
+    {
+        $user = (new \App\Services\ContractorWorkService())->currentUser();
+        if ($user === null) {
+            $this->send(401, false, null, ['auth' => 'Sign in to the contractor portal.']);
+
+            return;
+        }
+        $rows = (new \App\Services\ContractorWorkService())->home((int) $user['id']);
+        $this->send(200, true, ['work' => $rows], []);
+    }
+
     /**
      * @return array{client: array<string, mixed>, scopes: list<string>}|null
      */

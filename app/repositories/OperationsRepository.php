@@ -639,7 +639,8 @@ final class OperationsRepository extends Repository
             'SELECT i.label, i.sort_order
              FROM installation_checklist_template_items i
              INNER JOIN installation_checklist_templates t ON t.id = i.template_id
-             WHERE t.active = 1 ORDER BY i.sort_order ASC'
+             WHERE t.active = 1 AND (t.applies_value IS NULL OR t.applies_value = \'\')
+             ORDER BY i.sort_order ASC'
         );
     }
 

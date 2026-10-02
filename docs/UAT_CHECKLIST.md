@@ -134,6 +134,16 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Reorder a sign whose artwork and brand asset are still current and confirm that artwork is reused
 - [ ] Open the workshop file and confirm the current production file is the approved one and a superseded file is marked do not use
 
+## Logistics, couriers, and contractors
+
+- [ ] Produce 100 Correx boards, pass QC, pack four packages, book a courier by hand, print the labels, dispatch, record tracking, mark collected, mark delivered, and capture the proof of delivery. Confirm fulfilment, the customer portal, the job, and that the courier cost is internal
+- [ ] Deliver three customer orders on one vehicle and driver. Complete one stop, record one customer unavailable, and record one partial delivery. Confirm the three stops stay independent and the failed stop opens an exception
+- [ ] On a retail rollout, assign one contractor to five sites. Confirm the contractor sees sites, approved artwork, drawings, scope, dates, and checklists, and does not see customer pricing, gross profit, or another contractor’s jobs
+- [ ] Complete site 1 with photos and a signature. Review it internally and approve completion. Confirm the project, site, and job status, and confirm the job was not closed by the contractor submission
+- [ ] Create a contractor work order for specialist laser cutting, issue material, receive the output, run QC, return unused material, and approve the actual contractor cost. Confirm inventory, production, job cost posted once, and the audit row
+- [ ] Assign an external electrician to an asset repair. Give the asset, site, fault, photos, and technical notes. After the customer signs, confirm the asset service history and that customer charge, internal cost, and recovery stay separate
+- [ ] Open a public tracking link after it is revoked or expired and confirm it is refused
+
 ## Admin
 
 - [ ] Create a user and force a password change

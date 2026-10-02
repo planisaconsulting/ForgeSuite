@@ -20,6 +20,8 @@ v1.1 Phase 6 adds a customer hub on the existing portal: customer catalogues, fi
 
 v1.1 Phase 7 adds artwork numbers (`SFAW`), revisions, customer proofs, and production files (`PF1`, `PF2`) on the existing artwork record. A proof is not a production file. Approval names one revision. A later customer-visible revision does not keep that approval. A superseded production file asks for release review.
 
+v1.1 Phase 8 adds shipments (`SFSHP`), packages and labels, manual courier waybills, tracking events, own-delivery runs, collections, installation packs and sign-off, and contractor work orders (`SFCWO`). Dispatched is not delivered. Delivered is not installed. Installed is not job complete. A contractor sees the assigned scope and does not see quote value, margin, or gross profit. Booking a courier does not mark the goods collected or delivered. Approving a contractor cost posts that cost once. It does not pay the contractor, issue a customer invoice, or close the job.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

@@ -32,6 +32,8 @@ use App\Controllers\PurchasingController;
 use App\Controllers\ProcurementController;
 use App\Controllers\CustomerHubController;
 use App\Controllers\ArtworkController;
+use App\Controllers\LogisticsController;
+use App\Controllers\ContractorPortalController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
@@ -1425,6 +1427,72 @@ $router->post('/workshop/kiosk/badge', static function (): void {
 $router->get('/scan/{token}', static function (string $token): void {
     (new WorkshopController())->openToken($token);
 }, true, 'workshop.scan');
+$router->get('/logistics', static function (): void {
+    (new LogisticsController())->index();
+}, true, 'logistics.view');
+$router->post('/logistics/shipments', static function (): void {
+    (new LogisticsController())->create();
+}, true, true, 'logistics.shipment.create');
+$router->get('/logistics/shipments/{id}', static function (string $id): void {
+    (new LogisticsController())->show($id);
+}, true, 'logistics.view');
+$router->post('/logistics/shipments/{id}/items', static function (string $id): void {
+    (new LogisticsController())->addItem($id);
+}, true, true, 'logistics.shipment.create');
+$router->post('/logistics/shipments/{id}/book', static function (string $id): void {
+    (new LogisticsController())->book($id);
+}, true, true, 'logistics.shipment.manage');
+$router->post('/logistics/shipments/{id}/dispatch', static function (string $id): void {
+    (new LogisticsController())->dispatch($id);
+}, true, true, 'logistics.shipment.dispatch');
+$router->post('/logistics/shipments/{id}/events', static function (string $id): void {
+    (new LogisticsController())->event($id);
+}, true, true, 'logistics.shipment.dispatch');
+$router->get('/logistics/packages/{id}/label', static function (string $id): void {
+    (new LogisticsController())->label($id);
+}, true, 'logistics.view');
+$router->get('/logistics/contractors', static function (): void {
+    (new LogisticsController())->contractors();
+}, true, 'contractor.manage');
+$router->post('/logistics/contractors', static function (): void {
+    (new LogisticsController())->saveContractor();
+}, true, true, 'contractor.manage');
+$router->get('/logistics/work-orders', static function (): void {
+    (new LogisticsController())->workOrders();
+}, true, 'contractor.manage');
+$router->get('/logistics/reports', static function (): void {
+    (new LogisticsController())->reports();
+}, true, 'logistics.view');
+$router->get('/track/{token}', static function (string $token): void {
+    (new LogisticsController())->track($token);
+}, false);
+$router->get('/portal/deliveries', static function (): void {
+    (new LogisticsController())->portalShipments();
+}, false);
+$router->get('/contractor/login', static function (): void {
+    (new ContractorPortalController())->loginForm();
+}, false);
+$router->post('/contractor/login', static function (): void {
+    (new ContractorPortalController())->login();
+}, false, true);
+$router->post('/contractor/logout', static function (): void {
+    (new ContractorPortalController())->logout();
+}, false, true);
+$router->get('/contractor', static function (): void {
+    (new ContractorPortalController())->home();
+}, false);
+$router->get('/contractor/work/{id}', static function (string $id): void {
+    (new ContractorPortalController())->work($id);
+}, false);
+$router->post('/contractor/work/{id}/respond', static function (string $id): void {
+    (new ContractorPortalController())->respond($id);
+}, false, true);
+$router->post('/contractor/work/{id}/start', static function (string $id): void {
+    (new ContractorPortalController())->start($id);
+}, false, true);
+$router->post('/contractor/work/{id}/submit', static function (string $id): void {
+    (new ContractorPortalController())->submit($id);
+}, false, true);
 $router->get('/dispatch', static function (): void {
     (new DispatchController())->index();
 }, true, 'dispatch.view');
@@ -2070,6 +2138,33 @@ $router->get('/production/scan/{number}', static function (string $number): void
 $router->post('/production/fulfilment/{id}', static function (string $id): void {
     (new ProductionControlController())->fulfil($id);
 }, true, true, 'fulfilment.manage');
+$router->get('/api/v1/logistics/shipments', static function (): void {
+    (new ApiV1Controller())->shipments();
+}, false);
+$router->get('/api/v1/logistics/shipments/{id}', static function (string $id): void {
+    (new ApiV1Controller())->shipment($id);
+}, false);
+$router->get('/api/v1/logistics/tracking', static function (): void {
+    (new ApiV1Controller())->shipmentTracking();
+}, false);
+$router->get('/api/v1/logistics/deliveries', static function (): void {
+    (new ApiV1Controller())->deliveries();
+}, false);
+$router->get('/api/v1/logistics/exceptions', static function (): void {
+    (new ApiV1Controller())->logisticsExceptions();
+}, false);
+$router->get('/api/v1/installations', static function (): void {
+    (new ApiV1Controller())->installations();
+}, false);
+$router->get('/api/v1/contractors', static function (): void {
+    (new ApiV1Controller())->contractors();
+}, false);
+$router->get('/api/v1/contractor-work-orders', static function (): void {
+    (new ApiV1Controller())->contractorWorkOrders();
+}, false);
+$router->get('/api/v1/contractor/work', static function (): void {
+    (new ApiV1Controller())->contractorPortalWork();
+}, false);
 $router->get('/api/v1/artwork', static function (): void {
     (new ApiV1Controller())->artworkIndex();
 }, false);

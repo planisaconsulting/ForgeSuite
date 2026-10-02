@@ -75,3 +75,13 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - The file timing check inserts 200 file rows and searches once. It does not load 100,000 files. Revision numbers are locked in one request. The test does not start two PHP processes.
 - The restore check reads the artwork, revision, proof, approval, and production file in the working database. It is not a second-database import. Artwork bytes live in `storage/uploads` and have to be in the file backup.
 - Share-link approval stores the name and does not create a customer contact. Approval evidence is the database row, not a generated PDF.
+- Courier mode `API` stores the booking by hand. It does not call a carrier, fetch a label, or open a live tracking feed. There is no route optimiser and no map API key. Directions use the configured link template.
+- Contractor invoices are a reference and a file. They do not post accounts payable. Field expenses stay captured and are not reimbursed. There is no contractor payroll.
+- A contractor completion does not close the job, issue a customer invoice, or pay the contractor. A remake disposition on an exception does not start a production rework by itself.
+- The completion certificate is a rule check. It does not generate a PDF. The older installation form still offers the original status list. The field service writes the newer statuses.
+- Logistics, installation, and contractor API routes were not called over HTTP. `tests/v11_phase8.php` covers quantity, delivery, proof of delivery, contractor isolation, and cost posting in process.
+- The shipment timing check inserts 200 shipments and 50 tracking events and reads one page. It does not load 10,000 shipments, 50,000 events, 5,000 installations, or 1,000 work orders. Quantity locks run in one request. The test does not start two PHP processes.
+- The restore check reads the shipment, its items, and its proof of delivery in the working database. It is not a second-database import. Photos and signatures still need the file backup.
+- Public tracking and the contractor portal were checked by the service tests and by HTTP status. A browser click-through of accept, decline, and proof of delivery was not run.
+- Customer dispatch text is an in-app notice to the acting user. It is not an email, and it does not bypass communication preferences.
+- Geolocation is stored only when a person records arrival, delivery, or sign-off. There is no continuous GPS.

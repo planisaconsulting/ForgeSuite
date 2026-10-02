@@ -17,7 +17,7 @@ use App\Repositories\UserRepository;
 final class ScheduleService
 {
     /** @var list<string> */
-    public const ENTITY_TYPES = ['JOB', 'JOB_TASK', 'PRODUCTION_STAGE', 'INSTALLATION', 'SITE_SURVEY', 'MAINTENANCE', 'OTHER'];
+    public const ENTITY_TYPES = ['JOB', 'JOB_TASK', 'PRODUCTION_STAGE', 'INSTALLATION', 'SITE_SURVEY', 'MAINTENANCE', 'SHIPMENT', 'CONTRACTOR_WORK', 'OTHER'];
 
     /** @var list<string> */
     public const STATUSES = ['PLANNED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];

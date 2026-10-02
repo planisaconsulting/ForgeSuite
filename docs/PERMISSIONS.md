@@ -1,16 +1,16 @@
 # Permissions
 
-v1.1.0 has 337 permission codes. ADMIN holds all 295 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 353 permission codes. ADMIN holds all 311 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 196 |
-| SALES | 97 |
-| ACCOUNTS | 74 |
-| PRODUCTION | 56 |
+| MANAGEMENT | 212 |
+| SALES | 98 |
+| ACCOUNTS | 76 |
+| PRODUCTION | 57 |
 | DESIGN | 40 |
-| INSTALLER | 37 |
-| DISPATCH | 23 |
+| INSTALLER | 39 |
+| DISPATCH | 29 |
 | MARKETING | 11 |
 
 Project codes are `projects.view`, `projects.view_assigned`, `projects.create`, `projects.edit`, `projects.archive`, `projects.complete`, `projects.view_financials`, `projects.manage_team`, `projects.manage_sites`, `projects.import_sites`, `projects.bulk_create_jobs`, `projects.manage_milestones`, `projects.manage_risks`, `projects.manage_issues`, `projects.manage_budget`, `projects.manage_changes`, `projects.generate_handover`, and `projects.view_reports`.
@@ -37,7 +37,11 @@ Artwork codes are `artwork.view`, `artwork.create`, `artwork.edit`, `artwork.ass
 
 MANAGEMENT holds every new artwork code. DESIGN can create and revise artwork, send a proof, comment internally, prepare a production file, and download a source file. DESIGN cannot approve a production file and cannot release a job. PRODUCTION can view artwork so the workshop can open the current approved file. PRODUCTION cannot download source files. SALES can view, create, and send a proof. ACCOUNTS can view. Portal codes `portal.artwork.view`, `portal.artwork.comment`, `portal.artwork.approve`, and `portal.artwork.upload` sit on the portal user role, not in this table.
 
-Portal user roles (`ADMIN`, `BUYER`, `ACCOUNTS`, `VIEW_ONLY`, and the others in `docs/CUSTOMER_PORTAL_SECURITY.md`) are not rows in this permission table. A workshop login does not become a customer login.
+Logistics and contractor codes are `logistics.view`, `logistics.shipment.create`, `logistics.shipment.dispatch`, `logistics.shipment.manage`, `logistics.delivery.manage`, `logistics.collection.manage`, `logistics.exceptions.manage`, `installation.schedule`, `installation.execute`, `contractor.manage`, `contractor.assign`, `contractor.work_order.create`, `contractor.work_order.approve`, `contractor.cost.view`, `contractor.cost.approve`, and `contractor.portal.manage`. `installation.signoff` was already there and was not added again.
+
+MANAGEMENT holds every logistics and contractor code. DISPATCH can view logistics, create and dispatch a shipment, manage deliveries and collections, and manage exceptions. DISPATCH cannot manage the shipment record after the fact and cannot see contractor cost. INSTALLER can view logistics, execute an installation, and record sign-off. PRODUCTION and SALES can view logistics. ACCOUNTS can view logistics and contractor cost, and cannot approve that cost. A contractor login is not a staff role. Codes `contractor.work.view`, `contractor.work.accept`, `contractor.work.update`, `contractor.photos.upload`, `contractor.documents.view`, and `contractor.completion.submit` sit on the contractor user, not in this table.
+
+Portal user roles (`ADMIN`, `BUYER`, `ACCOUNTS`, `VIEW_ONLY`, and the others in `docs/CUSTOMER_PORTAL_SECURITY.md`) are not rows in this permission table. A workshop login does not become a customer login. A contractor login does not become a staff login.
 
 There is no separate SURVEYOR, FINANCE, WORKSHOP, or PURCHASING role. Survey work sits with SALES and INSTALLER. Finance sits with ACCOUNTS. Workshop sits with PRODUCTION. Purchasing sits with the roles that have `purchasing.*`. The customer portal is a different login, not a staff role.
 

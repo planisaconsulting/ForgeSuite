@@ -66,6 +66,12 @@ Supplier portal tokens are hashes. Do not put the raw token in a report. Quarant
 
 Proof links store a hash, not the raw token. Storage at `/artwork/storage` does not delete files. See `docs/ARTWORK_MANAGEMENT.md` and `docs/FILE_SECURITY.md`.
 
+## Logistics and contractors
+
+`shipment_prefix` defaults to SFSHP. `contractor_work_order_prefix` defaults to SFCWO. `map_url_template` builds a directions link and does not call a map API. `travel_cost_per_km` defaults to 0.00 and is an internal cost, separate from the customer delivery charge. `contractor_variance_amount` defaults to 0.00. Set it above zero when a cost difference needs a written reason. `logistics_incomplete_policy` is `OVERRIDE` or `BLOCK`. Override still needs a reason. `tracking_token_days` is 30. `courier_webhook_secret` starts empty, and an empty secret rejects a webhook. `pod_statement_version` is POD-1. `install_statement_version` is INSTALL-1.
+
+Courier integration mode `MANUAL` is the working path. `API` does not call a carrier. Tracking links are built only from the courier’s https template. Contractor users are a separate login at `/contractor/`. See `docs/LOGISTICS.md` and `docs/CONTRACTOR_PORTAL.md`.
+
 ## System health
 
 Administration → System health shows the release, PHP, database, storage, last cron, last backup, failed automations, and failed field sync. It does not show passwords.
