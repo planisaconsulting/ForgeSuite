@@ -113,6 +113,28 @@ final class ForecastRepository extends Repository
              INNER JOIN jobs j ON j.id = r.job_id
              INNER JOIN products p ON p.id = r.product_id
              WHERE j.status NOT IN ('COMPLETED', 'CANCELLED') AND j.archived = 0
+               AND j.preparation_status IN ('RELEASED', 'IN_PRODUCTION', 'PRODUCTION_COMPLETE')
+               AND r.final_required_quantity > 0
+             ORDER BY required_by, r.id"
+        );
+    }
+
+    /**
+     * Unreleased work stays planned. It is not also counted as firm demand.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function plannedDemand(): array
+    {
+        return $this->rows(
+            "SELECT r.id, r.job_id, r.product_id, r.final_required_quantity AS quantity, r.pack_size,
+                    COALESCE(j.target_date, CURDATE()) AS required_by, j.job_number, j.status,
+                    p.name AS product_name, p.minimum_stock_level, p.cost_price
+             FROM job_material_requirements r
+             INNER JOIN jobs j ON j.id = r.job_id
+             INNER JOIN products p ON p.id = r.product_id
+             WHERE j.status NOT IN ('COMPLETED', 'CANCELLED') AND j.archived = 0
+               AND j.preparation_status NOT IN ('RELEASED', 'IN_PRODUCTION', 'PRODUCTION_COMPLETE')
                AND r.final_required_quantity > 0
              ORDER BY required_by, r.id"
         );

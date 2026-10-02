@@ -89,6 +89,16 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Override a material quantity with a reason and confirm the original quantity is still stored
 - [ ] Sign in as sales and confirm specification approval is refused
 
+## Release to production
+
+- [ ] Accept a 2017 Ford Ranger branding quote, create the job, and confirm preparation is not released
+- [ ] On the release screen, confirm artwork approval, vehicle measurements, the wrap estimator snapshot, vinyl, laminate, production files, and the install booking
+- [ ] Release the job, then print, laminate, cut, and pass QC without consuming the reserved vinyl as a second stock movement
+- [ ] Complete the installation fulfilment and confirm the release number, artwork revision, and specification version are still on the pack
+- [ ] Accept an illuminated lightbox, release R1, change the customer phone number, and confirm R1 stays released
+- [ ] Approve artwork R2 and confirm the job asks for a new release, then confirm the old pack says SUPERSEDED — DO NOT PRODUCE
+- [ ] On a 25-branch project, run wave 1 for five sites, release the four that are ready, and leave the site that is blocked by artwork unreleased
+
 ## Admin
 
 - [ ] Create a user and force a password change

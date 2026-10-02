@@ -48,6 +48,7 @@ $fieldPacks = (new \App\Services\FieldPackService())->cleanup();
 $projectMilestones = (new \App\Services\ProjectHealthService())->notifyDue();
 $warrantyNotices = (new \App\Services\WarrantyService())->notifyExpiring();
 $maintenanceDue = (new \App\Services\AssetMaintenanceService())->notifyDue();
+$productionWatch = (new \App\Repositories\ProductionControlRepository())->watchdogCounts();
 $removed = (new SystemHealthService())->cleanupTemporary();
 $settings->put('last_cron_at', date('Y-m-d H:i:s'));
 $settings->put('last_cron_status', 'SUCCESS');
@@ -64,4 +65,4 @@ SettingsService::forget();
 
 $warrantyCount = (int) ($warrantyNotices['notified'] ?? 0);
 $maintenanceCount = (int) ($maintenanceDue['notified'] ?? 0);
-fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} snag_alerts={$snagAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} webhook_retries={$webhookRetries} approval_reminders={$approvalReminders} integration_retries={$integrationRetries} field_packs_closed={$fieldPacks} warranty_notices={$warrantyCount} maintenance_notices={$maintenanceCount} temp_removed={$removed}\n");
+fwrite(STDOUT, "alerts_created={$alerts} lead_alerts={$leadAlerts} snag_alerts={$snagAlerts} schedule_alerts={$scheduleAlerts} recurring_followups={$recurring} scheduled_reports={$reports} webhook_retries={$webhookRetries} approval_reminders={$approvalReminders} integration_retries={$integrationRetries} field_packs_closed={$fieldPacks} warranty_notices={$warrantyCount} maintenance_notices={$maintenanceCount} production_overdue={$productionWatch['overdue']} temp_removed={$removed}\n");

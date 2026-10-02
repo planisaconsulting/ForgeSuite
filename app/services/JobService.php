@@ -1172,6 +1172,7 @@ final class JobService
             'items_open' => $this->ops->itemsOpen($id),
             'qc_blocking' => $this->ops->qcBlocking($id),
             'installation_open' => $delivery->needsInstallation() && !$this->ops->installationComplete($id),
+            'fulfilment_open' => (new FulfilmentService())->jobOpen($id),
         ];
     }
 

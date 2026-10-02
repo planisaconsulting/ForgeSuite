@@ -107,6 +107,9 @@ final class AssetService
         if ((int) ($item['creates_customer_asset'] ?? 0) !== 1 && empty($input['force'])) {
             return ['errors' => ['_form' => 'This product is not set to create a customer asset.'], 'ids' => [], 'warnings' => []];
         }
+        if ((new \App\Repositories\ProductionControlRepository())->openFulfilmentForItem($jobItemId) > 0) {
+            return ['errors' => ['_form' => 'Fulfilment is not complete. An asset is not created before that is recorded.'], 'ids' => [], 'warnings' => []];
+        }
         $mode = strtoupper(trim((string) ($input['track_mode'] ?? 'GROUP')));
         if (!in_array($mode, ['GROUP', 'INDIVIDUAL'], true)) {
             $mode = 'GROUP';

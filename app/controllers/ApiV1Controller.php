@@ -417,6 +417,114 @@ final class ApiV1Controller
         $this->finish($auth, 200, true, $result, [], 'sign_calculation', null);
     }
 
+    public function productionReadiness(string $id): void
+    {
+        $auth = $this->gate('production.read');
+        if ($auth === null) {
+            return;
+        }
+        $this->actAsClient($auth);
+        $evaluated = (new \App\Services\ReleaseReadinessService())->evaluate((int) $id);
+        $this->finish($auth, $evaluated['found'] ? 200 : 404, $evaluated['found'], $evaluated, $evaluated['found'] ? [] : ['record' => 'That job was not found.'], 'job', (int) $id);
+    }
+
+    public function productionReleases(string $id): void
+    {
+        $auth = $this->gate('production.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\ProductionControlRepository())->releaseQueue(['project_id' => 0]);
+        $mine = array_values(array_filter($rows, static fn (array $row): bool => (int) $row['id'] === (int) $id));
+        $current = (new \App\Repositories\ProductionControlRepository())->currentRelease((int) $id);
+        $this->finish($auth, 200, true, ['current' => $current, 'listed' => $mine !== []], [], 'job', (int) $id);
+    }
+
+    public function productionRelease(string $id): void
+    {
+        $auth = $this->gate('production.read');
+        if ($auth === null) {
+            return;
+        }
+        $row = (new \App\Repositories\ProductionControlRepository())->release((int) $id);
+        if ($row === null) {
+            $this->finish($auth, 404, false, null, ['record' => 'That release was not found.'], 'production_release', (int) $id);
+
+            return;
+        }
+        unset($row['snapshot_json']);
+        $this->finish($auth, 200, true, $row, [], 'production_release', (int) $id);
+    }
+
+    public function productionQueue(): void
+    {
+        $auth = $this->gate('production.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\ProductionControlRepository())->queue([], 50, 0);
+        $this->finish($auth, 200, true, ['stages' => $rows], [], 'production_stage', null);
+    }
+
+    public function productionStage(string $id, string $action): void
+    {
+        $auth = $this->gate('production.execute');
+        if ($auth === null) {
+            return;
+        }
+        $this->actAsClient($auth);
+        $raw = file_get_contents('php://input');
+        $body = json_decode($raw === false ? '' : $raw, true);
+        $input = is_array($body) ? $body : [];
+        $userId = (int) ($auth['client']['created_by'] ?? 0);
+        $service = new \App\Services\ProductionStageControlService();
+        $key = (string) ($input['idempotency_key'] ?? '');
+        $errors = match ($action) {
+            'start' => $service->start((int) $id, $userId, $key !== '' ? $key : null),
+            'pause' => $service->pause((int) $id, (string) ($input['reason'] ?? ''), $userId, $key !== '' ? $key : null),
+            default => $service->complete((int) $id, $input, $userId, $key !== '' ? $key : null),
+        };
+        $this->finish($auth, $errors === [] ? 200 : 422, $errors === [], ['stage_id' => (int) $id], $errors, 'production_stage', (int) $id);
+    }
+
+    public function fulfilmentList(): void
+    {
+        $auth = $this->gate('production.read');
+        if ($auth === null) {
+            return;
+        }
+        $jobId = (int) ($_GET['job_id'] ?? 0);
+        $rows = $jobId > 0 ? (new \App\Repositories\ProductionControlRepository())->fulfilments($jobId) : [];
+        $this->finish($auth, 200, true, ['fulfilment' => $rows], [], 'fulfilment', null);
+    }
+
+    public function fulfilmentRecord(string $id): void
+    {
+        $auth = $this->gate('production.read');
+        if ($auth === null) {
+            return;
+        }
+        $row = (new \App\Repositories\ProductionControlRepository())->fulfilment((int) $id);
+        if ($row === null) {
+            $this->finish($auth, 404, false, null, ['record' => 'That fulfilment was not found.'], 'fulfilment', (int) $id);
+
+            return;
+        }
+        $this->finish($auth, 200, true, $row, [], 'fulfilment', (int) $id);
+    }
+
+    /**
+     * @param array{client: array<string, mixed>, scopes: list<string>} $auth
+     */
+    private function actAsClient(array $auth): void
+    {
+        $userId = (int) ($auth['client']['created_by'] ?? 0);
+        if ($userId > 0) {
+            $_SESSION['user_id'] = $userId;
+            forget_auth_user();
+        }
+    }
+
     private function read(string $scope, string $entity, int $id, callable $loader): void
     {
         $auth = $this->gate($scope);

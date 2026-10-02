@@ -96,6 +96,10 @@ final class JobController
             $decoded = json_decode($raw, true);
             $data['technical'] = is_array($decoded) ? $decoded : null;
             $data['showCosts'] = can('estimators.view_costs') || can('costing.view');
+        } elseif ($tab === 'release') {
+            $data['readiness'] = (new \App\Services\ReleaseReadinessService())->evaluate($jobId);
+            $data['currentRelease'] = (new \App\Repositories\ProductionControlRepository())->currentRelease($jobId);
+            $data['showCosts'] = can('production.view_costs') || can('costing.view');
         } elseif ($tab === 'overview') {
             $data['choices'] = (new JobWorkflowService())->choices((string) $job['status'], (string) $job['delivery_method']);
             $data['checks'] = (new JobService())->checks($job);
@@ -657,7 +661,11 @@ final class JobController
             'finance' => 'Finance',
             'activity' => 'Activity',
             'technical' => 'Technical',
+            'release' => 'Release',
         ];
+        if (!can('production.release.view') && !can('production.release.approve') && !can('production.queue.view')) {
+            unset($tabs['release']);
+        }
         if (!can('invoices.view')) {
             unset($tabs['finance']);
         }

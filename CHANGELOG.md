@@ -12,6 +12,8 @@ v1.1 Phase 2 adds customer assets (`SFA`), warranties, warranty claims (`SFWC`),
 
 v1.1 Phase 3 adds sign specifications and manufacturing estimators for vehicle wrap, channel letters, lightboxes, pylons, and panels. Quantities, yield, load, labour, and selling price are calculated on the server with the existing pricing and yield services. A specification version stays on the quote, job, and asset that used it. The estimators do not certify structure or electrical design.
 
+v1.1 Phase 4 adds release to production and line-item fulfilment. An accepted quote is not a release. A release does not start the stage and does not consume stock. The release snapshot keeps the specification version, artwork revision, and bill of materials from that moment. A later size or artwork change keeps the old release and asks for a new one. A phone number does not.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

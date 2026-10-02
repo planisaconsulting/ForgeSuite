@@ -48,6 +48,23 @@ Estimator calculations use scope `estimators.use`:
 
 The body is JSON. The client must have `created_by` set to a staff user, because estimator permissions are that user's. The call calculates and does not save. Cost and installation detail are included only when the client also has `estimators.financials`. These routes were not exercised over HTTP in the Phase 3 test run. The same calculations are covered by `tests/v11_phase3.php`.
 
+Production reads use scope `production.read`:
+
+- `GET /api/v1/jobs/{id}/production-readiness`
+- `GET /api/v1/jobs/{id}/production-releases`
+- `GET /api/v1/production-releases/{id}`
+- `GET /api/v1/production-queue`
+- `GET /api/v1/fulfilment`
+- `GET /api/v1/fulfilment/{id}`
+
+Stage actions use scope `production.execute`:
+
+- `POST /api/v1/production-stages/{id}/start`
+- `POST /api/v1/production-stages/{id}/pause`
+- `POST /api/v1/production-stages/{id}/complete`
+
+The body is JSON. The acting user is `api_clients.created_by`. A repeated idempotency key does not start or complete the stage twice. The release GET does not return the snapshot, so cost inside that snapshot is not sent on this route. These routes were not exercised over HTTP. The same rules are covered by `tests/v11_phase4.php`.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

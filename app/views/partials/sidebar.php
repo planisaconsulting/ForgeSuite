@@ -26,6 +26,8 @@ $groups = [
         ['workshop-floor', 'Workshop floor', '/workshop', 'fa-industry', 'workshop.view'],
         ['workshop-scan', 'Scan', '/workshop/scan', 'fa-qrcode', 'workshop.scan'],
         ['workshop-queue', 'Production queue', '/workshop/queue', 'fa-list', 'workshop.view'],
+        ['production-queue', 'Released work', '/production/queue', 'fa-clipboard-list', 'production.queue.view'],
+        ['production-today', 'Today board', '/production/today', 'fa-tv', 'production.queue.view'],
         ['workshop-qc', 'QC', '/workshop/qc', 'fa-clipboard-check', 'qc.perform'],
         ['workshop-ready', 'Ready for dispatch', '/dispatch', 'fa-truck-ramp-box', 'dispatch.view'],
         ['workshop-reprints', 'Reprints', '/workshop/reprints', 'fa-rotate-right', 'production.reprint'],

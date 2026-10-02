@@ -1,16 +1,16 @@
 # Permissions
 
-v1.1.0 has 283 permission codes. ADMIN holds all 241 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 299 permission codes. ADMIN holds all 257 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 142 |
-| SALES | 91 |
-| ACCOUNTS | 68 |
-| PRODUCTION | 50 |
-| INSTALLER | 35 |
-| DESIGN | 27 |
-| DISPATCH | 21 |
+| MANAGEMENT | 158 |
+| SALES | 92 |
+| ACCOUNTS | 69 |
+| PRODUCTION | 55 |
+| INSTALLER | 37 |
+| DESIGN | 28 |
+| DISPATCH | 23 |
 | MARKETING | 11 |
 
 Project codes are `projects.view`, `projects.view_assigned`, `projects.create`, `projects.edit`, `projects.archive`, `projects.complete`, `projects.view_financials`, `projects.manage_team`, `projects.manage_sites`, `projects.import_sites`, `projects.bulk_create_jobs`, `projects.manage_milestones`, `projects.manage_risks`, `projects.manage_issues`, `projects.manage_budget`, `projects.manage_changes`, `projects.generate_handover`, and `projects.view_reports`.
@@ -22,6 +22,10 @@ Asset and service codes are `assets.view`, `assets.create`, `assets.edit`, `asse
 Signage codes are `specifications.view`, `specifications.create`, `specifications.edit`, `specifications.approve`, `specifications.archive`, `estimators.use`, `estimators.override`, `estimators.view_costs`, `estimators.technical_review`, `vehicle_templates.view`, `vehicle_templates.manage`, `geometry.upload`, and `electrical_profiles.manage`.
 
 SALES can view specifications, run an approved estimator, and view vehicle templates. SALES cannot edit or approve a specification and cannot override a hard rule. DESIGN can create and edit specifications, run estimators, override a calculation, complete technical review, manage vehicle templates, and upload geometry. DESIGN cannot approve a specification. PRODUCTION and INSTALLER can view the specification on a job. ACCOUNTS can view specifications and estimator costs. MANAGEMENT and ADMIN hold the signage codes, including approval and electrical profiles. There is no separate ESTIMATOR role. DESIGN is the advanced-estimator role.
+
+Production-control codes are `production.release.view`, `production.release.request`, `production.release.approve`, `production.release.override`, `production.release.cancel`, `production.change.request`, `production.change.approve`, `production.queue.view`, `production.supervise`, `production.stage.start`, `production.stage.complete`, `production.stage.block`, `production.rework.manage`, `production.qc.disposition`, `fulfilment.manage`, and `production.view_costs`.
+
+SALES and DESIGN can see release state. They cannot release a job. PRODUCTION can open the released queue and start, complete, block, or rework a stage. PRODUCTION cannot approve a release or override a block. INSTALLER and DISPATCH can see release state and record fulfilment. ACCOUNTS can see production cost on the release screen. MANAGEMENT holds every production-control code, including release, override, and supervision. There is no separate PRODUCTION MANAGER or WORKSHOP role. MANAGEMENT releases. PRODUCTION executes released stages. Purchasing still uses `purchasing.create`. A shortage does not send a purchase order.
 
 There is no separate SURVEYOR, FINANCE, WORKSHOP, or PURCHASING role. Survey work sits with SALES and INSTALLER. Finance sits with ACCOUNTS. Workshop sits with PRODUCTION. Purchasing sits with the roles that have `purchasing.*`. The customer portal is a different login, not a staff role.
 

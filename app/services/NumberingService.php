@@ -140,6 +140,11 @@ final class NumberingService
         return $this->next('package', 'package_prefix', 'SFPK');
     }
 
+    public function productionRelease(): string
+    {
+        return $this->next('production_release', 'release_prefix', 'SFR');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

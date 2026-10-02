@@ -31,6 +31,12 @@ final class PurchaseRecommendationService
         }
         $grouped = [];
         foreach ($this->planning->firmDemand() as $row) {
+            $row['demand_class'] = 'FIRM';
+            $productId = (int) $row['product_id'];
+            $grouped[$productId][] = $row;
+        }
+        foreach ($this->planning->plannedDemand() as $row) {
+            $row['demand_class'] = 'PLANNED';
             $productId = (int) $row['product_id'];
             $grouped[$productId][] = $row;
         }
@@ -50,7 +56,7 @@ final class PurchaseRecommendationService
                 $demand[] = [
                     'quantity' => (string) $row['quantity'],
                     'required_by' => (string) $row['required_by'],
-                    'category' => 'FIRM',
+                    'category' => (string) ($row['demand_class'] ?? 'FIRM'),
                     'label' => (string) $row['job_number'],
                     'job_id' => (int) $row['job_id'],
                 ];

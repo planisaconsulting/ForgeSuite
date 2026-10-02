@@ -31,4 +31,19 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - Specification images and a one-step “apply this version to selected drafts” diff are not on a screen yet. Accepted jobs are never updated silently.
 - QC and installation text from a specification is copied onto the job snapshot. It does not create new rows in the older checklist editor by itself.
 - API estimator routes were not called over HTTP in the automated run.
+- API production routes were not called over HTTP. `tests/v11_phase4.php` covers the same release, reservation, fulfilment, and permission rules in process.
+- The channel-letter policy stores `approval_required`. Release does not call `ApprovalService` for that flag. The check severities still block.
+- A proposed material substitute is a table row. This release does not recalculate yield, waste, or cost for it.
+- Colour references and production-file rows have no upload screen. A print, CNC, or router stage still blocks until an approved file row exists.
+- The production pack links to the scan URL. It does not draw a QR image.
+- The release screen can show the quoted cost snapshot. It does not calculate an estimate-versus-BOM variance.
+- Bulk release takes a list of job ids. There is no wave screen on the project.
+- `JobService::updateStage` can still move a stage on a job that has not been released. The released queue and `ProductionStageControlService` do not.
+- The concurrency check repeats one idempotency key. It does not start two PHP processes.
+- The queue timing check uses one page of released stages. It does not load 500 jobs and 5,000 stages.
+- The cron production watchdog prints counts. It does not write a health sentence per job.
+- A commercial variation is not created when a production change is recorded. Link `variation_id` when the variation already exists.
+- Release, override, stock reservation, stage completion, and QC disposition are not in the offline field sync.
+- `PRODUCTION_RELEASE_REQUESTED`, `PRODUCTION_RELEASE_READY`, and `PRODUCTION_COMPLETE` are not emitted. Release emits `PRODUCTION_RELEASED` or `PRODUCTION_RELEASE_BLOCKED`.
+- Courier fulfilment stores carrier and waybill text. It does not call a carrier.
 - A phone camera was not used to check asset QR codes, and a photograph is not a measurement.

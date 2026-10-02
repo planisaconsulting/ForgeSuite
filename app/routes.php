@@ -40,6 +40,7 @@ use App\Controllers\LeadController;
 use App\Controllers\MarketingController;
 use App\Controllers\PublicLeadController;
 use App\Controllers\EstimatingController;
+use App\Controllers\ProductionControlController;
 use App\Controllers\SignageController;
 use App\Controllers\PageController;
 use App\Controllers\PricingLevelController;
@@ -1949,6 +1950,57 @@ $router->post('/api/v1/estimators/pylon', static function (): void {
 $router->post('/api/v1/estimators/panel-frame', static function (): void {
     (new ApiV1Controller())->estimateSign('PANEL_FRAME');
 }, false, false);
+$router->get('/production/queue', static function (): void {
+    (new ProductionControlController())->queue();
+}, true, 'production.queue.view');
+$router->get('/production/today', static function (): void {
+    (new ProductionControlController())->today();
+}, true, 'production.queue.view');
+$router->get('/production/jobs/{id}/release', static function (string $id): void {
+    (new ProductionControlController())->release($id);
+}, true, 'production.release.view');
+$router->post('/production/jobs/{id}/release', static function (string $id): void {
+    (new ProductionControlController())->release($id);
+}, true, true, 'production.release.approve');
+$router->post('/production/jobs/{id}/change', static function (string $id): void {
+    (new ProductionControlController())->change($id);
+}, true, true, 'production.change.request');
+$router->get('/production/releases/{id}/pack', static function (string $id): void {
+    (new ProductionControlController())->pack($id);
+}, true, 'production.release.view');
+$router->get('/production/scan/{number}', static function (string $number): void {
+    (new ProductionControlController())->scan($number);
+}, true, 'production.queue.view');
+$router->post('/production/fulfilment/{id}', static function (string $id): void {
+    (new ProductionControlController())->fulfil($id);
+}, true, true, 'fulfilment.manage');
+$router->get('/api/v1/jobs/{id}/production-readiness', static function (string $id): void {
+    (new ApiV1Controller())->productionReadiness($id);
+}, false);
+$router->get('/api/v1/jobs/{id}/production-releases', static function (string $id): void {
+    (new ApiV1Controller())->productionReleases($id);
+}, false);
+$router->get('/api/v1/production-releases/{id}', static function (string $id): void {
+    (new ApiV1Controller())->productionRelease($id);
+}, false);
+$router->get('/api/v1/production-queue', static function (): void {
+    (new ApiV1Controller())->productionQueue();
+}, false);
+$router->post('/api/v1/production-stages/{id}/start', static function (string $id): void {
+    (new ApiV1Controller())->productionStage($id, 'start');
+}, false, false);
+$router->post('/api/v1/production-stages/{id}/pause', static function (string $id): void {
+    (new ApiV1Controller())->productionStage($id, 'pause');
+}, false, false);
+$router->post('/api/v1/production-stages/{id}/complete', static function (string $id): void {
+    (new ApiV1Controller())->productionStage($id, 'complete');
+}, false, false);
+$router->get('/api/v1/fulfilment', static function (): void {
+    (new ApiV1Controller())->fulfilmentList();
+}, false);
+$router->get('/api/v1/fulfilment/{id}', static function (string $id): void {
+    (new ApiV1Controller())->fulfilmentRecord($id);
+}, false);
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

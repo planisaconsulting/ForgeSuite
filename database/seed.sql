@@ -1767,3 +1767,95 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('access_cost_cherry_picker', '0'),
 ('access_cost_crane', '0'),
 ('access_cost_other', '0');
+
+-- v1.1 Phase 4 production release.
+INSERT INTO production_release_policies (code, name, applies_to, applies_value, approval_required) VALUES
+('DEFAULT', 'Default release policy', 'DEFAULT', NULL, 0),
+('VEHICLE', 'Vehicle branding', 'JOB_TYPE', 'VEHICLE_WRAP', 0),
+('CHANNEL', 'Channel letters', 'JOB_TYPE', 'CHANNEL_LETTER', 1);
+
+INSERT INTO production_release_policy_checks (policy_id, check_code, severity)
+SELECT id, 'JOB_VALID', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'CUSTOMER_CONFIRMED', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'SCOPE_CONFIRMED', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'QUANTITIES_CONFIRMED', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'DIMENSIONS_CONFIRMED', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'ARTWORK_APPROVED', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'ARTWORK_REVISION', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'SPECIFICATION_CONFIRMED', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'TECHNICAL_REVIEW', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'BOM_GENERATED', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'MATERIAL_REQUIREMENTS', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'MATERIAL_AVAILABILITY', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'SHORTAGES_IDENTIFIED', 'INFORMATIONAL' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'PRODUCTION_ROUTE', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'PRODUCTION_FILES', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'QC_CHECKLIST', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'TARGET_DATE', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'FULFILMENT_METHOD', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'LOCATION_CONFIRMED', 'WARNING' FROM production_release_policies WHERE code = 'DEFAULT'
+UNION ALL SELECT id, 'SPECIAL_INSTRUCTIONS', 'INFORMATIONAL' FROM production_release_policies WHERE code = 'DEFAULT';
+
+INSERT INTO production_release_policy_checks (policy_id, check_code, severity)
+SELECT id, 'ARTWORK_APPROVED', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'VEHICLE'
+UNION ALL SELECT id, 'DIMENSIONS_CONFIRMED', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'VEHICLE'
+UNION ALL SELECT id, 'MATERIAL_AVAILABILITY', 'WARNING' FROM production_release_policies WHERE code = 'VEHICLE'
+UNION ALL SELECT id, 'FULFILMENT_METHOD', 'WARNING' FROM production_release_policies WHERE code = 'VEHICLE';
+
+INSERT INTO production_release_policy_checks (policy_id, check_code, severity)
+SELECT id, 'SPECIFICATION_CONFIRMED', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'CHANNEL'
+UNION ALL SELECT id, 'ARTWORK_APPROVED', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'CHANNEL'
+UNION ALL SELECT id, 'TECHNICAL_REVIEW', 'BLOCK_NO_OVERRIDE' FROM production_release_policies WHERE code = 'CHANNEL'
+UNION ALL SELECT id, 'MATERIAL_AVAILABILITY', 'BLOCK_OVERRIDE_WITH_PERMISSION' FROM production_release_policies WHERE code = 'CHANNEL';
+
+INSERT INTO permissions (code, name, module) VALUES
+('production.release.view', 'View production release state', 'production_control'),
+('production.release.request', 'Request a production release', 'production_control'),
+('production.release.approve', 'Release a job to production', 'production_control'),
+('production.release.override', 'Override an overridable release block', 'production_control'),
+('production.release.cancel', 'Cancel a production release', 'production_control'),
+('production.change.request', 'Request a production change', 'production_control'),
+('production.change.approve', 'Approve a production change', 'production_control'),
+('production.queue.view', 'View the released production queue', 'production_control'),
+('production.supervise', 'Supervise production exceptions', 'production_control'),
+('production.stage.start', 'Start a released production stage', 'production_control'),
+('production.stage.complete', 'Complete a released production stage', 'production_control'),
+('production.stage.block', 'Pause or block a production stage', 'production_control'),
+('production.rework.manage', 'Record production rework', 'production_control'),
+('production.qc.disposition', 'Record a QC disposition', 'production_control'),
+('fulfilment.manage', 'Manage line-item fulfilment', 'production_control'),
+('production.view_costs', 'View production cost on the release', 'production_control');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.module = 'production_control';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code = 'production.release.view';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'DESIGN' AND p.code = 'production.release.view';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'PRODUCTION' AND p.code IN (
+    'production.queue.view', 'production.stage.start', 'production.stage.complete',
+    'production.stage.block', 'production.rework.manage'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'INSTALLER' AND p.code IN ('production.release.view', 'fulfilment.manage');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'DISPATCH' AND p.code IN ('production.release.view', 'fulfilment.manage');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code = 'production.view_costs';
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('release_prefix', 'SFR');

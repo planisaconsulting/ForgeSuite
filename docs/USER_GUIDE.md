@@ -1,6 +1,6 @@
 # User guide
 
-Sign-Forge ERP v1.0.0 is the desk for sales, workshop, installation, and accounts. Prices on an accepted quote stay as they were accepted. Stock changes only through a movement. A payment does not disappear when it is reversed; the reversal is a new record.
+Sign-Forge ERP v1.1.0 is the desk for sales, workshop, installation, and accounts. Prices on an accepted quote stay as they were accepted. Accepting a quote does not release it to production. Stock changes only through a movement. A payment does not disappear when it is reversed; the reversal is a new record.
 
 ## How to create a customer
 
@@ -47,6 +47,18 @@ Open Advanced estimating. Choose vehicle wrap, channel letters, lightbox, pylon,
 Open How was this calculated on the result. Each row shows the input, the method, and the quantity. A schematic is an estimating sketch, not a fabrication drawing. Warnings name the problem, for example an open vector path or a material the specification excludes.
 
 If the calculation asks for technical review, finish that review before adding it to a quote. The customer quote shows the description, size, quantity, and price. Cost, waste, and margin stay on the internal calculation. After the quote is accepted, the job Technical tab keeps the specification version that was accepted.
+
+## How to release a job to production
+
+Accepting a quote creates the job. It does not put the job on the workshop queue. Open the job, then Release. The checks name what is missing: artwork, size, specification, materials, route, files, date, or where the finished sign is going.
+
+A warning, such as a material shortage, stays on the screen. A block stops the release. You cannot tick a missing artwork approval into a pass. Someone with release permission records the release. The number looks like `SFR-2026-0001`. The workshop pack shows that number, the artwork revision, and the time it was generated.
+
+If the customer later changes a size or approves a new artwork revision, record a production change. The first release is kept. The new pack is the one to produce. A phone number change does not do this.
+
+Released work is under Workshop → Released work. Today board is the large display. Unreleased jobs are counted there and are not listed as work to start.
+
+One job can install some lines and collect others. Record fulfilment on the item. The job is not finished while a delivery, collection, or installation quantity is still outstanding.
 
 ## How to record a payment
 

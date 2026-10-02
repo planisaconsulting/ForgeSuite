@@ -64,6 +64,36 @@ final class BusinessTimeService
         return $cursor;
     }
 
+    public function subtractBusinessMinutes(\DateTimeImmutable $end, int $minutes): \DateTimeImmutable
+    {
+        $remaining = max(0, $minutes);
+        $cursor = $end;
+        $guard = 0;
+        while ($remaining > 0 && $guard < 20000) {
+            $guard++;
+            $window = $this->window($cursor);
+            if ($window === null) {
+                $cursor = $cursor->modify('-1 day')->setTime(23, 59);
+                continue;
+            }
+            $minute = ((int) $cursor->format('H')) * 60 + (int) $cursor->format('i');
+            if ($minute > $window['end']) {
+                $cursor = $cursor->setTime(intdiv($window['end'], 60), $window['end'] % 60);
+                $minute = $window['end'];
+            }
+            if ($minute <= $window['start']) {
+                $cursor = $cursor->modify('-1 day')->setTime(23, 59);
+                continue;
+            }
+            $available = $minute - $window['start'];
+            $step = min($remaining, $available);
+            $cursor = $cursor->modify('-' . $step . ' minutes');
+            $remaining -= $step;
+        }
+
+        return $cursor;
+    }
+
     public function businessMinutesBetween(\DateTimeImmutable $start, \DateTimeImmutable $end): int
     {
         if ($end <= $start) {

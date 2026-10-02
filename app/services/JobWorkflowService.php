@@ -65,6 +65,9 @@ final class JobWorkflowService
             if ($checks['installation_open']) {
                 $warnings[] = 'Installation is not complete.';
             }
+            if (!empty($checks['fulfilment_open'])) {
+                $warnings[] = 'Fulfilment is not complete.';
+            }
             if ($warnings !== []) {
                 if (trim($overrideReason) === '' || !can('jobs.complete')) {
                     return $this->refuse(implode(' ', $warnings));

@@ -44,6 +44,14 @@ Geometry uploads are limited by `geometry_max_bytes` (262144) and `geometry_max_
 
 Vehicle templates record a source: manual, customer measured, supplier template, licensed library, or other. Leave `verified` off until someone has checked the sizes. Do not import a licensed template library without a licence. This release does not ship one.
 
+## Production release
+
+`release_prefix` defaults to SFR. Release policies are `DEFAULT`, `VEHICLE` (job type `VEHICLE_WRAP`), and `CHANNEL` (job type `CHANNEL_LETTER`). Change a severity on `production_release_policy_checks` only when you mean to change what can stop a release. `BLOCK_NO_OVERRIDE` cannot be waived from the screen.
+
+Channel letters store `approval_required`. The release still uses the check severities. It does not open a separate approval policy by itself.
+
+The hourly cron includes `production_overdue`, which is a count of released jobs past their internal target date. It does not email the customer.
+
 ## System health
 
 Administration → System health shows the release, PHP, database, storage, last cron, last backup, failed automations, and failed field sync. It does not show passwords.
