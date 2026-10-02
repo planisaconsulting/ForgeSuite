@@ -190,6 +190,13 @@ final class PurchasingService
         }
         try {
             $id = Database::transaction(function () use ($orderId, $input, $userId): int {
+                $key = trim((string) ($input['idempotency_key'] ?? ''));
+                if ($key !== '') {
+                    $existing = $this->orders->receiptByKey($key);
+                    if ($existing !== null) {
+                        return (int) $existing['id'];
+                    }
+                }
                 $order = $this->orders->lockOrder($orderId);
                 if ($order === null) {
                     throw new StockRejected(['_form' => 'That purchase order was not found.']);
@@ -211,6 +218,8 @@ final class PurchasingService
                     'supplier_invoice_number' => blank_to_null($input['supplier_invoice_number'] ?? null),
                     'received_by' => $userId,
                     'notes' => blank_to_null($input['notes'] ?? null),
+                    'idempotency_key' => $key !== '' ? $key : null,
+                    'status' => 'CONFIRMED',
                 ]);
                 $any = false;
                 $quantities = is_array($input['receive_qty'] ?? null) ? $input['receive_qty'] : [];
@@ -224,8 +233,13 @@ final class PurchasingService
                     }
                     $qty = Decimal::round($raw, 4);
                     $outstanding = Decimal::sub((string) $item['ordered_quantity'], (string) $item['received_quantity'], 4);
+                    $decision = strtoupper(trim((string) ($input['over_delivery'] ?? '')));
                     if (Decimal::cmp($qty, $outstanding) > 0) {
-                        throw new StockRejected(['_form' => 'You cannot receive more than the outstanding quantity of ' . $item['description'] . '.']);
+                        if ($decision === 'ACCEPT_PARTIAL') {
+                            $qty = $outstanding;
+                        } elseif ($decision !== 'ACCEPT') {
+                            throw new StockRejected(['_form' => 'You cannot receive more than the outstanding quantity of ' . $item['description'] . '.']);
+                        }
                     }
                     $any = true;
                     $receiptItemId = $this->orders->insertReceiptItem([
@@ -503,6 +517,12 @@ final class PurchasingService
      */
     private function lineCost(array $product, int $supplierProductId, array $input): string
     {
+        if (($input['cost_source'] ?? '') === 'SUPPLIER_QUOTATION') {
+            $posted = str_replace(',', '.', trim((string) ($input['unit_cost'] ?? '')));
+            if (Decimal::isNumeric($posted) && Decimal::cmp($posted, '0') >= 0) {
+                return Decimal::round($posted, 4);
+            }
+        }
         if ($supplierProductId > 0) {
             $link = $this->inventory->supplierProduct($supplierProductId);
             if ($link !== null && (int) $link['product_id'] === (int) $product['id']) {

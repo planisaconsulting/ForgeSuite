@@ -76,6 +76,9 @@ final class InventoryRepository extends Repository
         if (!$includeOffcuts) {
             $sql .= " AND (m.inventory_item_id IS NULL OR i.inventory_type <> 'OFFCUT')";
         }
+        if ($locationId === null || $locationId < 1) {
+            $sql .= " AND m.stock_location_id NOT IN (SELECT id FROM stock_locations WHERE location_type = 'QUARANTINE')";
+        }
         if ($locationId !== null && $locationId > 0) {
             $sql .= ' AND m.stock_location_id = ?';
             $params[] = $locationId;
@@ -425,6 +428,28 @@ final class InventoryRepository extends Repository
     /**
      * @return list<array<string, mixed>>
      */
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function locationBalances(int $locationId): array
+    {
+        return $this->rows(
+            'SELECT p.id AS product_id, p.sku, p.name AS product_name, p.cost_unit, p.inventory_method,
+                    p.track_stock, p.cost_price, p.average_cost,
+                    l.id AS stock_location_id, l.name AS location_name,
+                    COALESCE(SUM(CASE WHEN i.inventory_type = \'OFFCUT\' THEN 0 ELSE m.quantity END), 0) AS on_hand
+             FROM stock_movements m
+             INNER JOIN products p ON p.id = m.product_id
+             INNER JOIN stock_locations l ON l.id = m.stock_location_id
+             LEFT JOIN inventory_items i ON i.id = m.inventory_item_id
+             WHERE m.stock_location_id = ?
+             GROUP BY p.id, l.id
+             HAVING on_hand <> 0
+             ORDER BY p.name',
+            [$locationId]
+        );
+    }
+
     public function balances(int $limit = 300): array
     {
         return $this->rows(

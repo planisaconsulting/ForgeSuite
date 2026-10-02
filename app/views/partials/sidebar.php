@@ -93,6 +93,7 @@ $groups = [
         ['categories', 'Categories', '/categories', 'fa-tags', 'categories.manage'],
     ]],
     ['label' => 'Purchasing', 'links' => [
+        ['procurement-workbench', 'Workbench', '/purchasing/workbench', 'fa-table-list', 'purchasing.view'],
         ['requests', 'Purchase requests', '/purchasing/requests', 'fa-cart-plus', 'purchasing.view'],
         ['orders', 'Purchase orders', '/purchasing/orders', 'fa-file-contract', 'purchasing.view'],
         ['purchasing', 'Goods receiving', '/purchasing', 'fa-dolly', 'purchasing.view'],

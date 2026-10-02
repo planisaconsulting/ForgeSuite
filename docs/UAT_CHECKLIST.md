@@ -99,6 +99,19 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Approve artwork R2 and confirm the job asks for a new release, then confirm the old pack says SUPERSEDED — DO NOT PRODUCE
 - [ ] On a 25-branch project, run wave 1 for five sites, release the four that are ready, and leave the site that is blocked by artwork unreleased
 
+## Procurement and receiving
+
+- [ ] A production release shows a shortage of 20 sheets of 3 mm white ACM
+- [ ] Create a purchase request and an RFQ, and invite three suppliers
+- [ ] Supplier A quotes R520 with 20 available in 5 days, Supplier B quotes R545 in stock, and Supplier C quotes R500 with 10 available
+- [ ] Confirm the comparison does not select a winner
+- [ ] Award 10 to Supplier C and 10 to Supplier B and confirm two draft purchase orders
+- [ ] Approve, send, receive Supplier B now, and receive Supplier C later
+- [ ] Confirm stock, locations, source allocations, job readiness, and the audit row
+- [ ] Quote vinyl at R4,950 against a contract of R4,500 and confirm a variance warning with no automatic rejection
+- [ ] Receive 10 acrylic sheets, quarantine 2 damaged sheets with photos, leave 8 available, and create a supplier return
+- [ ] Receive LED batch LED-270314, use it on 4 jobs that create 7 assets, and read the lot trace in both directions
+
 ## Admin
 
 - [ ] Create a user and force a password change

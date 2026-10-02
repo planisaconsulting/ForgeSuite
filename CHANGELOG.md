@@ -14,6 +14,8 @@ v1.1 Phase 3 adds sign specifications and manufacturing estimators for vehicle w
 
 v1.1 Phase 4 adds release to production and line-item fulfilment. An accepted quote is not a release. A release does not start the stage and does not consume stock. The release snapshot keeps the specification version, artwork revision, and bill of materials from that moment. A later size or artwork change keeps the old release and asks for a new one. A phone number does not.
 
+v1.1 Phase 5 adds supplier RFQs (`SFRFQ`), supplier quotations (`SFVQ`), a token supplier portal, split awards into draft purchase orders, contract prices, quarantine, supplier returns (`SFRTN`), and hierarchical stock locations. The cheapest quotation is not awarded. A purchase order is not stock. A confirmed goods receipt is what makes quantity available. Quarantine stock is excluded from that available figure.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

@@ -488,10 +488,7 @@ final class StockMovementService
                 'notes' => null,
                 'created_by' => $userId,
             ]);
-            foreach ($this->inventory->balances(500) as $row) {
-                if ((int) $row['stock_location_id'] !== $locationId) {
-                    continue;
-                }
+            foreach ($this->inventory->locationBalances($locationId) as $row) {
                 if ((int) ($row['track_stock'] ?? 0) !== 1 && (string) $row['inventory_method'] === 'NONE') {
                     continue;
                 }
@@ -581,7 +578,6 @@ final class StockMovementService
                         'reference_id' => $countId,
                         'reason' => 'Stock count',
                         'created_by' => $userId,
-                        'allow_negative' => true,
                     ]);
                 }
                 $this->inventory->finishCount($countId, StockCountStatus::Completed->value, $userId);

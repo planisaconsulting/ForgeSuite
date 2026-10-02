@@ -175,15 +175,21 @@ final class PurchasingRepository extends Repository
         $this->run(
             'INSERT INTO goods_receipts (
                 grn_number, purchase_order_id, supplier_id, received_date, supplier_delivery_note,
-                supplier_invoice_number, received_by, notes
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                supplier_invoice_number, received_by, notes, idempotency_key, status
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $data['grn_number'], $data['purchase_order_id'], $data['supplier_id'], $data['received_date'],
                 $data['supplier_delivery_note'], $data['supplier_invoice_number'], $data['received_by'], $data['notes'],
+                $data['idempotency_key'] ?? null, $data['status'] ?? 'CONFIRMED',
             ]
         );
 
         return $this->insertId();
+    }
+
+    public function receiptByKey(string $key): ?array
+    {
+        return $this->one('SELECT * FROM goods_receipts WHERE idempotency_key = ?', [$key]);
     }
 
     /**

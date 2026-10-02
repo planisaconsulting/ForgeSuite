@@ -1859,3 +1859,43 @@ WHERE r.code = 'ACCOUNTS' AND p.code = 'production.view_costs';
 
 INSERT INTO settings (setting_key, setting_value) VALUES
 ('release_prefix', 'SFR');
+
+-- v1.1 Phase 5 procurement
+INSERT INTO permissions (code, name, module) VALUES
+('procurement.rfq.view', 'View supplier RFQs', 'procurement'),
+('procurement.rfq.create', 'Create supplier RFQs', 'procurement'),
+('procurement.rfq.send', 'Send supplier RFQs', 'procurement'),
+('procurement.rfq.award', 'Award a supplier RFQ', 'procurement'),
+('procurement.quotes.view', 'View supplier quotations', 'procurement'),
+('procurement.quotes.compare', 'Compare supplier quotations', 'procurement'),
+('procurement.po.approve', 'Approve a high-value purchase order', 'procurement'),
+('procurement.contract_prices.view', 'View supplier contract prices', 'procurement'),
+('procurement.contract_prices.manage', 'Manage supplier contract prices', 'procurement'),
+('procurement.supplier_portal.manage', 'Manage supplier portal access', 'procurement'),
+('inventory.locations.manage', 'Manage warehouse locations', 'procurement'),
+('inventory.putaway', 'Confirm stock put-away', 'procurement'),
+('inventory.serial.manage', 'Manage serial numbers', 'procurement'),
+('inventory.lot.manage', 'Manage lots and batches', 'procurement'),
+('inventory.count.create', 'Create a stock count', 'procurement'),
+('inventory.count.perform', 'Enter a physical stock count', 'procurement'),
+('inventory.count.approve', 'Approve a stock count variance', 'procurement'),
+('receiving.perform', 'Confirm goods receipts', 'procurement'),
+('receiving.exceptions.manage', 'Manage receiving exceptions', 'procurement'),
+('supplier_returns.manage', 'Manage supplier returns', 'procurement');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.module = 'procurement';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN (
+    'procurement.rfq.view', 'procurement.quotes.view', 'procurement.contract_prices.view', 'receiving.perform'
+);
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('rfq_prefix', 'SFRFQ'),
+('supplier_quote_prefix', 'SFVQ'),
+('supplier_return_prefix', 'SFRTN'),
+('po_approval_amount', '50000'),
+('rfq_late_response', 'FLAG');

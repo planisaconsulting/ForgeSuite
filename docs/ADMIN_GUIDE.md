@@ -50,7 +50,13 @@ Vehicle templates record a source: manual, customer measured, supplier template,
 
 Channel letters store `approval_required`. The release still uses the check severities. It does not open a separate approval policy by itself.
 
-The hourly cron includes `production_overdue`, which is a count of released jobs past their internal target date. It does not email the customer.
+The hourly cron includes `production_overdue`, which is a count of released jobs past their internal target date. It does not email the customer. The same line includes `late_pos`, a count of ordered purchase orders past their expected date. It does not email the supplier.
+
+## Procurement and warehouse
+
+`rfq_prefix` defaults to SFRFQ. `supplier_quote_prefix` defaults to SFVQ. `supplier_return_prefix` defaults to SFRTN, because SFSR is already the service-request prefix. `po_approval_amount` defaults to 50000 and is stored for a later approval policy. Award does not call that policy by itself. `rfq_late_response` is `FLAG` or `BLOCK`.
+
+Supplier portal tokens are hashes. Do not put the raw token in a report. Quarantine locations are excluded from available stock. See `docs/PROCUREMENT.md` and `docs/WAREHOUSE_LOCATIONS.md`.
 
 ## System health
 

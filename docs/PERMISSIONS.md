@@ -1,12 +1,12 @@
 # Permissions
 
-v1.1.0 has 299 permission codes. ADMIN holds all 257 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 319 permission codes. ADMIN holds all 277 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 158 |
+| MANAGEMENT | 178 |
 | SALES | 92 |
-| ACCOUNTS | 69 |
+| ACCOUNTS | 73 |
 | PRODUCTION | 55 |
 | INSTALLER | 37 |
 | DESIGN | 28 |
@@ -26,6 +26,10 @@ SALES can view specifications, run an approved estimator, and view vehicle templ
 Production-control codes are `production.release.view`, `production.release.request`, `production.release.approve`, `production.release.override`, `production.release.cancel`, `production.change.request`, `production.change.approve`, `production.queue.view`, `production.supervise`, `production.stage.start`, `production.stage.complete`, `production.stage.block`, `production.rework.manage`, `production.qc.disposition`, `fulfilment.manage`, and `production.view_costs`.
 
 SALES and DESIGN can see release state. They cannot release a job. PRODUCTION can open the released queue and start, complete, block, or rework a stage. PRODUCTION cannot approve a release or override a block. INSTALLER and DISPATCH can see release state and record fulfilment. ACCOUNTS can see production cost on the release screen. MANAGEMENT holds every production-control code, including release, override, and supervision. There is no separate PRODUCTION MANAGER or WORKSHOP role. MANAGEMENT releases. PRODUCTION executes released stages. Purchasing still uses `purchasing.create`. A shortage does not send a purchase order.
+
+Procurement codes are `procurement.rfq.view`, `procurement.rfq.create`, `procurement.rfq.send`, `procurement.rfq.award`, `procurement.quotes.view`, `procurement.quotes.compare`, `procurement.po.approve`, `procurement.contract_prices.view`, `procurement.contract_prices.manage`, `procurement.supplier_portal.manage`, `inventory.locations.manage`, `inventory.putaway`, `inventory.serial.manage`, `inventory.lot.manage`, `inventory.count.create`, `inventory.count.perform`, `inventory.count.approve`, `receiving.perform`, `receiving.exceptions.manage`, and `supplier_returns.manage`. `inventory.transfer` already existed and was not added again.
+
+MANAGEMENT holds every procurement code. ACCOUNTS can view RFQs, quotations, and contract prices, and can confirm a receipt. PRODUCTION, DESIGN, INSTALLER, and DISPATCH do not receive quotation comparison. A workshop user who can see a job cannot open the quote comparison. Supplier portal access is the invitation token. It does not reuse `suppliers.edit` or `procurement.supplier_portal.manage`.
 
 There is no separate SURVEYOR, FINANCE, WORKSHOP, or PURCHASING role. Survey work sits with SALES and INSTALLER. Finance sits with ACCOUNTS. Workshop sits with PRODUCTION. Purchasing sits with the roles that have `purchasing.*`. The customer portal is a different login, not a staff role.
 

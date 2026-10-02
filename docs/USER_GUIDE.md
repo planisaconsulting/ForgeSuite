@@ -60,6 +60,14 @@ Released work is under Workshop → Released work. Today board is the large disp
 
 One job can install some lines and collect others. Record fulfilment on the item. The job is not finished while a delivery, collection, or installation quantity is still outstanding.
 
+## How to buy material
+
+Open Purchasing → Workbench. A shortage is not a purchase order. Create an RFQ, invite the suppliers you choose, and wait for their prices. The comparison shows price, stock, and lead time. It does not pick the cheapest.
+
+Award the quantities you want. Two suppliers can share one requirement. Each award creates a draft purchase order. Approve it and send it with the existing purchase-order screen. Stock increases only when you confirm the goods receipt.
+
+If two sheets arrive damaged, quarantine them and return them. The good quantity is what production can use. A supplier link (`/supplier/…`) is for that supplier only.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

@@ -65,6 +65,15 @@ Stage actions use scope `production.execute`:
 
 The body is JSON. The acting user is `api_clients.created_by`. A repeated idempotency key does not start or complete the stage twice. The release GET does not return the snapshot, so cost inside that snapshot is not sent on this route. These routes were not exercised over HTTP. The same rules are covered by `tests/v11_phase4.php`.
 
+Procurement reads use scope `procurement.read`:
+
+- `GET /api/v1/procurement/rfqs`
+- `GET /api/v1/procurement/rfqs/{id}`
+- `GET /api/v1/procurement/rfqs/{id}/responses`
+- `GET /api/v1/procurement/purchase-recommendations`
+
+Responses are the internal comparison. They are not the supplier portal. The recommendations route returns the pack-size suggestion for a shortage of 13 and a pack of 5. Contract prices, locations, serials, lots, and receiving are not separate API routes in this release. These routes were not exercised over HTTP. The same RFQ, award, and receipt rules are covered by `tests/v11_phase5.php`. The supplier portal is `/supplier/{token}` and does not accept a staff API token.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

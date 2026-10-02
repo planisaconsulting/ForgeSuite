@@ -47,3 +47,16 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - `PRODUCTION_RELEASE_REQUESTED`, `PRODUCTION_RELEASE_READY`, and `PRODUCTION_COMPLETE` are not emitted. Release emits `PRODUCTION_RELEASED` or `PRODUCTION_RELEASE_BLOCKED`.
 - Courier fulfilment stores carrier and waybill text. It does not call a carrier.
 - A phone camera was not used to check asset QR codes, and a photograph is not a measurement.
+- RFQ invitations do not send email. The buyer copies the supplier link.
+- `po_approval_amount` is stored. Award and send do not call `ApprovalService`.
+- Purchase-order revisions and three-way invoice matching have tables or notes only. There is no revision writer and no match screen.
+- Cash purchases, supplier document expiry, freight allocation, and a stored exchange rate have no entry screen. Historical purchase orders are not revalued.
+- Location QR images, blind counts, and cycle-count selection are not on a screen.
+- `/m/receiving` opens the purchasing screen. It does not post a goods receipt, a transfer, or a count.
+- The production release screen does not add a Create purchase request button. `PurchasingService::request` still creates the request.
+- There is no project procurement tab and no warranty-recovery screen. A lot use can store a job id and an asset id. The trace test does not create those jobs or assets.
+- Supplier contact roles were not added. The existing contact record is unchanged.
+- API procurement routes were not called over HTTP. `tests/v11_phase5.php` covers RFQ, award, receipt, quarantine, serial, lot, and count rules in process.
+- The performance check inserts 200 suppliers and times one RFQ page. It does not load 10,000 supplier products or 50,000 stock rows.
+- Receipt idempotency is one key. The test does not start two PHP processes.
+- A second receipt of the same serial is refused before stock posts. Two processes that pass that check together can still hit the unique key after the first receipt has posted.

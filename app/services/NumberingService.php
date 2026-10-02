@@ -145,6 +145,21 @@ final class NumberingService
         return $this->next('production_release', 'release_prefix', 'SFR');
     }
 
+    public function supplierRfq(): string
+    {
+        return $this->next('supplier_rfq', 'rfq_prefix', 'SFRFQ');
+    }
+
+    public function supplierQuotation(): string
+    {
+        return $this->next('supplier_quotation', 'supplier_quote_prefix', 'SFVQ');
+    }
+
+    public function supplierReturnNumber(): string
+    {
+        return $this->next('supplier_return', 'supplier_return_prefix', 'SFRTN');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

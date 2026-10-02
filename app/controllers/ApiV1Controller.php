@@ -417,6 +417,46 @@ final class ApiV1Controller
         $this->finish($auth, 200, true, $result, [], 'sign_calculation', null);
     }
 
+    public function procurementRfqs(): void
+    {
+        $auth = $this->gate('procurement.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\ProcurementRepository())->rfqPage(50, 0);
+        $this->finish($auth, 200, true, ['rfqs' => $rows], [], null, null);
+    }
+
+    public function procurementRfq(string $id): void
+    {
+        $auth = $this->gate('procurement.read');
+        if ($auth === null) {
+            return;
+        }
+        $rfq = (new \App\Repositories\ProcurementRepository())->rfq((int) $id);
+        $this->finish($auth, $rfq === null ? 404 : 200, $rfq !== null, $rfq, $rfq === null ? ['record' => 'That RFQ was not found.'] : [], 'supplier_rfq', (int) $id);
+    }
+
+    public function procurementResponses(string $id): void
+    {
+        $auth = $this->gate('procurement.read');
+        if ($auth === null) {
+            return;
+        }
+        $compared = (new \App\Services\SupplierRfqService())->compare((int) $id);
+        $this->finish($auth, 200, true, $compared, [], 'supplier_rfq', (int) $id);
+    }
+
+    public function purchaseRecommendations(): void
+    {
+        $auth = $this->gate('procurement.read');
+        if ($auth === null) {
+            return;
+        }
+        $sample = (new \App\Services\SupplierRfqService())->suggestOrderQuantity('13', '5');
+        $this->finish($auth, 200, true, $sample, [], null, null);
+    }
+
     public function productionReadiness(string $id): void
     {
         $auth = $this->gate('production.read');

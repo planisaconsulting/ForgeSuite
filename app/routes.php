@@ -29,6 +29,7 @@ use App\Controllers\PaymentController;
 use App\Controllers\JobController;
 use App\Controllers\ProjectController;
 use App\Controllers\PurchasingController;
+use App\Controllers\ProcurementController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
@@ -652,6 +653,30 @@ $router->post('/inventory/transfers', static function () use ($inventory): void 
 $router->post('/inventory/supplier-returns', static function () use ($inventory): void { $inventory()->supplierReturn(); }, true, true, 'inventory.adjust');
 $router->post('/inventory/locations', static function () use ($inventory): void { $inventory()->saveLocation(); }, true, true, 'inventory.view');
 
+$router->get('/purchasing/workbench', static function (): void {
+    (new ProcurementController())->workbench();
+}, true, 'purchasing.view');
+$router->get('/purchasing/rfqs/{id}', static function (string $id): void {
+    (new ProcurementController())->rfq($id);
+}, true, 'procurement.rfq.view');
+$router->post('/purchasing/rfqs/{id}', static function (string $id): void {
+    (new ProcurementController())->rfq($id);
+}, true, true, 'procurement.rfq.award');
+$router->get('/supplier/{token}', static function (string $token): void {
+    (new ProcurementController())->supplier($token);
+}, false);
+$router->post('/supplier/{token}', static function (string $token): void {
+    (new ProcurementController())->supplier($token);
+}, false, false);
+$router->get('/inventory/locations', static function (): void {
+    (new ProcurementController())->locations();
+}, true, 'inventory.locations.manage');
+$router->post('/inventory/locations', static function (): void {
+    (new ProcurementController())->locations();
+}, true, true, 'inventory.locations.manage');
+$router->get('/m/receiving', static function (): void {
+    (new ProcurementController())->mobileReceive();
+}, true, 'receiving.perform');
 $router->get('/purchasing', static function () use ($purchasing): void { $purchasing()->index(); }, true, 'purchasing.view');
 $router->get('/purchasing/orders', static function () use ($purchasing): void { $purchasing()->orders(); }, true, 'purchasing.view');
 $router->post('/purchasing/orders', static function () use ($purchasing): void { $purchasing()->create(); }, true, true, 'purchasing.create');
@@ -1974,6 +1999,18 @@ $router->get('/production/scan/{number}', static function (string $number): void
 $router->post('/production/fulfilment/{id}', static function (string $id): void {
     (new ProductionControlController())->fulfil($id);
 }, true, true, 'fulfilment.manage');
+$router->get('/api/v1/procurement/rfqs', static function (): void {
+    (new ApiV1Controller())->procurementRfqs();
+}, false);
+$router->get('/api/v1/procurement/rfqs/{id}', static function (string $id): void {
+    (new ApiV1Controller())->procurementRfq($id);
+}, false);
+$router->get('/api/v1/procurement/rfqs/{id}/responses', static function (string $id): void {
+    (new ApiV1Controller())->procurementResponses($id);
+}, false);
+$router->get('/api/v1/procurement/purchase-recommendations', static function (): void {
+    (new ApiV1Controller())->purchaseRecommendations();
+}, false);
 $router->get('/api/v1/jobs/{id}/production-readiness', static function (string $id): void {
     (new ApiV1Controller())->productionReadiness($id);
 }, false);
