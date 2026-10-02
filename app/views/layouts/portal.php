@@ -28,6 +28,7 @@
             ['Request a quote', '/portal/quote-request', $hubUser !== null && $hubAllows->allows($hubUser, 'portal.quotes.request')],
             ['Order signage', '/portal/orders', $hubUser !== null && $hubAllows->allows($hubUser, 'portal.orders.create')],
             ['Assets', '/portal/assets', $hubUser !== null && $hubAllows->allows($hubUser, 'portal.assets.view')],
+            ['Artwork', '/portal/artwork-library', $hubUser !== null && ($hubAllows->allows($hubUser, 'portal.artwork.view') || $hubAllows->allows($hubUser, 'portal.artwork.approve'))],
             ['Statement', '/portal/statement', $hubUser !== null && $hubAllows->allows($hubUser, 'portal.finance.view')],
         ];
     ?>

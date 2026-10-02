@@ -76,6 +76,12 @@ Submit does not start production. The sales desk reviews the order. A requested 
 
 To report a problem on an installed sign, open the asset and use Report a problem. That is the same service request the office already uses.
 
+## How to approve artwork
+
+Open the proof from the portal or from the proof link. The page says PROOF and is not the file the workshop prints. Place a comment on the proof, or approve that revision after you read the statement. Approving R3 does not approve a later revision. If the phone number changes, you will be asked again. A bleed correction may not ask you again. The workshop still uses a separate production file.
+
+The artwork library lists artwork Sign-Forge has marked for your account. An older logo stays on file when a new primary logo is uploaded.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

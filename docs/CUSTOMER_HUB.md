@@ -6,7 +6,7 @@ A portal order is an intake. Submitting it does not release production, consume 
 
 ## Navigation
 
-Dashboard, Request a quote, Order signage, Assets, and Statement. A link is hidden when that portal user’s role cannot use it.
+Dashboard, Request a quote, Order signage, Assets, Artwork, and Statement. A link is hidden when that portal user’s role cannot use it. Artwork opens the library of approved files for that customer. The proof page is still `/portal/artwork/{id}`.
 
 The dashboard still lists quotes, jobs, artwork, invoices, documents, and assets. Empty artwork says “No artwork is waiting for your approval.”
 

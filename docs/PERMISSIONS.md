@@ -1,15 +1,15 @@
 # Permissions
 
-v1.1.0 has 322 permission codes. ADMIN holds all 280 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 337 permission codes. ADMIN holds all 295 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 181 |
-| SALES | 94 |
-| ACCOUNTS | 73 |
-| PRODUCTION | 55 |
+| MANAGEMENT | 196 |
+| SALES | 97 |
+| ACCOUNTS | 74 |
+| PRODUCTION | 56 |
+| DESIGN | 40 |
 | INSTALLER | 37 |
-| DESIGN | 28 |
 | DISPATCH | 23 |
 | MARKETING | 11 |
 
@@ -32,6 +32,10 @@ Procurement codes are `procurement.rfq.view`, `procurement.rfq.create`, `procure
 MANAGEMENT holds every procurement code. ACCOUNTS can view RFQs, quotations, and contract prices, and can confirm a receipt. PRODUCTION, DESIGN, INSTALLER, and DISPATCH do not receive quotation comparison. A workshop user who can see a job cannot open the quote comparison. Supplier portal access is the invitation token. It does not reuse `suppliers.edit` or `procurement.supplier_portal.manage`.
 
 Staff customer-hub codes are `customer_hub.view`, `customer_catalogues.manage`, and `customer_orders.review`. MANAGEMENT holds all three. SALES can view the portal inbox and review an order. SALES cannot edit a catalogue. PRODUCTION cannot review a portal order.
+
+Artwork codes are `artwork.view`, `artwork.create`, `artwork.edit`, `artwork.assign`, `artwork.revise`, `artwork.internal_review`, `artwork.send_proof`, `artwork.comment_internal`, `artwork.approve_internal`, `artwork.production_file.create`, `artwork.production_file.approve`, `artwork.production_file.supersede`, `artwork.physical_proof.manage`, `artwork.files.download_source`, and `artwork.admin`. `artwork.upload` and `artwork.approve_record` were already there and were not added again.
+
+MANAGEMENT holds every new artwork code. DESIGN can create and revise artwork, send a proof, comment internally, prepare a production file, and download a source file. DESIGN cannot approve a production file and cannot release a job. PRODUCTION can view artwork so the workshop can open the current approved file. PRODUCTION cannot download source files. SALES can view, create, and send a proof. ACCOUNTS can view. Portal codes `portal.artwork.view`, `portal.artwork.comment`, `portal.artwork.approve`, and `portal.artwork.upload` sit on the portal user role, not in this table.
 
 Portal user roles (`ADMIN`, `BUYER`, `ACCOUNTS`, `VIEW_ONLY`, and the others in `docs/CUSTOMER_PORTAL_SECURITY.md`) are not rows in this permission table. A workshop login does not become a customer login.
 

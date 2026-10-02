@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Helpers\Decimal;
+use App\Repositories\ArtworkProofingRepository;
 use App\Repositories\InventoryRepository;
 use App\Repositories\ProductionControlRepository;
 
@@ -65,6 +66,12 @@ final class ReleaseReadinessService
                 'severity' => $severity,
                 'message' => $state['message'],
             ];
+        }
+        foreach ($this->artworkExtras($jobId) as $extra) {
+            if ($extra['result'] === 'BLOCK') {
+                $blocked = true;
+            }
+            $checks[] = $extra;
         }
 
         return [
@@ -222,5 +229,27 @@ final class ReleaseReadinessService
         }
 
         return ['state' => 'ok', 'message' => 'Required production files are approved for production.'];
+    }
+
+    /**
+     * Phase 7 gates apply only when the artwork asks for them.
+     * A job with no production-file requirement and no physical sample is unchanged.
+     *
+     * @return list<array{check_code: string, result: string, severity: string, message: string}>
+     */
+    private function artworkExtras(int $jobId): array
+    {
+        $facts = (new ArtworkProofingRepository())->releaseFacts($jobId);
+        $physical = $facts['physical_pending']
+            ? ['check_code' => 'PHYSICAL_SAMPLE', 'result' => 'BLOCK', 'severity' => 'BLOCKING', 'message' => 'A physical sample is still required.']
+            : ['check_code' => 'PHYSICAL_SAMPLE', 'result' => 'NOT_APPLICABLE', 'severity' => 'INFORMATIONAL', 'message' => 'No physical sample is waiting.'];
+        $file = $facts['file_missing']
+            ? ['check_code' => 'PRODUCTION_FILE_APPROVED', 'result' => 'BLOCK', 'severity' => 'BLOCKING', 'message' => 'Artwork is approved. The production file is not.']
+            : ['check_code' => 'PRODUCTION_FILE_APPROVED', 'result' => 'NOT_APPLICABLE', 'severity' => 'INFORMATIONAL', 'message' => 'No extra production-file gate.'];
+        $stale = $facts['stale']
+            ? ['check_code' => 'PRODUCTION_FILE_CURRENT', 'result' => 'BLOCK', 'severity' => 'BLOCKING', 'message' => 'The released production file was superseded.']
+            : ['check_code' => 'PRODUCTION_FILE_CURRENT', 'result' => 'NOT_APPLICABLE', 'severity' => 'INFORMATIONAL', 'message' => 'No superseded production file is on the release.'];
+
+        return [$physical, $file, $stale];
     }
 }

@@ -20,6 +20,8 @@ Customer acceptance is a commercial event. Production release is an operational 
 
 The older job status (`NEW`, `IN_PRODUCTION`, `COMPLETED`, and the rest) is unchanged.
 
+Phase 7 adds three checks after that list. They are `NOT_APPLICABLE` unless the artwork asks for them. `PHYSICAL_SAMPLE` blocks while a sample is required and not approved. `PRODUCTION_FILE_APPROVED` blocks when the artwork is marked as needing a production file and none is approved. `PRODUCTION_FILE_CURRENT` blocks when a released snapshot still points at a superseded file. A job that never set those flags is not blocked by them.
+
 ## Release record
 
 Each release is a row in `production_releases`. The number is `SFR-YYYY-####` from `NumberingService` and the `release_prefix` setting.

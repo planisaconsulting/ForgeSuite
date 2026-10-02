@@ -168,12 +168,135 @@ final class PortalController
         if ($art === null) {
             $this->denied();
         }
+        $repo = new \App\Repositories\ArtworkProofingRepository();
+        $proof = !empty($art['current_revision_id']) ? $repo->latestProof((int) $art['current_revision_id']) : null;
         View::render('portal/artwork', [
             'title' => (string) $art['title'],
             'artwork' => $art,
+            'proof' => $proof,
+            'annotations' => $proof === null ? [] : (new \App\Services\ArtworkProofingService())->annotationsFor((int) $proof['id'], true, null),
             'statement' => SettingsService::get('artwork_approval_statement', ''),
             'user' => $user,
         ], 'layouts/portal');
+    }
+
+    public function artworkAnnotate(string $id): void
+    {
+        $user = $this->user();
+        if (!(new \App\Services\CustomerHubService())->allows($user, 'portal.artwork.comment') && !(new \App\Services\CustomerHubService())->allows($user, 'portal.artwork.approve')) {
+            $this->denied();
+        }
+        $art = (new PortalService())->artwork($user, route_id($id));
+        if ($art === null) {
+            $this->denied();
+        }
+        $proof = (new \App\Repositories\ArtworkProofingRepository())->proof((int) ($_POST['proof_id'] ?? 0));
+        if ($proof === null || (int) $proof['artwork_id'] !== (int) $art['id']) {
+            $this->denied();
+        }
+        $errors = (new \App\Services\ArtworkProofingService())->annotate(
+            (int) ($_POST['proof_id'] ?? 0),
+            $_POST,
+            'PORTAL',
+            null,
+            (int) $user['id'],
+            (string) ($user['display_name'] ?? $user['email'] ?? '')
+        );
+        if ($errors['errors'] === [] && (int) ($art['current_revision_id'] ?? 0) > 0 && trim((string) ($_POST['body'] ?? '')) !== '') {
+            $proof = (new \App\Repositories\ArtworkProofingRepository())->proof((int) ($_POST['proof_id'] ?? 0));
+            if ($proof !== null && (int) $proof['artwork_id'] !== (int) $art['id']) {
+                $this->denied();
+            }
+        }
+        $this->back($errors['errors'], '/portal/artwork/' . route_id($id), 'Comment placed on the proof.');
+    }
+
+    public function artworkProofFile(string $id): void
+    {
+        $user = $this->user();
+        $art = (new PortalService())->artwork($user, route_id($id));
+        if ($art === null || empty($art['current_revision_id'])) {
+            $this->denied();
+        }
+        $proof = (new \App\Repositories\ArtworkProofingRepository())->latestProof((int) $art['current_revision_id']);
+        if ($proof === null || (string) $proof['visibility'] !== 'CUSTOMER') {
+            $this->denied();
+        }
+        $relative = (string) $proof['stored_filename'];
+        if (str_contains($relative, '..')) {
+            $this->denied();
+        }
+        $path = base_path('storage/uploads/' . $relative);
+        if (!is_file($path)) {
+            abort_not_found('That file is missing.');
+        }
+        header('Content-Type: ' . (string) $proof['mime_type']);
+        header('X-Content-Type-Options: nosniff');
+        header('Content-Disposition: inline; filename="' . str_replace('"', '', (string) $proof['original_filename']) . '"');
+        readfile($path);
+        exit;
+    }
+
+    public function artworkLibrary(): void
+    {
+        $user = $this->user();
+        if (!(new \App\Services\CustomerHubService())->allows($user, 'portal.artwork.view') && !(new \App\Services\CustomerHubService())->allows($user, 'portal.artwork.approve')) {
+            $this->denied();
+        }
+        View::render('portal/artwork_library', [
+            'title' => 'Artwork library',
+            'rows' => (new \App\Services\ArtworkProofingService())->library((int) $user['customer_id']),
+        ], 'layouts/portal');
+    }
+
+    public function proofShare(string $token): void
+    {
+        $requested = isset($_GET['artwork']) ? (int) $_GET['artwork'] : null;
+        $opened = (new \App\Services\ArtworkProofingService())->openShare($token, $requested);
+        if ($opened['token'] === null) {
+            $this->denied();
+        }
+        $row = $opened['token'];
+        $repo = new \App\Repositories\ArtworkProofingRepository();
+        $art = $repo->artwork((int) $row['artwork_id']);
+        $revision = $repo->revision((int) $row['revision_id']);
+        $proof = $repo->proof((int) $row['proof_id']);
+        View::render('portal/proof_share', [
+            'title' => 'Artwork proof',
+            'artwork' => $art,
+            'revision' => $revision,
+            'proof' => $proof,
+            'annotations' => (new \App\Services\ArtworkProofingService())->annotationsFor((int) $proof['id'], true, null),
+            'token' => $row,
+            'rawToken' => $token,
+            'statement' => SettingsService::get('artwork_approval_statement', ''),
+        ], 'layouts/portal');
+    }
+
+    public function proofShareApprove(string $token): void
+    {
+        $opened = (new \App\Services\ArtworkProofingService())->openShare($token, null);
+        if ($opened['token'] === null) {
+            $this->denied();
+        }
+        $row = $opened['token'];
+        if (empty($_POST['approve'])) {
+            flash('error', 'Tick the approval statement before you continue.');
+            redirect('/proof/' . $token . '?artwork=' . (int) $row['artwork_id']);
+        }
+        $result = (new \App\Services\ArtworkProofingService())->approve(
+            (int) $row['proof_id'],
+            (int) $row['revision_id'],
+            trim((string) ($_POST['name'] ?? '')),
+            SettingsService::get('artwork_approval_statement', ''),
+            '1',
+            null,
+            (int) $row['id'],
+            substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 64),
+            substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255)
+        );
+        flash($result['errors'] === [] ? 'success' : 'error', $result['errors'] === [] ? 'Artwork approved.' : (string) reset($result['errors']));
+        redirect('/proof/' . $token . '?artwork=' . (int) $row['artwork_id']);
     }
 
     public function artworkFile(string $id): void

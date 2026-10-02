@@ -1922,3 +1922,61 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('catalogue_margin_alert_percent', '15'),
 ('expired_price_policy', 'QUOTE_REQUIRED')
 ON DUPLICATE KEY UPDATE setting_key = setting_key;
+
+-- v1.1 Phase 7 artwork proofing
+INSERT INTO permissions (code, name, module) VALUES
+('artwork.view', 'View artwork workspace', 'operations'),
+('artwork.create', 'Create artwork', 'operations'),
+('artwork.edit', 'Edit artwork details', 'operations'),
+('artwork.assign', 'Assign a designer', 'operations'),
+('artwork.revise', 'Create an artwork revision', 'operations'),
+('artwork.internal_review', 'Request internal artwork review', 'operations'),
+('artwork.send_proof', 'Send an artwork proof', 'operations'),
+('artwork.comment_internal', 'Add an internal artwork note', 'operations'),
+('artwork.approve_internal', 'Complete internal artwork review', 'operations'),
+('artwork.production_file.create', 'Prepare a production file', 'operations'),
+('artwork.production_file.approve', 'Approve a production file', 'operations'),
+('artwork.production_file.supersede', 'Supersede a production file', 'operations'),
+('artwork.physical_proof.manage', 'Manage a physical sample', 'operations'),
+('artwork.files.download_source', 'Download a design source file', 'operations'),
+('artwork.admin', 'Administer artwork storage', 'operations');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.code IN (
+    'artwork.view', 'artwork.create', 'artwork.edit', 'artwork.assign', 'artwork.revise',
+    'artwork.internal_review', 'artwork.send_proof', 'artwork.comment_internal', 'artwork.approve_internal',
+    'artwork.production_file.create', 'artwork.production_file.approve', 'artwork.production_file.supersede',
+    'artwork.physical_proof.manage', 'artwork.files.download_source', 'artwork.admin'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'DESIGN' AND p.code IN (
+    'artwork.view', 'artwork.create', 'artwork.edit', 'artwork.assign', 'artwork.revise',
+    'artwork.internal_review', 'artwork.send_proof', 'artwork.comment_internal', 'artwork.approve_internal',
+    'artwork.production_file.create', 'artwork.physical_proof.manage', 'artwork.files.download_source'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'PRODUCTION' AND p.code = 'artwork.view';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN ('artwork.view', 'artwork.create', 'artwork.send_proof');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code = 'artwork.view';
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('artwork_prefix', 'SFAW'),
+('artwork_production_only_reapproval', 'NO'),
+('dpi_small_print', '150'),
+('dpi_large_format', '75'),
+('large_format_min_mm', '1000'),
+('artwork_reminder_days', '3'),
+('artwork_upload_max_mb', '32'),
+('artwork_retention_note', 'Approved artwork and production files are retained. Nothing is deleted automatically.')
+ON DUPLICATE KEY UPDATE setting_key = setting_key;

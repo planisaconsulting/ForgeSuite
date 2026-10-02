@@ -213,6 +213,7 @@ final class PortalService
             return null;
         }
         $this->portal->audit((int) $user['customer_id'], (int) $user['id'], 'ARTWORK_VIEWED', 'artwork', $artworkId, $this->ip());
+        BusinessEventDispatcher::emit('ARTWORK_VIEWED', 'ARTWORK', $artworkId, null, ['portal' => '1']);
 
         return $row;
     }

@@ -19,7 +19,8 @@ final class CustomerHubService
     public const ROLES = [
         'ADMIN' => [
             'portal.quotes.request', 'portal.quotes.view', 'portal.quotes.approve',
-            'portal.orders.create', 'portal.orders.view', 'portal.artwork.approve',
+            'portal.orders.create', 'portal.orders.view', 'portal.artwork.view', 'portal.artwork.comment',
+            'portal.artwork.approve', 'portal.artwork.upload',
             'portal.projects.view', 'portal.jobs.view', 'portal.assets.view',
             'portal.service.create', 'portal.service.view', 'portal.finance.view',
             'portal.finance.pay', 'portal.documents.view', 'portal.users.manage',
@@ -27,8 +28,9 @@ final class CustomerHubService
         'BUYER' => [
             'portal.quotes.request', 'portal.quotes.view', 'portal.orders.create', 'portal.orders.view',
             'portal.projects.view', 'portal.jobs.view', 'portal.documents.view', 'portal.assets.view',
+            'portal.artwork.view',
         ],
-        'MARKETING' => ['portal.artwork.approve', 'portal.quotes.view', 'portal.documents.view', 'portal.orders.view'],
+        'MARKETING' => ['portal.artwork.view', 'portal.artwork.comment', 'portal.artwork.approve', 'portal.artwork.upload', 'portal.quotes.view', 'portal.documents.view', 'portal.orders.view'],
         'PROJECT_MANAGER' => ['portal.projects.view', 'portal.jobs.view', 'portal.orders.view', 'portal.orders.create', 'portal.documents.view'],
         'SITE_MANAGER' => ['portal.projects.view', 'portal.jobs.view', 'portal.assets.view', 'portal.service.create', 'portal.service.view'],
         'ACCOUNTS' => ['portal.finance.view', 'portal.finance.pay', 'portal.documents.view', 'portal.quotes.view'],

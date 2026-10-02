@@ -123,6 +123,17 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] On a 25-site project, confirm the portal shows installed, in production, awaiting approval, and scheduled counts, and does not show cost or margin
 - [ ] Download an invoice, start a payment, confirm a browser return leaves it unpaid, then confirm one verified webhook marks it paid and a repeat webhook does not pay twice
 
+## Artwork proofing
+
+- [ ] On a 600 × 400 ACM job, create R1, place “Make phone number larger” on the proof, create R2, resolve the note in R2, and approve R2
+- [ ] Prepare PF1, confirm pre-flight, approve PF1, and confirm release readiness no longer blocks on the production file
+- [ ] Confirm R1’s file is unchanged and R2’s approval does not move to a later customer-visible revision
+- [ ] On a Ford Ranger proof, comment on the rear phone number, create the next revision, and approve that revision. Confirm the vehicle template id can be stored and that each view is not a separate automatic gate
+- [ ] On a 25-branch project, approve one site and confirm the other sites stay unapproved
+- [ ] Require a vinyl sample after digital approval and confirm release stays blocked until the sample is approved
+- [ ] Reorder a sign whose artwork and brand asset are still current and confirm that artwork is reused
+- [ ] Open the workshop file and confirm the current production file is the approved one and a superseded file is marked do not use
+
 ## Admin
 
 - [ ] Create a user and force a password change

@@ -77,6 +77,7 @@ $groups = [
         ['dispatch', 'Dispatch', '/dispatch', 'fa-truck-ramp-box', 'dispatch.view'],
         ['snags', 'Snags', '/snags', 'fa-triangle-exclamation', 'snags.view'],
         ['design', 'Artwork', '/jobs/design', 'fa-pen-ruler', 'jobs.view'],
+        ['design-queue', 'Design queue', '/artwork', 'fa-pen-ruler', 'artwork.view'],
     ]],
     ['label' => 'Resources', 'links' => [
         ['resources', 'Staff and resources', '/resources', 'fa-people-group', 'resources.view'],

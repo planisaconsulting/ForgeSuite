@@ -68,3 +68,10 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - Customer hub API routes need a portal session. They were not called over HTTP.
 - The catalogue timing check inserts 100 items and reads one page. It does not load 500 items, 1,000 assets, or 5,000 jobs.
 - Brand colours are stored as supplied. They are not converted between Pantone, CMYK, RGB, and RAL.
+- A CDR, AI, EPS, or PSD file is not inspected. Colour mode stays unknown. The proof watermark is a label on the page, not ink in the file.
+- PDF comments keep a page number. The server does not draw the PDF page. Revision compare does not calculate a pixel difference.
+- There is no CorelDRAW plugin, no RIP, and no variable-data print engine. Vehicle, channel-letter, and lightbox artwork can store a template id and a sign kind. They do not approve each vehicle view as its own gate.
+- Artwork API routes were not called over HTTP. `tests/v11_phase7.php` covers revisions, approval, annotations, share links, production files, and release gates in process.
+- The file timing check inserts 200 file rows and searches once. It does not load 100,000 files. Revision numbers are locked in one request. The test does not start two PHP processes.
+- The restore check reads the artwork, revision, proof, approval, and production file in the working database. It is not a second-database import. Artwork bytes live in `storage/uploads` and have to be in the file backup.
+- Share-link approval stores the name and does not create a customer contact. Approval evidence is the database row, not a generated PDF.

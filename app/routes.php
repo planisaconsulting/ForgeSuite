@@ -31,6 +31,7 @@ use App\Controllers\ProjectController;
 use App\Controllers\PurchasingController;
 use App\Controllers\ProcurementController;
 use App\Controllers\CustomerHubController;
+use App\Controllers\ArtworkController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
@@ -518,6 +519,42 @@ $router->get('/jobs/board', static function (): void {
 $router->get('/jobs/workshop', static function (): void {
     (new JobController())->workshop();
 }, true, 'production.view');
+$router->get('/artwork', static function (): void {
+    (new ArtworkController())->queue();
+}, true, 'artwork.view');
+$router->get('/artwork/storage', static function (): void {
+    (new ArtworkController())->storage();
+}, true, 'artwork.admin');
+$router->get('/artwork/jobs/{id}/workshop', static function (string $id): void {
+    (new ArtworkController())->workshop($id);
+}, true, 'artwork.view');
+$router->get('/artwork/production-files/{id}/download', static function (string $id): void {
+    (new ArtworkController())->downloadProduction($id);
+}, true, 'artwork.view');
+$router->get('/artwork/files/{id}/download', static function (string $id): void {
+    (new ArtworkController())->downloadSource($id);
+}, true, 'artwork.view');
+$router->get('/artwork/{id}', static function (string $id): void {
+    (new ArtworkController())->show($id);
+}, true, 'artwork.view');
+$router->get('/artwork/{id}/compare', static function (string $id): void {
+    (new ArtworkController())->compare($id);
+}, true, 'artwork.view');
+$router->post('/artwork/{id}/revisions', static function (string $id): void {
+    (new ArtworkController())->revise($id);
+}, true, true, 'artwork.revise');
+$router->post('/artwork/{id}/proof', static function (string $id): void {
+    (new ArtworkController())->proof($id);
+}, true, true, 'artwork.send_proof');
+$router->post('/artwork/{id}/annotations', static function (string $id): void {
+    (new ArtworkController())->annotate($id);
+}, true, true, 'artwork.view');
+$router->post('/artwork/{id}/production-files', static function (string $id): void {
+    (new ArtworkController())->production($id);
+}, true, true, 'artwork.production_file.create');
+$router->post('/artwork/{id}/production-files/approve', static function (string $id): void {
+    (new ArtworkController())->approveProduction($id);
+}, true, true, 'artwork.production_file.approve');
 $router->get('/jobs/design', static function (): void {
     (new JobController())->design();
 }, true, 'jobs.view');
@@ -1089,6 +1126,15 @@ $router->post('/portal/quotes/{id}/changes', static function (string $id): void 
 $router->get('/portal/quotes/{id}/whatsapp', static function (string $id): void {
     (new PortalController())->whatsapp($id);
 }, false);
+$router->get('/portal/artwork-library', static function (): void {
+    (new PortalController())->artworkLibrary();
+}, false);
+$router->get('/proof/{token}', static function (string $token): void {
+    (new PortalController())->proofShare($token);
+}, false);
+$router->post('/proof/{token}/approve', static function (string $token): void {
+    (new PortalController())->proofShareApprove($token);
+}, false, true);
 $router->get('/portal/artwork/{id}', static function (string $id): void {
     (new PortalController())->artwork($id);
 }, false);
@@ -1101,6 +1147,12 @@ $router->post('/portal/artwork/{id}/approve', static function (string $id): void
 $router->post('/portal/artwork/{id}/changes', static function (string $id): void {
     (new PortalController())->artworkChange($id);
 }, false, true);
+$router->post('/portal/artwork/{id}/annotations', static function (string $id): void {
+    (new PortalController())->artworkAnnotate($id);
+}, false, true);
+$router->get('/portal/artwork/{id}/proof', static function (string $id): void {
+    (new PortalController())->artworkProofFile($id);
+}, false);
 $router->get('/portal/jobs/{id}', static function (string $id): void {
     (new PortalController())->job($id);
 }, false);
@@ -2018,6 +2070,15 @@ $router->get('/production/scan/{number}', static function (string $number): void
 $router->post('/production/fulfilment/{id}', static function (string $id): void {
     (new ProductionControlController())->fulfil($id);
 }, true, true, 'fulfilment.manage');
+$router->get('/api/v1/artwork', static function (): void {
+    (new ApiV1Controller())->artworkIndex();
+}, false);
+$router->get('/api/v1/artwork/{id}', static function (string $id): void {
+    (new ApiV1Controller())->artworkShow($id);
+}, false);
+$router->get('/api/v1/portal/artwork', static function (): void {
+    (new ApiV1Controller())->portalArtwork();
+}, false);
 $router->get('/api/v1/portal/catalogues', static function (): void {
     (new ApiV1Controller())->portalCatalogues();
 }, false);

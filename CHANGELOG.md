@@ -18,6 +18,8 @@ v1.1 Phase 5 adds supplier RFQs (`SFRFQ`), supplier quotations (`SFVQ`), a token
 
 v1.1 Phase 6 adds a customer hub on the existing portal: customer catalogues, fixed prices with date ranges, reorders that do not copy an obsolete specification, and customer orders (`SFCO`). A portal order does not release production, consume stock, or issue an invoice. A browser payment return does not mark an invoice paid.
 
+v1.1 Phase 7 adds artwork numbers (`SFAW`), revisions, customer proofs, and production files (`PF1`, `PF2`) on the existing artwork record. A proof is not a production file. Approval names one revision. A later customer-visible revision does not keep that approval. A superseded production file asks for release review.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

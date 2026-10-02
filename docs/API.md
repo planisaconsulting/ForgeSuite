@@ -81,6 +81,13 @@ Customer hub reads use the portal session, not a staff bearer token:
 
 No portal session returns 401. The lists are limited to that portal user’s customer. These routes were not called over HTTP. `tests/v11_phase6.php` covers catalogue isolation, site restriction, and order ownership in process.
 
+Artwork reads use scope `artwork.read`:
+
+- `GET /api/v1/artwork`
+- `GET /api/v1/artwork/{id}`
+
+`GET /api/v1/portal/artwork` uses the portal session and returns that customer’s library. No portal session returns 401. These routes were not called over HTTP. `tests/v11_phase7.php` covers revision, proof, annotation, and production-file rules in process. Creating a revision or approving a proof is done in the workspace and the portal, which call `ArtworkProofingService`.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

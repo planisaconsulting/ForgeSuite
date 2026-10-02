@@ -60,6 +60,12 @@ The hourly cron includes `production_overdue`, which is a count of released jobs
 
 Supplier portal tokens are hashes. Do not put the raw token in a report. Quarantine locations are excluded from available stock. See `docs/PROCUREMENT.md` and `docs/WAREHOUSE_LOCATIONS.md`.
 
+## Artwork
+
+`artwork_prefix` defaults to SFAW. `artwork_production_only_reapproval` defaults to NO, so a bleed-only revision does not ask the customer again. `dpi_small_print` is 150, `dpi_large_format` is 75, and `large_format_min_mm` is 1000. `artwork_reminder_days` is 3. `artwork_upload_max_mb` is 32.
+
+Proof links store a hash, not the raw token. Storage at `/artwork/storage` does not delete files. See `docs/ARTWORK_MANAGEMENT.md` and `docs/FILE_SECURITY.md`.
+
 ## System health
 
 Administration → System health shows the release, PHP, database, storage, last cron, last backup, failed automations, and failed field sync. It does not show passwords.

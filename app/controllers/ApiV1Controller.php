@@ -429,6 +429,43 @@ final class ApiV1Controller
         $this->send(200, true, ['catalogues' => $rows], []);
     }
 
+    public function artworkIndex(): void
+    {
+        $auth = $this->gate('artwork.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\ArtworkProofingRepository())->queue('CUSTOMER_REVIEW', 50);
+        $this->finish($auth, 200, true, ['artwork' => $rows], [], 'artwork', null);
+    }
+
+    public function artworkShow(string $id): void
+    {
+        $auth = $this->gate('artwork.read');
+        if ($auth === null) {
+            return;
+        }
+        $row = (new \App\Repositories\ArtworkProofingRepository())->artwork((int) $id);
+        if ($row === null) {
+            $this->finish($auth, 404, false, null, ['record' => 'That artwork was not found.'], 'artwork', (int) $id);
+
+            return;
+        }
+        $this->finish($auth, 200, true, ['artwork' => $row, 'revisions' => (new \App\Repositories\ArtworkProofingRepository())->revisions((int) $id)], [], 'artwork', (int) $id);
+    }
+
+    public function portalArtwork(): void
+    {
+        $user = (new \App\Services\PortalAuthService())->user();
+        if ($user === null) {
+            $this->send(401, false, null, ['auth' => 'Sign in to the customer hub.']);
+
+            return;
+        }
+        $rows = (new \App\Services\ArtworkProofingService())->library((int) $user['customer_id']);
+        $this->send(200, true, ['artwork' => $rows], []);
+    }
+
     public function portalOrders(): void
     {
         $user = (new \App\Services\PortalAuthService())->user();

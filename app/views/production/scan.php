@@ -8,6 +8,10 @@
         <?php if (!empty($scan['current'])): ?>
             <p>Current authorised release <?= e((string) $scan['current']['release_number']) ?> R<?= (int) $scan['current']['release_version'] ?>.</p>
             <a href="<?= e(url('/production/releases/' . (int) $scan['current']['id'] . '/pack')) ?>">Open current pack</a>
+            <?php if (!empty($scan['production_file'])): ?>
+                <p>Current production file <?= e((string) $scan['production_file']['version_label']) ?> · APPROVED FOR PRODUCTION</p>
+                <a href="<?= e(url('/artwork/jobs/' . (int) $scan['release']['job_id'] . '/workshop')) ?>">Open the current production file</a>
+            <?php endif; ?>
         <?php endif; ?>
     <?php endif; ?>
 </section>

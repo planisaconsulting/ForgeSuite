@@ -75,6 +75,7 @@ final class ProductionReleaseService
                     'snapshot_json' => json_encode($this->snapshot($job, $evaluated), JSON_THROW_ON_ERROR),
                     'idempotency_key' => $key !== '' ? $key : null,
                 ]);
+                (new \App\Repositories\ArtworkProofingRepository())->captureRelease($id, $jobId);
                 foreach ($evaluated['checks'] as $check) {
                     $this->repo->insertCheck([
                         'release_id' => $id,
@@ -197,6 +198,7 @@ final class ProductionReleaseService
             'superseded' => $superseded,
             'warning' => $superseded ? 'SUPERSEDED RELEASE — DO NOT PRODUCE.' : null,
             'current' => $current,
+            'production_file' => (new \App\Repositories\ArtworkProofingRepository())->currentProductionFile((int) $release['job_id']),
         ];
     }
 
@@ -222,6 +224,7 @@ final class ProductionReleaseService
             'files' => $this->repo->files((int) $job['id']),
             'fulfilment' => $this->repo->fulfilments((int) $job['id']),
             'artwork' => $this->repo->artworkFacts((int) $job['id']),
+            'artwork_files' => (new \App\Repositories\ArtworkProofingRepository())->snapshotRows((int) $job['id']),
             'technical' => is_array($technical) ? $technical : null,
             'materials' => $evaluated['materials'],
             'checks' => $evaluated['checks'],
