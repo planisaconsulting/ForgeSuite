@@ -275,6 +275,14 @@ final class PortalController
     public function upload(): void
     {
         $user = $this->user();
+        $file = $_FILES['file'] ?? [];
+        $name = (string) ($file['name'] ?? '');
+        $tmp = (string) ($file['tmp_name'] ?? '');
+        $bytes = is_file($tmp) ? (string) file_get_contents($tmp) : '';
+        $rejected = (new \App\Services\CustomerHubService())->rejectFile($name, $bytes);
+        if ($rejected !== []) {
+            $this->back($rejected, '/portal', '');
+        }
         $errors = (new AttachmentService())->store(
             'customer',
             (int) $user['customer_id'],

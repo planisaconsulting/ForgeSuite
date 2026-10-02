@@ -68,6 +68,14 @@ Award the quantities you want. Two suppliers can share one requirement. Each awa
 
 If two sheets arrive damaged, quarantine them and return them. The good quantity is what production can use. A supplier link (`/supplier/…`) is for that supplier only.
 
+## How a customer orders from the portal
+
+Open the customer portal. Request a quote when the sign still needs measuring or artwork. Order signage only from a catalogue Sign-Forge has activated, and enter the customer purchase order when you have one.
+
+Submit does not start production. The sales desk reviews the order. A requested date is not a promise. Reordering an old sign checks that the material, specification, artwork, and price are still valid. If they are not, the order waits for review instead of copying the old one.
+
+To report a problem on an installed sign, open the asset and use Report a problem. That is the same service request the office already uses.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

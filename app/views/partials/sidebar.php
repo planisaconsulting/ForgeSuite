@@ -50,6 +50,7 @@ $groups = [
         ['calculator', 'Calculator', '/calculator', 'fa-calculator', 'calculator.use'],
         ['estimates', 'Estimates', '/estimates', 'fa-ruler', 'estimates.view'],
         ['quotes', 'Quotes', '/quotes', 'fa-file-invoice', 'quotes.view'],
+        ['portal-inbox', 'Portal requests', '/sales/portal-requests', 'fa-id-card', 'customer_hub.view'],
         ['templates', 'Signage templates', '/templates', 'fa-swatchbook', 'templates.view'],
     ]],
     ['label' => 'Estimating', 'links' => [

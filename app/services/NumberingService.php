@@ -160,6 +160,11 @@ final class NumberingService
         return $this->next('supplier_return', 'supplier_return_prefix', 'SFRTN');
     }
 
+    public function customerOrder(): string
+    {
+        return $this->next('customer_order', 'customer_order_prefix', 'SFCO');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

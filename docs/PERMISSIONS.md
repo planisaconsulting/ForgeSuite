@@ -1,11 +1,11 @@
 # Permissions
 
-v1.1.0 has 319 permission codes. ADMIN holds all 277 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 322 permission codes. ADMIN holds all 280 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 178 |
-| SALES | 92 |
+| MANAGEMENT | 181 |
+| SALES | 94 |
 | ACCOUNTS | 73 |
 | PRODUCTION | 55 |
 | INSTALLER | 37 |
@@ -30,6 +30,10 @@ SALES and DESIGN can see release state. They cannot release a job. PRODUCTION ca
 Procurement codes are `procurement.rfq.view`, `procurement.rfq.create`, `procurement.rfq.send`, `procurement.rfq.award`, `procurement.quotes.view`, `procurement.quotes.compare`, `procurement.po.approve`, `procurement.contract_prices.view`, `procurement.contract_prices.manage`, `procurement.supplier_portal.manage`, `inventory.locations.manage`, `inventory.putaway`, `inventory.serial.manage`, `inventory.lot.manage`, `inventory.count.create`, `inventory.count.perform`, `inventory.count.approve`, `receiving.perform`, `receiving.exceptions.manage`, and `supplier_returns.manage`. `inventory.transfer` already existed and was not added again.
 
 MANAGEMENT holds every procurement code. ACCOUNTS can view RFQs, quotations, and contract prices, and can confirm a receipt. PRODUCTION, DESIGN, INSTALLER, and DISPATCH do not receive quotation comparison. A workshop user who can see a job cannot open the quote comparison. Supplier portal access is the invitation token. It does not reuse `suppliers.edit` or `procurement.supplier_portal.manage`.
+
+Staff customer-hub codes are `customer_hub.view`, `customer_catalogues.manage`, and `customer_orders.review`. MANAGEMENT holds all three. SALES can view the portal inbox and review an order. SALES cannot edit a catalogue. PRODUCTION cannot review a portal order.
+
+Portal user roles (`ADMIN`, `BUYER`, `ACCOUNTS`, `VIEW_ONLY`, and the others in `docs/CUSTOMER_PORTAL_SECURITY.md`) are not rows in this permission table. A workshop login does not become a customer login.
 
 There is no separate SURVEYOR, FINANCE, WORKSHOP, or PURCHASING role. Survey work sits with SALES and INSTALLER. Finance sits with ACCOUNTS. Workshop sits with PRODUCTION. Purchasing sits with the roles that have `purchasing.*`. The customer portal is a different login, not a staff role.
 

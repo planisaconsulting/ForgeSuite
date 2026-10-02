@@ -74,6 +74,13 @@ Procurement reads use scope `procurement.read`:
 
 Responses are the internal comparison. They are not the supplier portal. The recommendations route returns the pack-size suggestion for a shortage of 13 and a pack of 5. Contract prices, locations, serials, lots, and receiving are not separate API routes in this release. These routes were not exercised over HTTP. The same RFQ, award, and receipt rules are covered by `tests/v11_phase5.php`. The supplier portal is `/supplier/{token}` and does not accept a staff API token.
 
+Customer hub reads use the portal session, not a staff bearer token:
+
+- `GET /api/v1/portal/catalogues`
+- `GET /api/v1/portal/orders`
+
+No portal session returns 401. The lists are limited to that portal user’s customer. These routes were not called over HTTP. `tests/v11_phase6.php` covers catalogue isolation, site restriction, and order ownership in process.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

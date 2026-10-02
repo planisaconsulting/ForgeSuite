@@ -417,6 +417,30 @@ final class ApiV1Controller
         $this->finish($auth, 200, true, $result, [], 'sign_calculation', null);
     }
 
+    public function portalCatalogues(): void
+    {
+        $user = (new \App\Services\PortalAuthService())->user();
+        if ($user === null) {
+            $this->send(401, false, null, ['auth' => 'Sign in to the customer hub.']);
+
+            return;
+        }
+        $rows = (new \App\Repositories\CustomerHubRepository())->catalogues((int) $user['customer_id'], 50, 0);
+        $this->send(200, true, ['catalogues' => $rows], []);
+    }
+
+    public function portalOrders(): void
+    {
+        $user = (new \App\Services\PortalAuthService())->user();
+        if ($user === null) {
+            $this->send(401, false, null, ['auth' => 'Sign in to the customer hub.']);
+
+            return;
+        }
+        $rows = (new \App\Repositories\CustomerHubRepository())->searchOrders((int) $user['customer_id'], '', 1);
+        $this->send(200, true, ['orders' => $rows], []);
+    }
+
     public function procurementRfqs(): void
     {
         $auth = $this->gate('procurement.read');

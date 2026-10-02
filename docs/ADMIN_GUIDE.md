@@ -54,6 +54,8 @@ The hourly cron includes `production_overdue`, which is a count of released jobs
 
 ## Procurement and warehouse
 
+`customer_order_prefix` defaults to SFCO. Customer portal users keep their own roles on the portal user, separate from staff roles. Existing portal users stay `ADMIN` so they can still accept a quote and approve artwork. `catalogue_margin_alert_percent` defaults to 15 and only warns staff. `expired_price_policy` is `QUOTE_REQUIRED`.
+
 `rfq_prefix` defaults to SFRFQ. `supplier_quote_prefix` defaults to SFVQ. `supplier_return_prefix` defaults to SFRTN, because SFSR is already the service-request prefix. `po_approval_amount` defaults to 50000 and is stored for a later approval policy. Award does not call that policy by itself. `rfq_late_response` is `FLAG` or `BLOCK`.
 
 Supplier portal tokens are hashes. Do not put the raw token in a report. Quarantine locations are excluded from available stock. See `docs/PROCUREMENT.md` and `docs/WAREHOUSE_LOCATIONS.md`.

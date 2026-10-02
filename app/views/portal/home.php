@@ -26,7 +26,7 @@
 </section>
 <section class="sf-panel mb-3">
     <div class="sf-panel-head"><h2>Artwork</h2></div>
-    <?php if ($data['artworks'] === []): ?><div class="sf-empty"><p>No proofs are waiting.</p></div><?php else: ?>
+    <?php if ($data['artworks'] === []): ?><div class="sf-empty"><p>No artwork is waiting for your approval.</p></div><?php else: ?>
         <ul class="sf-feed"><?php foreach ($data['artworks'] as $row): ?><li><a href="<?= e(url('/portal/artwork/' . $row['id'])) ?>"><?= e((string) $row['title']) ?></a><small><?= e((string) $row['job_number']) ?> · Rev <?= e((string) $row['revision_number']) ?> · <?= e((string) $row['status']) ?></small></li><?php endforeach; ?></ul>
     <?php endif; ?>
 </section>

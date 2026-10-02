@@ -30,6 +30,7 @@ use App\Controllers\JobController;
 use App\Controllers\ProjectController;
 use App\Controllers\PurchasingController;
 use App\Controllers\ProcurementController;
+use App\Controllers\CustomerHubController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
 use App\Controllers\CategoryController;
@@ -1040,6 +1041,24 @@ $router->get('/portal/access/{token}', static function (string $token): void {
 $router->post('/portal/logout', static function (): void {
     (new PortalController())->logout();
 }, false, true);
+$router->get('/portal/orders', static function (): void {
+    (new CustomerHubController())->orderForm();
+}, false);
+$router->post('/portal/orders', static function (): void {
+    (new CustomerHubController())->submitOrder();
+}, false, true);
+$router->get('/portal/quote-request', static function (): void {
+    (new CustomerHubController())->quoteRequest();
+}, false);
+$router->post('/portal/quote-request', static function (): void {
+    (new CustomerHubController())->quoteRequest();
+}, false, true);
+$router->get('/portal/projects/{id}', static function (string $id): void {
+    (new CustomerHubController())->project($id);
+}, false);
+$router->get('/sales/portal-requests', static function (): void {
+    (new CustomerHubController())->inbox();
+}, true, 'customer_hub.view');
 $router->get('/portal', static function (): void {
     (new PortalController())->home();
 }, false);
@@ -1999,6 +2018,12 @@ $router->get('/production/scan/{number}', static function (string $number): void
 $router->post('/production/fulfilment/{id}', static function (string $id): void {
     (new ProductionControlController())->fulfil($id);
 }, true, true, 'fulfilment.manage');
+$router->get('/api/v1/portal/catalogues', static function (): void {
+    (new ApiV1Controller())->portalCatalogues();
+}, false);
+$router->get('/api/v1/portal/orders', static function (): void {
+    (new ApiV1Controller())->portalOrders();
+}, false);
 $router->get('/api/v1/procurement/rfqs', static function (): void {
     (new ApiV1Controller())->procurementRfqs();
 }, false);

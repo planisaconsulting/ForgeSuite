@@ -16,6 +16,8 @@ v1.1 Phase 4 adds release to production and line-item fulfilment. An accepted qu
 
 v1.1 Phase 5 adds supplier RFQs (`SFRFQ`), supplier quotations (`SFVQ`), a token supplier portal, split awards into draft purchase orders, contract prices, quarantine, supplier returns (`SFRTN`), and hierarchical stock locations. The cheapest quotation is not awarded. A purchase order is not stock. A confirmed goods receipt is what makes quantity available. Quarantine stock is excluded from that available figure.
 
+v1.1 Phase 6 adds a customer hub on the existing portal: customer catalogues, fixed prices with date ranges, reorders that do not copy an obsolete specification, and customer orders (`SFCO`). A portal order does not release production, consume stock, or issue an invoice. A browser payment return does not mark an invoice paid.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

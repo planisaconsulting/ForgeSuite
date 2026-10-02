@@ -1899,3 +1899,26 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('supplier_return_prefix', 'SFRTN'),
 ('po_approval_amount', '50000'),
 ('rfq_late_response', 'FLAG');
+
+-- v1.1 Phase 6 customer hub
+INSERT INTO permissions (code, name, module) VALUES
+('customer_hub.view', 'View portal orders and requests', 'sales'),
+('customer_catalogues.manage', 'Manage customer catalogues', 'sales'),
+('customer_orders.review', 'Review a customer portal order', 'sales');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.code IN (
+    'customer_hub.view', 'customer_catalogues.manage', 'customer_orders.review'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN ('customer_hub.view', 'customer_orders.review');
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('customer_order_prefix', 'SFCO'),
+('artwork_approval_responsibility', 'Check spelling, contact details, colours, and any dimensions you supplied before you approve.'),
+('catalogue_margin_alert_percent', '15'),
+('expired_price_policy', 'QUOTE_REQUIRED')
+ON DUPLICATE KEY UPDATE setting_key = setting_key;

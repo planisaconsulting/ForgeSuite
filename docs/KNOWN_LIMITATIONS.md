@@ -60,3 +60,11 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - The performance check inserts 200 suppliers and times one RFQ page. It does not load 10,000 supplier products or 50,000 stock rows.
 - Receipt idempotency is one key. The test does not start two PHP processes.
 - A second receipt of the same serial is refused before stock posts. Two processes that pass that check together can still hit the unique key after the first receipt has posted.
+- A portal order is reviewed by staff. Accepting it does not create a quote, a job, or an invoice by itself.
+- A quote request does not create a lead or an opportunity.
+- The order screen is one catalogue item and a quantity. The 25-site matrix is accepted by the service. There is no spreadsheet import on the page.
+- Bundles, favourites, installation date confirmation, and a pay button on the invoice page are not separate screens. Payment links and the verified webhook are unchanged.
+- Portal user invites do not send email, and this phase does not add a second sign-in factor.
+- Customer hub API routes need a portal session. They were not called over HTTP.
+- The catalogue timing check inserts 100 items and reads one page. It does not load 500 items, 1,000 assets, or 5,000 jobs.
+- Brand colours are stored as supplied. They are not converted between Pantone, CMYK, RGB, and RAL.

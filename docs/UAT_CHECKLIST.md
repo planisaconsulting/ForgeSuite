@@ -112,6 +112,17 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Receive 10 acrylic sheets, quarantine 2 damaged sheets with photos, leave 8 available, and create a supplier return
 - [ ] Receive LED batch LED-270314, use it on 4 jobs that create 7 assets, and read the lot trace in both directions
 
+## Customer hub
+
+- [ ] Create ABC Retail and an approved signage catalogue with opening-hours vinyl, a parking sign, a manager nameplate, and a store entrance sign
+- [ ] Sign in as the buyer, order opening-hours vinyl for 5 sites, add nameplate details and a customer PO, and submit
+- [ ] Confirm the price, sites, and artwork, then confirm production was not released and stock was not consumed
+- [ ] Reorder a parking sign whose specification and price are still valid and confirm the approved artwork is the one linked
+- [ ] Reorder a sign whose vinyl is discontinued and confirm the result is review required, with no silent substitute
+- [ ] Open an installed pylon, read the warranty and service history, report a problem, and upload a photo
+- [ ] On a 25-site project, confirm the portal shows installed, in production, awaiting approval, and scheduled counts, and does not show cost or margin
+- [ ] Download an invoice, start a payment, confirm a browser return leaves it unpaid, then confirm one verified webhook marks it paid and a repeat webhook does not pay twice
+
 ## Admin
 
 - [ ] Create a user and force a password change
