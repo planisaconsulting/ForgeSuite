@@ -86,4 +86,15 @@ final class RuntimeService
     {
         return Version::NAME . ' v' . Version::NUMBER;
     }
+
+    /** Short release label for the sidebar footer (e.g. v1.1). */
+    public static function sidebarReleaseLabel(): string
+    {
+        $parts = explode('.', Version::NUMBER);
+        if (count($parts) >= 2 && ctype_digit($parts[0]) && ctype_digit($parts[1])) {
+            return 'v' . $parts[0] . '.' . $parts[1];
+        }
+
+        return 'v' . Version::NUMBER;
+    }
 }

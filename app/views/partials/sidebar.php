@@ -312,5 +312,5 @@ $groups = [
             </nav>
         <?php endif; ?>
     <?php endforeach; ?>
-    <p class="sf-nav-label"><a href="<?= e(url('/help')) ?>"><?= e(\App\Services\RuntimeService::releaseLabel()) ?></a></p>
+    <p class="sf-sidebar-version"><a href="<?= e(url('/help')) ?>"><?= e(\App\Services\RuntimeService::sidebarReleaseLabel()) ?></a></p>
 </div>

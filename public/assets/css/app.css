@@ -152,6 +152,25 @@ a {
     flex-direction: column;
 }
 
+.sf-sidebar-version {
+    margin: 0.85rem 0 0.35rem;
+    padding: 0 0.75rem;
+    color: var(--sf-metal);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.sf-sidebar-version a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.sf-sidebar-version a:hover {
+    color: #fff;
+}
+
 .sf-nav-label {
     margin: 0.85rem 0 0.35rem;
     padding: 0.2rem 0.75rem;
