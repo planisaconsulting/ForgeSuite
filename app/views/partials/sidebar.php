@@ -229,6 +229,14 @@ $groups = [
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#appNav" aria-label="Close menu"></button>
 </div>
 <div class="offcanvas-body sf-sidebar-body">
+    <button type="button"
+            class="sf-nav-arrange"
+            id="sfNavArrange"
+            aria-pressed="false"
+            aria-label="Arrange menu"
+            title="Arrange menu">
+        <i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i>
+    </button>
     <a class="sf-brand" href="<?= e(url('/')) ?>">
         <img src="<?= e(asset('assets/images/mark.svg')) ?>" alt="" width="36" height="36">
         <span>
@@ -274,8 +282,10 @@ $groups = [
                 </button>
                 <nav class="sf-nav" id="<?= e($groupId) ?>" aria-label="<?= e($group['label']) ?>"<?= $hasActive ? ' data-has-active="1"' : '' ?>>
                     <?php foreach ($visible as [$key, $label, $href, $icon]): ?>
+                        <?php $navId = $groupId . ':' . $key; ?>
                         <?php if ($href === null): ?>
-                            <span class="sf-nav-link is-disabled" aria-disabled="true">
+                            <span class="sf-nav-link is-disabled" data-nav-key="<?= e($key) ?>" data-nav-id="<?= e($navId) ?>" aria-disabled="true">
+                                <i class="fa-solid fa-grip-vertical sf-nav-grip" aria-hidden="true"></i>
                                 <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
                                 <span><?= e($label) ?></span>
                                 <small>Soon</small>
@@ -283,7 +293,10 @@ $groups = [
                         <?php else: ?>
                             <a class="<?= $key === $activeNav ? 'sf-nav-link active' : 'sf-nav-link' ?>"
                                href="<?= e(url($href)) ?>"
+                               data-nav-key="<?= e($key) ?>"
+                               data-nav-id="<?= e($navId) ?>"
                                <?= $key === $activeNav ? 'aria-current="page"' : '' ?>>
+                                <i class="fa-solid fa-grip-vertical sf-nav-grip" aria-hidden="true"></i>
                                 <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
                                 <span><?= e($label) ?></span>
                             </a>
@@ -292,10 +305,12 @@ $groups = [
                 </nav>
             </div>
         <?php else: ?>
-            <nav class="sf-nav" aria-label="Main">
+            <nav class="sf-nav" data-nav-group="nav-main" aria-label="Main">
                 <?php foreach ($visible as [$key, $label, $href, $icon]): ?>
+                    <?php $navId = 'nav-main:' . $key; ?>
                     <?php if ($href === null): ?>
-                        <span class="sf-nav-link is-disabled" aria-disabled="true">
+                        <span class="sf-nav-link is-disabled" data-nav-key="<?= e($key) ?>" data-nav-id="<?= e($navId) ?>" aria-disabled="true">
+                            <i class="fa-solid fa-grip-vertical sf-nav-grip" aria-hidden="true"></i>
                             <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
                             <span><?= e($label) ?></span>
                             <small>Soon</small>
@@ -303,7 +318,10 @@ $groups = [
                     <?php else: ?>
                         <a class="<?= $key === $activeNav ? 'sf-nav-link active' : 'sf-nav-link' ?>"
                            href="<?= e(url($href)) ?>"
+                           data-nav-key="<?= e($key) ?>"
+                           data-nav-id="<?= e($navId) ?>"
                            <?= $key === $activeNav ? 'aria-current="page"' : '' ?>>
+                            <i class="fa-solid fa-grip-vertical sf-nav-grip" aria-hidden="true"></i>
                             <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
                             <span><?= e($label) ?></span>
                         </a>
