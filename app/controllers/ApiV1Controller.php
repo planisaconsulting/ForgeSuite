@@ -346,6 +346,77 @@ final class ApiV1Controller
         });
     }
 
+    public function specifications(): void
+    {
+        $auth = $this->gate('specifications.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\SignageRepository())->specifications(['approved_only' => true], 50, 0);
+        $data = [];
+        foreach ($rows as $row) {
+            $data[] = [
+                'id' => (int) $row['id'],
+                'code' => (string) $row['code'],
+                'version' => (int) $row['version'],
+                'name' => (string) $row['name'],
+                'estimator_type' => (string) $row['estimator_type'],
+                'status' => (string) $row['status'],
+            ];
+        }
+        $this->finish($auth, 200, true, ['specifications' => $data], [], 'specification', null);
+    }
+
+    public function vehicleTemplates(): void
+    {
+        $auth = $this->gate('specifications.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Repositories\SignageRepository())->templates(true);
+        $data = [];
+        foreach ($rows as $row) {
+            $data[] = [
+                'id' => (int) $row['id'],
+                'make' => (string) $row['make_name'],
+                'model' => (string) $row['model_name'],
+                'year_from' => (int) $row['year_from'],
+                'verified' => (int) $row['verified'] === 1,
+            ];
+        }
+        $this->finish($auth, 200, true, ['templates' => $data], [], 'vehicle_template', null);
+    }
+
+    public function estimateSign(string $type): void
+    {
+        $auth = $this->gate('estimators.use');
+        if ($auth === null) {
+            return;
+        }
+        $raw = file_get_contents('php://input');
+        $body = json_decode($raw === false ? '' : $raw, true);
+        $input = is_array($body) ? $body : $_GET;
+        $userId = (int) ($auth['client']['created_by'] ?? 0);
+        if ($userId < 1) {
+            $this->finish($auth, 403, false, null, ['auth' => 'This API client has no user for estimator permissions.'], 'sign_calculation', null);
+
+            return;
+        }
+        $_SESSION['user_id'] = $userId;
+        forget_auth_user();
+        $ran = (new \App\Services\SignEstimateService())->run(strtoupper($type), $input, $userId, false);
+        if ($ran['errors'] !== []) {
+            $this->finish($auth, 422, false, null, $ran['errors'], 'sign_calculation', null);
+
+            return;
+        }
+        $result = $ran['result'];
+        if (!(new ApiClientService())->allows($auth['scopes'], 'estimators.financials')) {
+            unset($result['costs'], $result['installation_detail']);
+        }
+        $this->finish($auth, 200, true, $result, [], 'sign_calculation', null);
+    }
+
     private function read(string $scope, string $entity, int $id, callable $loader): void
     {
         $auth = $this->gate($scope);

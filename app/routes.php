@@ -40,6 +40,7 @@ use App\Controllers\LeadController;
 use App\Controllers\MarketingController;
 use App\Controllers\PublicLeadController;
 use App\Controllers\EstimatingController;
+use App\Controllers\SignageController;
 use App\Controllers\PageController;
 use App\Controllers\PricingLevelController;
 use App\Controllers\ProductController;
@@ -302,6 +303,39 @@ $router->get('/estimating/vehicles', static function (): void {
 $router->post('/estimating/vehicles', static function (): void {
     (new EstimatingController())->vehicles();
 }, true, true, 'estimates.create');
+$router->get('/estimating/signage', static function (): void {
+    (new SignageController())->index();
+}, true, 'estimators.use');
+$router->get('/estimating/signage/preview', static function (): void {
+    (new SignageController())->preview();
+}, true, 'estimators.use');
+$router->get('/estimating/signage/reports/{slug}', static function (string $slug): void {
+    (new SignageController())->report($slug);
+}, true, 'estimators.view_costs');
+$router->get('/estimating/signage/calculations/{id}', static function (string $id): void {
+    (new SignageController())->show($id);
+}, true, 'estimators.use');
+$router->get('/estimating/signage/{type}', static function (string $type): void {
+    (new SignageController())->form($type);
+}, true, 'estimators.use');
+$router->post('/estimating/signage/{type}', static function (string $type): void {
+    (new SignageController())->calculate($type);
+}, true, true, 'estimators.use');
+$router->get('/specifications', static function (): void {
+    (new SignageController())->specifications();
+}, true, 'specifications.view');
+$router->post('/specifications', static function (): void {
+    (new SignageController())->saveSpecification();
+}, true, true, 'specifications.create');
+$router->get('/specifications/{id}', static function (string $id): void {
+    (new SignageController())->specification($id);
+}, true, 'specifications.view');
+$router->post('/specifications/{id}/approve', static function (string $id): void {
+    (new SignageController())->approveSpecification($id);
+}, true, true, 'specifications.approve');
+$router->post('/specifications/{id}/revise', static function (string $id): void {
+    (new SignageController())->reviseSpecification($id);
+}, true, true, 'specifications.edit');
 $router->get('/estimating/simulator', static function (): void {
     (new EstimatingController())->simulator();
 }, true, 'estimates.view');
@@ -1894,6 +1928,27 @@ $router->get('/api/v1/warranty-claims', static function (): void {
 $router->get('/api/v1/maintenance/due', static function (): void {
     (new ApiV1Controller())->maintenanceDue();
 }, false);
+$router->get('/api/v1/specifications', static function (): void {
+    (new ApiV1Controller())->specifications();
+}, false);
+$router->get('/api/v1/vehicle-templates', static function (): void {
+    (new ApiV1Controller())->vehicleTemplates();
+}, false);
+$router->post('/api/v1/estimators/vehicle-wrap', static function (): void {
+    (new ApiV1Controller())->estimateSign('VEHICLE_WRAP');
+}, false, false);
+$router->post('/api/v1/estimators/channel-letter', static function (): void {
+    (new ApiV1Controller())->estimateSign('CHANNEL_LETTER');
+}, false, false);
+$router->post('/api/v1/estimators/lightbox', static function (): void {
+    (new ApiV1Controller())->estimateSign('LIGHTBOX');
+}, false, false);
+$router->post('/api/v1/estimators/pylon', static function (): void {
+    (new ApiV1Controller())->estimateSign('PYLON');
+}, false, false);
+$router->post('/api/v1/estimators/panel-frame', static function (): void {
+    (new ApiV1Controller())->estimateSign('PANEL_FRAME');
+}, false, false);
 
 $soon = static function (string $slug): void {
     (new PageController())->upcoming($slug);

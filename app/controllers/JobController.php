@@ -91,6 +91,11 @@ final class JobController
         ];
         if ($tab === 'finance') {
             $data['finance'] = (new \App\Services\JobFinancialService())->report($jobId);
+        } elseif ($tab === 'technical') {
+            $raw = (string) ($job['technical_snapshot_json'] ?? '');
+            $decoded = json_decode($raw, true);
+            $data['technical'] = is_array($decoded) ? $decoded : null;
+            $data['showCosts'] = can('estimators.view_costs') || can('costing.view');
         } elseif ($tab === 'overview') {
             $data['choices'] = (new JobWorkflowService())->choices((string) $job['status'], (string) $job['delivery_method']);
             $data['checks'] = (new JobService())->checks($job);
@@ -651,6 +656,7 @@ final class JobController
             'costing' => 'Costing',
             'finance' => 'Finance',
             'activity' => 'Activity',
+            'technical' => 'Technical',
         ];
         if (!can('invoices.view')) {
             unset($tabs['finance']);

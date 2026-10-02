@@ -33,6 +33,21 @@ Asset and service reads use scope `assets.read` or `service.read`:
 
 Original commercial value and original internal cost are included only when the client also has `assets.financials`. The asset token is generated on the server. The browser does not invent it.
 
+Specification reads use scope `specifications.read`:
+
+- `GET /api/v1/specifications` returns approved specifications (code, version, name, estimator type, status)
+- `GET /api/v1/vehicle-templates` returns templates, including whether each one is verified
+
+Estimator calculations use scope `estimators.use`:
+
+- `POST /api/v1/estimators/vehicle-wrap`
+- `POST /api/v1/estimators/channel-letter`
+- `POST /api/v1/estimators/lightbox`
+- `POST /api/v1/estimators/pylon`
+- `POST /api/v1/estimators/panel-frame`
+
+The body is JSON. The client must have `created_by` set to a staff user, because estimator permissions are that user's. The call calculates and does not save. Cost and installation detail are included only when the client also has `estimators.financials`. These routes were not exercised over HTTP in the Phase 3 test run. The same calculations are covered by `tests/v11_phase3.php`.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

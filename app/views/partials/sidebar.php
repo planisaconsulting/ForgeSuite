@@ -56,6 +56,8 @@ $groups = [
         ['rolls', 'Roll optimiser', '/estimating/rolls', 'fa-scroll', 'yield.view'],
         ['install-est', 'Installation estimator', '/estimating/installation', 'fa-person-digging', 'estimates.view'],
         ['vehicle-est', 'Vehicle branding', '/estimating/vehicles', 'fa-truck', 'estimates.view'],
+        ['signage', 'Advanced estimating', '/estimating/signage', 'fa-compass-drafting', 'estimators.use'],
+        ['specifications', 'Specifications', '/specifications', 'fa-book', 'specifications.view'],
         ['pricing-intel', 'Pricing intelligence', '/estimating/intelligence', 'fa-chart-line', 'pricing_intelligence.view'],
         ['pricing-rec', 'Recommendations', '/estimating/recommendations', 'fa-lightbulb', 'pricing_intelligence.view'],
     ]],

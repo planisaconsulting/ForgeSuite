@@ -159,6 +159,19 @@ final class AssetService
             }
             $ids[] = (int) $created['id'];
             $warnings = array_merge($warnings, $created['warnings']);
+            $technical = (new \App\Repositories\SignageRepository())->jobTechnical((int) $item['job_id']);
+            if ($technical !== null) {
+                (new \App\Repositories\SignageRepository())->stampAsset(
+                    (int) $created['id'],
+                    isset($technical['specification_id']) ? (int) $technical['specification_id'] : null,
+                    json_encode([
+                        'specification_code' => $technical['specification_code'] ?? null,
+                        'specification_version' => $technical['specification_version'] ?? null,
+                        'components' => $technical['components'] ?? [],
+                        'geometry' => $technical['geometry'] ?? [],
+                    ], JSON_THROW_ON_ERROR)
+                );
+            }
         }
 
         return ['errors' => [], 'ids' => $ids, 'warnings' => $warnings];

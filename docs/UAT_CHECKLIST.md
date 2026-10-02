@@ -77,6 +77,18 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Sign in as customer A and confirm customer B’s asset URL is refused
 - [ ] Open the public QR page and confirm it has no prices or internal notes
 
+## Advanced estimating
+
+- [ ] Estimate a 2017 Ford Ranger Double Cab partial wrap: front doors, rear doors, tailgate, and canopy sides, with printable vinyl and laminate
+- [ ] Read graphic area, roll length, consumed area, waste, labour, cost, sell, and gross profit, then confirm a 1,520 mm roll is compared and does not replace the selected roll
+- [ ] Convert that estimate to a quote and a job and confirm the job still shows the same specification version after the live specification changes
+- [ ] Upload an SVG of the word SIGN-FORGE at 600 mm nominal height, acrylic face, 100 mm return, LED, and trim cap
+- [ ] Confirm face, back, return, trim, modules, power supplies, labour, route, cost, and sell, and confirm an open path is blocked
+- [ ] Estimate a 4,000 × 1,200 × 200 mm double-sided illuminated lightbox and confirm faces, frame, returns, LEDs, power supplies, labour, and a technical review flag when the specification limit is exceeded
+- [ ] Apply one lightbox specification to 25 sites and three oversized sites, and confirm the three exceptions are listed and the 25 standard estimates are not duplicated onto project value
+- [ ] Override a material quantity with a reason and confirm the original quantity is still stored
+- [ ] Sign in as sales and confirm specification approval is refused
+
 ## Admin
 
 - [ ] Create a user and force a password change

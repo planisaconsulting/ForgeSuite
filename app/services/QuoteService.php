@@ -752,6 +752,10 @@ final class QuoteService
             return ['errors' => $e->errors, 'id' => null];
         }
 
+        if ($jobId > 0) {
+            (new SignEstimateService())->stampJobFromQuote($jobId, $quoteId);
+        }
+
         return ['errors' => [], 'id' => $jobId];
     }
 

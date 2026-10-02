@@ -32,6 +32,18 @@ Project types, milestone types, delay reasons, risk categories, and templates ar
 
 Project changes use the existing approval engine when a policy exists for entity PROJECT and action CHANGE. With no policy, a user who has `projects.manage_changes` can approve the change.
 
+## Sign specifications
+
+Specifications live under Estimating. Create a draft, add materials, labour formulas, and compatibility rules, then send it for approval. Only a user with `specifications.approve` can approve it. Approving a new version supersedes the previous approved version and does not change quotes or jobs already linked to the old one.
+
+Labour formulas use FormulaService. `eval`, `exec`, and raw SQL are rejected. Allowed names are `W`, `H`, `D`, `Q`, `AREA`, `PERIMETER`, `FACE_AREA`, `RETURN_DEPTH`, `VECTOR_AREA`, `VECTOR_PERIMETER`, `SIDES`, and `MODULE_WATTS`.
+
+LED and power-supply profiles store wattage, spacing or modules per square metre, voltage, and the recommended maximum load percent. Do not put 80 percent in a formula. Put it on the profile.
+
+Geometry uploads are limited by `geometry_max_bytes` (262144) and `geometry_max_paths` (200). Wrap hours and complexity factors are the `wrap_hours_*` and `wrap_factor_*` settings. A dimension above `dimension_warn_mm` (8000) warns and is not rewritten.
+
+Vehicle templates record a source: manual, customer measured, supplier template, licensed library, or other. Leave `verified` off until someone has checked the sizes. Do not import a licensed template library without a licence. This release does not ship one.
+
 ## System health
 
 Administration → System health shows the release, PHP, database, storage, last cron, last backup, failed automations, and failed field sync. It does not show passwords.

@@ -1625,3 +1625,145 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('warranty_alert_days', '30'),
 ('asset_label_contact', 'Sign-Forge service'),
 ('service_manager_user_id', '');
+
+-- v1.1 Phase 3 sign specifications and estimators.
+INSERT INTO sign_specifications (
+    code, version, name, category, estimator_type, description, status, effective_from,
+    engineering_review_required, electrical_review_required, height_review_mm,
+    manufacturing_allowance_percent, construction_type, frame_profile, face_material,
+    return_material, back_material, illumination_type, mounting_method, finishing
+) VALUES
+('LBX-ACM-001', 1, 'Standard ACM illuminated lightbox', 'LIGHTBOX', 'LIGHTBOX',
+ 'Manufacturing default for a rectangular illuminated lightbox. Not a structural certificate.',
+ 'APPROVED', CURDATE(), 0, 1, NULL, 5.00, 'FABRICATED_BOX', '25 x 25 x 1.6 mm aluminium tube',
+ 'Acrylic, flexface, or fabric as selected', '3 mm ACM', '3 mm ACM', 'LED modules', 'Wall', 'Paint'),
+('PYL-STD-001', 1, 'Panelled pylon manufacturing allowance', 'PYLON', 'PYLON',
+ 'Manufacturing quantities from an approved design. Height above the specification threshold needs engineering review.',
+ 'APPROVED', CURDATE(), 1, 1, 6000.00, 5.00, 'PANELLED_PYLON', 'Aluminium frame from the approved design',
+ 'ACM or acrylic as selected', NULL, 'ACM', 'Optional LED', 'Base plate', 'Paint');
+
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 1, 'CUT', 'Cut', 15, 10, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 2, 'FABRICATE', 'Fabricate', 20, 20, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 3, 'PAINT', 'Paint', 10, 15, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 4, 'ELECTRICAL', 'Electrical', 10, 20, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 5, 'ASSEMBLE', 'Assemble', 10, 20, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 6, 'QC', 'Quality check', 5, 10, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 7, 'PACK', 'Pack', 5, 5, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_operations (specification_id, sequence_no, operation_code, description, setup_minutes, run_minutes, hourly_rate)
+SELECT id, 8, 'INSTALL', 'Install', 15, 30, 0 FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+
+INSERT INTO specification_notes (specification_id, note_type, body, customer_visible)
+SELECT id, 'QC', 'Faces secure. Returns complete. LED operation. Polarity. PSU load checked against the profile. Water ingress. Finish. Artwork matches approval.', 0
+FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_notes (specification_id, note_type, body, customer_visible)
+SELECT id, 'WARNING', 'Drainage and service access are required on this lightbox specification. This note is a manufacturing assumption, not a certificate.', 0
+FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+INSERT INTO specification_notes (specification_id, note_type, body, customer_visible)
+SELECT id, 'INSTALLATION', 'Confirm fixings on site. Site instructions add to this standard list. They do not replace it silently.', 1
+FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+
+INSERT INTO specification_rules (specification_id, rule_type, hardness, when_key, when_op, when_value, then_key, then_value, message)
+SELECT id, 'REQUIRES', 'HARD', 'illuminated', 'EQ', 'YES', 'electrical_components', 'YES', 'Illuminated construction requires electrical components.'
+FROM sign_specifications WHERE code = 'LBX-ACM-001' AND version = 1;
+
+INSERT INTO specification_rules (specification_id, rule_type, hardness, when_key, when_op, when_value, message)
+SELECT id, 'EXCLUDES', 'HARD', 'face_material', 'EQ', 'CORREX', '3 mm Correx cannot be selected with this freestanding illuminated pylon specification.'
+FROM sign_specifications WHERE code = 'PYL-STD-001' AND version = 1;
+
+INSERT INTO specification_rules (specification_id, rule_type, hardness, when_key, when_op, when_value, message)
+SELECT id, 'ENGINEERING_REVIEW', 'SOFT', 'height_mm', 'GT', '6000', 'Height is above the review threshold defined on PYL-STD-001. Professional structural review is required. This estimate does not certify the structure.'
+FROM sign_specifications WHERE code = 'PYL-STD-001' AND version = 1;
+
+INSERT INTO electrical_component_profiles (
+    code, name, kind, module_watts, rated_watts, max_load_percent, spacing_mm, modules_per_m2, voltage, method_code, notes
+) VALUES
+('LED-MOD-12', 'LED module 1.2 W', 'LED_MODULE', 1.200, NULL, NULL, 150.00, 25.00, '12V', 'MODULES_PER_M2', 'Planning profile. Not an electrical certificate.'),
+('PSU-100-80', '100 W PSU at 80 percent planning load', 'PSU', NULL, 100.00, 80.00, NULL, NULL, '12V', NULL, 'Usable planning capacity is the rated watts times the configured load percent.');
+
+INSERT INTO vehicle_templates (make_name, model_name, variant_name, year_from, year_to, body_type, source, verified, notes)
+VALUES ('Ford', 'Ranger', 'Double Cab', 2017, 2017, 'DOUBLE_CAB', 'MANUAL', 1, 'Example dimensions for estimating. Confirm before production. Not a licensed template library.');
+
+INSERT INTO vehicle_template_panels (template_id, panel_code, width_mm, height_mm, area_m2, bleed_mm, overlap_mm)
+SELECT id, 'LEFT_FRONT_DOOR', 1000, 800, 0.8000, 10, 0 FROM vehicle_templates WHERE make_name = 'Ford' AND model_name = 'Ranger' AND year_from = 2017;
+INSERT INTO vehicle_template_panels (template_id, panel_code, width_mm, height_mm, area_m2, bleed_mm, overlap_mm)
+SELECT id, 'RIGHT_FRONT_DOOR', 1000, 800, 0.8000, 10, 0 FROM vehicle_templates WHERE make_name = 'Ford' AND model_name = 'Ranger' AND year_from = 2017;
+INSERT INTO vehicle_template_panels (template_id, panel_code, width_mm, height_mm, area_m2, bleed_mm, overlap_mm)
+SELECT id, 'LEFT_REAR_DOOR', 900, 800, 0.7200, 10, 0 FROM vehicle_templates WHERE make_name = 'Ford' AND model_name = 'Ranger' AND year_from = 2017;
+INSERT INTO vehicle_template_panels (template_id, panel_code, width_mm, height_mm, area_m2, bleed_mm, overlap_mm)
+SELECT id, 'RIGHT_REAR_DOOR', 900, 800, 0.7200, 10, 0 FROM vehicle_templates WHERE make_name = 'Ford' AND model_name = 'Ranger' AND year_from = 2017;
+INSERT INTO vehicle_template_panels (template_id, panel_code, width_mm, height_mm, area_m2, bleed_mm, overlap_mm)
+SELECT id, 'TAILGATE', 1400, 500, 0.7000, 10, 0 FROM vehicle_templates WHERE make_name = 'Ford' AND model_name = 'Ranger' AND year_from = 2017;
+INSERT INTO vehicle_template_panels (template_id, panel_code, width_mm, height_mm, area_m2, bleed_mm, overlap_mm)
+SELECT id, 'CANOPY_LEFT', 1800, 400, 0.7200, 10, 0 FROM vehicle_templates WHERE make_name = 'Ford' AND model_name = 'Ranger' AND year_from = 2017;
+INSERT INTO vehicle_template_panels (template_id, panel_code, width_mm, height_mm, area_m2, bleed_mm, overlap_mm)
+SELECT id, 'CANOPY_RIGHT', 1800, 400, 0.7200, 10, 0 FROM vehicle_templates WHERE make_name = 'Ford' AND model_name = 'Ranger' AND year_from = 2017;
+
+INSERT INTO permissions (code, name, module) VALUES
+('specifications.view', 'View sign specifications', 'signage'),
+('specifications.create', 'Create sign specifications', 'signage'),
+('specifications.edit', 'Edit sign specifications', 'signage'),
+('specifications.approve', 'Approve sign specifications', 'signage'),
+('specifications.archive', 'Archive sign specifications', 'signage'),
+('estimators.use', 'Run signage estimators', 'signage'),
+('estimators.override', 'Override a calculated estimator quantity', 'signage'),
+('estimators.view_costs', 'View estimator cost and margin', 'signage'),
+('estimators.technical_review', 'Complete technical estimate review', 'signage'),
+('vehicle_templates.view', 'View vehicle templates', 'signage'),
+('vehicle_templates.manage', 'Manage vehicle templates', 'signage'),
+('geometry.upload', 'Upload vector geometry', 'signage'),
+('electrical_profiles.manage', 'Manage electrical component profiles', 'signage');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.module = 'signage';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN ('specifications.view', 'estimators.use', 'vehicle_templates.view');
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'DESIGN' AND p.code IN (
+    'specifications.view', 'specifications.create', 'specifications.edit',
+    'estimators.use', 'estimators.override', 'estimators.technical_review',
+    'vehicle_templates.view', 'vehicle_templates.manage', 'geometry.upload'
+);
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'PRODUCTION' AND p.code = 'specifications.view';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'INSTALLER' AND p.code = 'specifications.view';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN ('specifications.view', 'estimators.view_costs');
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('geometry_max_bytes', '262144'),
+('geometry_max_paths', '200'),
+('estimator_version', '1'),
+('dimension_warn_mm', '8000'),
+('wrap_hours_standard', '1.5'),
+('wrap_hours_moderate', '2.5'),
+('wrap_hours_complex', '4'),
+('wrap_hours_specialist', '6'),
+('wrap_factor_standard', '1'),
+('wrap_factor_moderate', '1.25'),
+('wrap_factor_complex', '1.50'),
+('wrap_factor_specialist', '2'),
+('wrap_removal_hours', '1'),
+('access_cost_ladder', '0'),
+('access_cost_scaffold', '0'),
+('access_cost_cherry_picker', '0'),
+('access_cost_crane', '0'),
+('access_cost_other', '0');

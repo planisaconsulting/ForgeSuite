@@ -19,7 +19,7 @@ use App\Repositories\UserRepository;
 final class EstimateService
 {
     /** @var list<string> */
-    public const TYPES = ['GENERAL', 'SHEET', 'ROLL', 'INSTALLATION', 'VEHICLE', 'RECIPE', 'REPRINT'];
+    public const TYPES = ['GENERAL', 'SHEET', 'ROLL', 'INSTALLATION', 'VEHICLE', 'RECIPE', 'REPRINT', 'VEHICLE_WRAP', 'CHANNEL_LETTER', 'LIGHTBOX', 'PYLON', 'PANEL_FRAME'];
 
     /** @var list<string> */
     public const STATUSES = ['DRAFT', 'CALCULATED', 'APPROVED', 'SUPERSEDED', 'CONVERTED', 'ARCHIVED'];

@@ -40,6 +40,14 @@ The asset page shows the site, components, warranties, and service history. Prin
 
 Open Service, or use Report a problem on the asset. Choose the problem and a priority. Normal is the usual choice. If a warranty date covers the day of the report, the request is marked as a candidate. It is not approved. From the request you can open a quote and a service job. Warranty work can be charged at zero and still record the parts, hours, and travel you used.
 
+## How to estimate a manufactured sign
+
+Open Advanced estimating. Choose vehicle wrap, channel letters, lightbox, pylon, or panel and frame. Pick an approved specification when one applies. Enter sizes in mm, cm, or m. What-if shows the quantities without saving. Calculate and save keeps a draft bill of materials.
+
+Open How was this calculated on the result. Each row shows the input, the method, and the quantity. A schematic is an estimating sketch, not a fabrication drawing. Warnings name the problem, for example an open vector path or a material the specification excludes.
+
+If the calculation asks for technical review, finish that review before adding it to a quote. The customer quote shows the description, size, quantity, and price. Cost, waste, and margin stay on the internal calculation. After the quote is accepted, the job Technical tab keeps the specification version that was accepted.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

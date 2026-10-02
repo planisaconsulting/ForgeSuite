@@ -10,6 +10,8 @@ Project numbers are `SFP-YYYY-####`. Commercial value comes from accepted projec
 
 v1.1 Phase 2 adds customer assets (`SFA`), warranties, warranty claims (`SFWC`), and service requests (`SFSR`). Service work stays on the existing job number. Jobs that are not `STANDARD` stay out of project commercial value and project actual cost. A product creates an asset only when that product is marked to do so, and only when a person confirms it.
 
+v1.1 Phase 3 adds sign specifications and manufacturing estimators for vehicle wrap, channel letters, lightboxes, pylons, and panels. Quantities, yield, load, labour, and selling price are calculated on the server with the existing pricing and yield services. A specification version stays on the quote, job, and asset that used it. The estimators do not certify structure or electrical design.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.
