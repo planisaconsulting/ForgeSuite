@@ -47,6 +47,9 @@ final class SystemHealthService
             'last_cron' => (string) (SettingsService::get('last_cron_at', '') ?? ''),
             'last_cron_status' => (string) (SettingsService::get('last_cron_status', '') ?? ''),
             'last_cron_started' => (string) (SettingsService::get('last_cron_started_at', '') ?? ''),
+            'last_cron_seconds' => (string) (SettingsService::get('last_cron_seconds', '') ?? ''),
+            'last_cron_error' => (string) (SettingsService::get('last_cron_error', '') ?? ''),
+            'next_cron' => $this->nextCron(),
             'last_backup' => $backup === null ? '' : (string) ($backup['completed_at'] ?? $backup['started_at']),
             'failed_sync' => $this->failedSync(),
             'environment' => (string) config('app.env', ''),
@@ -116,7 +119,57 @@ final class SystemHealthService
             }
         }
 
+        $this->rotateLogIfLarge(base_path('storage/logs/app.log'));
+
         return $removed;
+    }
+
+    /**
+     * Rename a log once it passes the size limit and keep a short archive.
+     * The live file is only renamed. Older archives beyond $keep are removed.
+     */
+    public function rotateLogIfLarge(string $path, int $maxBytes = 5242880, int $keep = 5): bool
+    {
+        if ($maxBytes < 1 || $keep < 1 || !is_file($path)) {
+            return false;
+        }
+        clearstatcache(true, $path);
+        $size = filesize($path);
+        if ($size === false || $size < $maxBytes) {
+            return false;
+        }
+        $dir = dirname($path);
+        $base = pathinfo($path, PATHINFO_FILENAME);
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        $suffix = $ext !== '' ? '.' . $ext : '';
+        $dest = $dir . '/' . $base . '-' . date('Ymd-His') . $suffix;
+        if (is_file($dest)) {
+            $dest = $dir . '/' . $base . '-' . date('Ymd-His') . '-' . bin2hex(random_bytes(2)) . $suffix;
+        }
+        if (!@rename($path, $dest)) {
+            return false;
+        }
+        $old = glob($dir . '/' . $base . '-*' . $suffix) ?: [];
+        sort($old);
+        while (count($old) > $keep) {
+            $drop = array_shift($old);
+            if (is_string($drop) && is_file($drop)) {
+                unlink($drop);
+            }
+        }
+
+        return true;
+    }
+
+    private function nextCron(): string
+    {
+        $started = (string) (SettingsService::get('last_cron_started_at', '') ?? '');
+        $ts = strtotime($started);
+        if ($started === '' || $ts === false) {
+            return '';
+        }
+
+        return date('Y-m-d H:i:s', $ts + 3600);
     }
 
     private function failedSync(): int

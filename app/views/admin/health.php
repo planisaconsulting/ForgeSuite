@@ -11,7 +11,9 @@
         <div><dt>Maintenance</dt><dd><?= !empty($health['maintenance']) ? 'On' : 'Off' ?></dd></div>
         <div><dt>Application version</dt><dd><?= e((string) $health['app_version']) ?></dd></div>
         <div><dt>Latest migration file</dt><dd><?= e((string) $health['last_migration']) ?></dd></div>
-        <div><dt>Last cron</dt><dd><?= e((string) ($health['last_cron'] !== '' ? $health['last_cron'] : 'Not recorded')) ?> <?= e((string) ($health['last_cron_status'] ?? '')) ?></dd></div>
+        <div><dt>Last cron</dt><dd><?= e((string) ($health['last_cron'] !== '' ? $health['last_cron'] : 'Not recorded')) ?> <?= e((string) ($health['last_cron_status'] ?? '')) ?><?php if (($health['last_cron_seconds'] ?? '') !== ''): ?> · <?= e((string) $health['last_cron_seconds']) ?>s<?php endif; ?></dd></div>
+        <div><dt>Last cron failure</dt><dd><?= e((string) (($health['last_cron_error'] ?? '') !== '' ? $health['last_cron_error'] : 'None recorded')) ?></dd></div>
+        <div><dt>Next cron expected</dt><dd><?= e((string) (($health['next_cron'] ?? '') !== '' ? $health['next_cron'] : 'After the hourly host job runs')) ?></dd></div>
         <div><dt>Failed field sync</dt><dd><?= e((string) ($health['failed_sync'] ?? '0')) ?></dd></div>
         <div><dt>Last successful backup</dt><dd><?= e((string) ($health['last_backup'] !== '' ? $health['last_backup'] : 'None')) ?></dd></div>
         <div><dt>Failed automations, 7 days</dt><dd><?= e((string) $health['failed_automations']) ?></dd></div>

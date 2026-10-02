@@ -1165,7 +1165,7 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('cash_pressure_amount', '0');
 
 -- Phase 13 permissions, rules, flags, and labels.
-. Fresh installs load the same rows from seed.sql.
+-- A fresh install loads these rows here. An existing database loads them from migration 013.
 
 INSERT IGNORE INTO permissions (code, name, module) VALUES
 ('workflows.view', 'View workflows', 'automation'),

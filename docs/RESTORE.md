@@ -17,4 +17,13 @@ v1.0.0 restore drill, 1 October 2026, on the development database:
 - 465 foreign keys. The login-address index was present.
 - The application itself was not switched onto that database. The check was a SQL restore and row validation, then deletion of the copy.
 
+v1.1.0 restore drill, 2 October 2026, on the development database:
+
+- Source: `mysqldump --single-transaction`, file `signforge-20261002-055856.sql`, 98 MB. Import into a new database took about 9 seconds.
+- Counts matched the source at import: 563 users, 4,143 customers, 14,879 quotes, 14,452 jobs, 737 invoices, 283 payments, 1,581 stock movements, 152 projects, 26,520 assets, 1,863 shipments, 832 expenses, 153 attachments. Quote totals and invoice totals matched. The administrator account was present.
+- 402 tables and 812 foreign keys on both sides.
+- The application was not switched onto that database. The copy was dropped after the comparison.
+- A file archive of uploads, documents, signatures, quotes, and field photos was taken beside the dump. Those bytes were not imported into MySQL. A company restore still has to copy that archive back.
+- An earlier dump from the same morning imported, then no longer matched the live counts because later tests had added rows. A backup matches the database at the moment it was taken.
+
 Repeat this drill on the company server before go-live, against that server’s backup, and sign the result in the production checklist.

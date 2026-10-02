@@ -3,7 +3,10 @@
 Practical targets from the v1.0.0 drill, not a contract:
 
 - Recovery point: the last successful off-server backup. If backups run nightly and the in-app backup also runs daily, expect to lose up to one day of entries made after that copy. A host snapshot can shorten that. Sign-Forge does not promise a five-minute point.
-- Recovery time: on the drill, a 7.5 MB database came back in under two seconds plus file copy. A larger company database and a full `storage/` copy will take longer. Plan for a few hours of host, DNS, and file restore, not a guarantee of minutes.
+- Recovery time: on the v1.0 drill, a 7.5 MB database came back in under two seconds plus file copy. On 2 October 2026 a 98 MB v1.1 dump imported in about 9 seconds and the row counts matched. A larger company database and a full `storage/` copy will take longer. Plan for a few hours of host, DNS, and file restore, not a guarantee of minutes.
+- The 2 October dump was restored into a side database on the same server, checked, and dropped. A copy on the same disk is not off-server recovery. Keep an encrypted copy off the server.
+- Responsible role: the administrator who holds the database password, the `config.local.php` values, and the DNS login. Sign-Forge does not store that person’s name in the application.
+- Xneelo: create the empty database in the panel, import the dump, set the cron command, and point the domain at `public/` with HTTPS. The application user often cannot create a second database. The panel, or an administrator account, does that.
 
 ## Server failure
 

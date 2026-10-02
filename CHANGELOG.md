@@ -26,6 +26,8 @@ v1.1 Phase 9 adds sales intake (`SFIN`). An enquiry can propose a customer, quan
 
 v1.1 Phase 10 adds expenses (`SFEXP`), reimbursement batches (`SFREB`), mileage, and field trips (`SFTRIP`). An expense is a cost record. Approving it can post that cost once to a job. It does not pay the person or write a ledger. A cost that already sits on a goods receipt, contractor order, or logistics record is not posted again. The calendar reads installation and task dates. An iCalendar feed uses a revocable token and does not keep a second copy of the date.
 
+v1.1 Phase 11 is the release pass. It does not add a module. A fresh install seed file had one broken line and now loads. The application log rotates after 5 MB. System health shows cron duration, the last failure, and the next expected hourly run. The release notes are in `docs/release/`.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.
