@@ -24,6 +24,8 @@ v1.1 Phase 8 adds shipments (`SFSHP`), packages and labels, manual courier waybi
 
 v1.1 Phase 9 adds sales intake (`SFIN`). An enquiry can propose a customer, quantities, sizes, and a product match. The estimate and the quote are still calculated by the existing pricing services. A person confirms the customer, the requirements, and the product before a draft quote exists. A price, discount, or instruction inside the message does not change the selling price. A repair is routed to a service request. The draft quote stays a draft.
 
+v1.1 Phase 10 adds expenses (`SFEXP`), reimbursement batches (`SFREB`), mileage, and field trips (`SFTRIP`). An expense is a cost record. Approving it can post that cost once to a job. It does not pay the person or write a ledger. A cost that already sits on a goods receipt, contractor order, or logistics record is not posted again. The calendar reads installation and task dates. An iCalendar feed uses a revocable token and does not keep a second copy of the date.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

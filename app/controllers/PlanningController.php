@@ -110,6 +110,7 @@ final class PlanningController
             'title' => 'My work',
             'activeNav' => 'my-work',
             'groups' => $groups,
+            'inbox' => (new \App\Services\OperationalWorkspaceService())->inbox($userId),
             'reasons' => $planning->blockReasons(),
             'installations' => array_values(array_filter(
                 $planning->installationsBetween($today, date('Y-m-d', strtotime('+14 days'))),

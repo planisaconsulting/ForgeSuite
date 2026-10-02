@@ -110,6 +110,18 @@ Sales intake reads use scope `sales_intake.read`:
 
 `POST /api/v1/sales-intake/{id}/analyse` uses scope `sales_intake.write`. The same intake analysis limit applies. These routes were not called over HTTP. `tests/v11_phase9.php` covers extraction, matching, estimate, draft quote, and permission rules in process.
 
+Expense, mileage, trip, calendar, and data-quality reads use scope `expenses.read`:
+
+- `GET /api/v1/expenses`
+- `GET /api/v1/expenses/{id}`
+- `GET /api/v1/mileage`
+- `GET /api/v1/trips`
+- `GET /api/v1/calendar`
+- `GET /api/v1/calendar/feed`
+- `GET /api/v1/data-quality`
+
+`POST /api/v1/expenses/{id}/submit`, `/approve`, and `/reject` use scope `expenses.write`. The public iCalendar address is `/calendar/feed/{token}` and does not use an API credential. These routes were not called over HTTP. `tests/v11_phase10.php` covers costing, approval, mileage, feeds, search, and merge in process.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

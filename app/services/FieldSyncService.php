@@ -30,6 +30,7 @@ final class FieldSyncService
         'CONTRACTOR_APPROVE' => ['OFFLINE_NOT_ALLOWED', 'Contractor approval needs a connection.'],
         'COST_APPROVE' => ['OFFLINE_NOT_ALLOWED', 'Cost approval needs a connection.'],
         'JOB_COMPLETE' => ['OFFLINE_NOT_ALLOWED', 'Closing a job needs a connection.'],
+        'EXPENSE_APPROVE' => ['OFFLINE_NOT_ALLOWED', 'Approving an expense needs a connection.'],
     ];
 
     /** @var array<string, string> */
@@ -199,6 +200,7 @@ final class FieldSyncService
             'SCAN_CONFIRM' => $this->scan($userId, $payload, $operation, $local),
             'WORKSHOP_NOTE' => $this->note($userId, 'JOB', $entityId, 'WORKSHOP', $payload, $operation, $local, can('workshop.view')),
             'PHOTO_REORDER' => $this->reorder($entityType, $entityId, $payload, $operation),
+            'EXPENSE_DRAFT' => $this->expenseDraft($userId, $payload, $operation, $local),
             default => $this->bare($operation, 'REJECTED', 'INVALID', null),
         };
     }
@@ -999,6 +1001,36 @@ final class FieldSyncService
     /**
      * @return array<string, mixed>
      */
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private function expenseDraft(int $userId, array $payload, string $operation, string $local): array
+    {
+        if (!can('expenses.create')) {
+            return $this->bare($operation, 'REJECTED', 'PERMISSION_CHANGED', null);
+        }
+        $receipt = (string) ($payload['receipt'] ?? '');
+        $created = (new ExpenseService())->create([
+            'source' => 'MOBILE',
+            'client_local_id' => $local !== '' ? $local : $operation,
+            'category' => (string) ($payload['category'] ?? 'MATERIALS'),
+            'description' => (string) ($payload['description'] ?? ''),
+            'amount_inc_vat' => (string) ($payload['amount'] ?? ''),
+            'expense_date' => (string) ($payload['expense_date'] ?? date('Y-m-d')),
+            'merchant_name' => (string) ($payload['merchant'] ?? ''),
+            'payment_method' => (string) ($payload['payment_method'] ?? 'CASH'),
+            'job_id' => (int) ($payload['job_id'] ?? 0),
+            'receipt_name' => (string) ($payload['receipt_name'] ?? 'receipt.txt'),
+            'receipt_sha256' => $receipt !== '' ? hash('sha256', $receipt) : null,
+        ], $userId);
+        if ($created['id'] === null) {
+            return $this->bare($operation, 'FAILED', 'INVALID', null, (string) (reset($created['errors']) ?: 'That expense could not be saved.'));
+        }
+
+        return $this->bare($operation, 'SYNCED', null, $created['id'], 'Expense ' . (string) $created['number'] . ' saved.');
+    }
+
     private function bare(string $operation, string $status, ?string $code, mixed $serverId, ?string $message = null): array
     {
         $code = $code !== null && $code !== '' ? $code : null;

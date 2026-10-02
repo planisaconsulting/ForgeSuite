@@ -91,3 +91,10 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - Intake API routes were not called over HTTP. `tests/v11_phase9.php` covers extraction, conflicts, catalogue matching, estimates, and draft quotes in process.
 - The intake timing check inserts 200 rows and reads one page. It does not load 50,000 intakes. A repeated analysis is one request. The test does not start two PHP processes.
 - Provider cost is not calculated. The scripted provider returns no token cost. Analysis retention is a setting. This release does not purge old analysis rows on a schedule.
+- An expense is not a payment and not a ledger posting. Reimbursement export is a CSV. `REIMBURSED_EXTERNALLY` records a report from outside. It does not pay the person. Employee bank details are not stored.
+- There is no live calendar provider. iCalendar is a subscribe link. An outside calendar cannot move an installation. The timezone block uses a fixed SAST offset for the company zone.
+- Customer merge moves the known customer links. A one-per-customer row on both sides stops the merge. It does not offer a field-by-field picker for every column.
+- Expense, calendar, and data-quality API routes were not called over HTTP. `tests/v11_phase10.php` covers costing, reversal, mileage, feeds, search, and merge in process.
+- The expense timing check inserts 200 rows and reads one page. It does not load 100,000 expenses. Approval locks run in one request. The test does not start two PHP processes.
+- The restore check reads the expense and its allocation in the working database. It is not a second-database import. Receipt files still need the file backup.
+- A browser click-through of expense capture, calendar filters, and merge preview was not run.

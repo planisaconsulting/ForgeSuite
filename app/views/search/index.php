@@ -11,6 +11,16 @@
 <?php if ($term === ''): ?>
     <section class="sf-panel"><div class="sf-empty"><p>Type at least a few letters.</p></div></section>
 <?php else: ?>
+    <?php if (!empty($operational)): ?>
+        <section class="sf-panel mb-3">
+            <div class="sf-panel-head"><h2>Records</h2></div>
+            <ul class="sf-feed">
+                <?php foreach ($operational as $row): ?>
+                    <li><a href="<?= e(url((string) $row['href'])) ?>"><?= e((string) $row['type']) ?> <?= e((string) $row['number']) ?></a><small><?= e((string) $row['title']) ?> · <?= e((string) $row['status']) ?> · <?= e((string) $row['date']) ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
+    <?php endif; ?>
     <?php if (!empty($tracking)): ?>
         <section class="sf-panel mb-3">
             <div class="sf-panel-head"><h2>Tracking code</h2></div>

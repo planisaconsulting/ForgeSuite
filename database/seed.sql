@@ -2161,3 +2161,78 @@ INSERT IGNORE INTO feature_flags (feature_key, enabled) VALUES
 ('AI_PRODUCT_MATCH_ASSIST', 0),
 ('AI_MESSAGE_DRAFTING', 0),
 ('AI_QUOTE_DESCRIPTION', 0);
+
+-- v1.1 Phase 10 expense categories, permissions, and settings.
+
+INSERT IGNORE INTO expense_categories
+    (code, name, receipt_required, approval_required, approval_threshold, prevent_self_approval, reimbursable, vat_treatment, costing_behaviour, other_cost_type)
+VALUES
+('MATERIALS', 'Materials', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'OTHER'),
+('TOOLS', 'Tools', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'OTHER'),
+('CONSUMABLES', 'Consumables', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'OTHER'),
+('PARKING', 'Parking', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'TRAVEL'),
+('TOLLS', 'Tolls', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'TRAVEL'),
+('FUEL', 'Fuel', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'TRAVEL'),
+('TRAVEL', 'Travel', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'TRAVEL'),
+('ACCOMMODATION', 'Accommodation', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'ACCOMMODATION'),
+('MEALS', 'Meals', 1, 1, 500.00, 1, 0, 'REVIEW', 'JOB_OTHER', 'ACCOMMODATION'),
+('COURIER', 'Courier', 1, 1, 500.00, 1, 0, 'REVIEW', 'JOB_OTHER', 'COURIER'),
+('SUBCONTRACT', 'Subcontract', 1, 1, 500.00, 1, 0, 'REVIEW', 'DO_NOT_POST', 'SUBCONTRACTOR'),
+('SITE_COST', 'Site cost', 1, 1, 500.00, 1, 1, 'REVIEW', 'JOB_OTHER', 'OTHER'),
+('VEHICLE', 'Vehicle', 1, 1, 500.00, 1, 0, 'REVIEW', 'JOB_OTHER', 'TRAVEL'),
+('OFFICE', 'Office', 0, 1, 500.00, 1, 0, 'REVIEW', 'JOB_OTHER', 'OTHER'),
+('OTHER', 'Other', 1, 1, 500.00, 1, 0, 'REVIEW', 'JOB_OTHER', 'OTHER');
+
+INSERT IGNORE INTO permissions (code, name, module) VALUES
+('expenses.view', 'View expenses', 'expenses'),
+('expenses.create', 'Capture an expense', 'expenses'),
+('expenses.submit', 'Submit an expense', 'expenses'),
+('expenses.approve', 'Approve an expense', 'expenses'),
+('expenses.reject', 'Reject an expense', 'expenses'),
+('expenses.reverse', 'Reverse an expense', 'expenses'),
+('expenses.view_all', 'View every expense', 'expenses'),
+('expenses.reimbursement.manage', 'Prepare reimbursement batches', 'expenses'),
+('expenses.export', 'Export expenses', 'expenses'),
+('mileage.create', 'Record mileage', 'mileage'),
+('mileage.approve', 'Approve mileage', 'mileage'),
+('trips.manage', 'Manage field trips', 'trips'),
+('calendar.view_company', 'View the company calendar', 'calendar'),
+('calendar.manage_feed', 'Manage calendar feeds', 'calendar'),
+('data_quality.view', 'View data quality', 'data_quality'),
+('data_quality.manage', 'Record data quality issues', 'data_quality'),
+('entity_merge.preview', 'Preview a customer merge', 'entity_merge'),
+('entity_merge.execute', 'Merge duplicate customers', 'entity_merge');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.code IN (
+    'expenses.view', 'expenses.create', 'expenses.submit', 'expenses.approve', 'expenses.reject',
+    'expenses.reverse', 'expenses.view_all', 'expenses.reimbursement.manage', 'expenses.export',
+    'mileage.create', 'mileage.approve', 'trips.manage', 'calendar.view_company', 'calendar.manage_feed',
+    'data_quality.view', 'data_quality.manage', 'entity_merge.preview', 'entity_merge.execute'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN ('expenses.view', 'expenses.create', 'expenses.submit', 'mileage.create');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code IN (
+    'expenses.view', 'expenses.view_all', 'expenses.approve', 'expenses.reject', 'expenses.reverse',
+    'expenses.reimbursement.manage', 'expenses.export', 'data_quality.view'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'INSTALLER' AND p.code IN ('expenses.view', 'expenses.create', 'expenses.submit', 'mileage.create');
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('expense_prefix', 'SFEXP'),
+('reimbursement_prefix', 'SFREB'),
+('trip_prefix', 'SFTRIP'),
+('mileage_rate_per_km', '4.50')
+ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('company_timezone', 'Africa/Johannesburg');

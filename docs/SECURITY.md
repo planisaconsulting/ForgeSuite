@@ -49,3 +49,9 @@ Customer data is limited to people who have the module permission. Field packs o
 An enquiry is untrusted data. A sentence that says to ignore instructions, delete customers, or set a price is stored as text. It does not run SQL, change a price, or delete a record. Analysis output is limited to the intake schema. Unknown actions and monetary fields are dropped. A product id that is not in the product table is rejected.
 
 The provider, when enabled, receives a shortened copy of the enquiry. It does not receive a tool that can change stock, payments, users, or production release. The API key stays in server configuration, not in the database and not in the browser. Provider cost is visible only with `sales_intake.view_ai_audit`. Executable uploads are rejected before analysis. See `docs/AI_SAFETY.md`.
+
+## Expenses and calendar feeds
+
+Receipt files use the same blocked extensions as other uploads. A receipt proposal cannot approve an expense. Expense lists without `expenses.view_all` are limited to the signed-in person. Search omits invoices when the role cannot view them. Customer merge needs `entity_merge.execute` and runs in one transaction.
+
+Calendar tokens are stored as a hash. A revoked token is refused. Basic feed text omits quote value, cost, and margin. CSV export prefixes a cell that starts with `=`, `+`, `-`, or `@` so a spreadsheet does not treat it as a formula. See `docs/EXPENSES.md` and `docs/ICAL.md`.

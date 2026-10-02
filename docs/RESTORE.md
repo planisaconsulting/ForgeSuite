@@ -6,7 +6,7 @@
 4. Copy `storage/uploads`, `storage/documents`, `storage/signatures`, `storage/quotes`, and `storage/field-photos` back into place.
 5. Point `config.local.php` at the restored database, with `app.debug` false.
 6. Open `/health`, then sign in.
-7. Open a customer, a quote PDF, a job, an invoice, a signature or delivery document, a stock item, one artwork with its revisions, proof, approval, and production file, and one shipment with its packages, tracking events, proof of delivery, and any contractor work order. Confirm the file path exists under `storage/uploads`.
+7. Open a customer, a quote PDF, a job, an invoice, a signature or delivery document, a stock item, one artwork with its revisions, proof, approval, and production file, one shipment with its packages, tracking events, proof of delivery, and any contractor work order, and one expense with its allocation, approval, and mileage or trip. Confirm the file path exists under `storage/uploads`.
 8. Check foreign keys are present, the login index from migration 015 is present, and file paths on those documents exist on disk.
 
 v1.0.0 restore drill, 1 October 2026, on the development database:

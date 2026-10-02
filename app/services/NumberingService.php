@@ -185,6 +185,21 @@ final class NumberingService
         return $this->next('sales_intake', 'intake_prefix', 'SFIN');
     }
 
+    public function expense(): string
+    {
+        return $this->next('expense', 'expense_prefix', 'SFEXP');
+    }
+
+    public function reimbursementBatch(): string
+    {
+        return $this->next('reimbursement_batch', 'reimbursement_prefix', 'SFREB');
+    }
+
+    public function fieldTrip(): string
+    {
+        return $this->next('field_trip', 'trip_prefix', 'SFTRIP');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

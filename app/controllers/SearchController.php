@@ -76,6 +76,7 @@ final class SearchController
             'tracking' => $term !== '' && (can('workshop.scan') || can('inventory.view') || can('jobs.view'))
                 ? (new \App\Services\TrackingCodeService())->locate($term)
                 : null,
+            'operational' => $term !== '' ? (new \App\Services\OperationalWorkspaceService())->search($term, (int) (auth_user()['id'] ?? 0)) : [],
         ]);
     }
 }

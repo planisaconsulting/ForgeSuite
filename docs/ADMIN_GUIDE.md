@@ -78,6 +78,12 @@ Courier integration mode `MANUAL` is the working path. `API` does not call a car
 
 `AI_INTAKE_ANALYSIS` and `AI_MESSAGE_DRAFTING` start off. With them off, staff can still capture an enquiry and create an estimate. `ai_provider` must be `scripted` and `ai_enabled` must be 1 before the stand-in drafts wording. Any other provider is treated as unavailable. Do not store an API key in settings. See `docs/AI_PROVIDER_CONFIGURATION.md` and `docs/AI_SAFETY.md`.
 
+## Expenses and calendar
+
+`expense_prefix` defaults to SFEXP. `reimbursement_prefix` defaults to SFREB. `trip_prefix` defaults to SFTRIP. `mileage_rate_per_km` defaults to 4.50 and is copied onto each mileage row. `company_timezone` defaults to Africa/Johannesburg and is used for iCalendar times. Changing the mileage rate does not rewrite old trips.
+
+Expense categories set receipt, approval, the manager threshold, self-approval, and whether a personal payment is reimbursable. VAT treatment starts as review. See `docs/EXPENSES.md` and `docs/CALENDAR.md`.
+
 ## System health
 
 Administration → System health shows the release, PHP, database, storage, last cron, last backup, failed automations, and failed field sync. It does not show passwords.

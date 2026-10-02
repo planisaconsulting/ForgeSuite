@@ -17,6 +17,10 @@ final class QuickActionService
         $catalog = [
             ['New quote', '/quotes/new', 'quotes.create'],
             ['New customer', '/customers/new', 'customers.manage'],
+            ['New expense', '/expenses', 'expenses.create'],
+            ['New site survey', '/surveys', 'site_surveys.edit'],
+            ['New service request', '/service', 'service_requests.create'],
+            ['Search', '/search', 'dashboard.view'],
             ['Scan item', '/workshop/scan', 'workshop.scan'],
             ['New job', '/jobs', 'jobs.view'],
             ['Log payment', '/payments/new', 'payments.record'],

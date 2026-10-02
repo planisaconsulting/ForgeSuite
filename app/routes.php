@@ -34,6 +34,8 @@ use App\Controllers\CustomerHubController;
 use App\Controllers\ArtworkController;
 use App\Controllers\LogisticsController;
 use App\Controllers\SalesIntakeController;
+use App\Controllers\ExpenseController;
+use App\Controllers\CalendarController;
 use App\Controllers\ContractorPortalController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
@@ -464,6 +466,30 @@ $router->post('/sales/intake/{id}/estimate', static function (string $id): void 
 $router->post('/sales/intake/{id}/quote', static function (string $id): void {
     (new SalesIntakeController())->quote($id);
 }, true, true, 'sales_intake.create_quote');
+$router->get('/expenses', static function (): void {
+    (new ExpenseController())->index();
+}, true, 'expenses.view');
+$router->post('/expenses', static function (): void {
+    (new ExpenseController())->create();
+}, true, true, 'expenses.create');
+$router->get('/expenses/{id}', static function (string $id): void {
+    (new ExpenseController())->show($id);
+}, true, 'expenses.view');
+$router->post('/expenses/{id}/submit', static function (string $id): void {
+    (new ExpenseController())->submit($id);
+}, true, true, 'expenses.submit');
+$router->post('/expenses/{id}/approve', static function (string $id): void {
+    (new ExpenseController())->approve($id);
+}, true, true, 'expenses.approve');
+$router->post('/expenses/{id}/reject', static function (string $id): void {
+    (new ExpenseController())->reject($id);
+}, true, true, 'expenses.reject');
+$router->get('/calendar', static function (): void {
+    (new CalendarController())->index();
+}, true, 'schedule.view');
+$router->get('/calendar/feed/{token}', static function (string $token): void {
+    (new CalendarController())->feed($token);
+}, false);
 $router->get('/quotes', static function (): void {
     (new QuoteController())->index();
 }, true, 'quotes.view');
@@ -2195,6 +2221,36 @@ $router->get('/api/v1/contractors', static function (): void {
 }, false);
 $router->get('/api/v1/contractor-work-orders', static function (): void {
     (new ApiV1Controller())->contractorWorkOrders();
+}, false);
+$router->get('/api/v1/expenses', static function (): void {
+    (new ApiV1Controller())->expenses();
+}, false);
+$router->post('/api/v1/expenses/{id}/submit', static function (string $id): void {
+    (new ApiV1Controller())->expenseAction($id, 'submit');
+}, false);
+$router->post('/api/v1/expenses/{id}/approve', static function (string $id): void {
+    (new ApiV1Controller())->expenseAction($id, 'approve');
+}, false);
+$router->post('/api/v1/expenses/{id}/reject', static function (string $id): void {
+    (new ApiV1Controller())->expenseAction($id, 'reject');
+}, false);
+$router->get('/api/v1/expenses/{id}', static function (string $id): void {
+    (new ApiV1Controller())->expense($id);
+}, false);
+$router->get('/api/v1/mileage', static function (): void {
+    (new ApiV1Controller())->mileage();
+}, false);
+$router->get('/api/v1/trips', static function (): void {
+    (new ApiV1Controller())->trips();
+}, false);
+$router->get('/api/v1/calendar/feed', static function (): void {
+    (new ApiV1Controller())->calendarFeed();
+}, false);
+$router->get('/api/v1/calendar', static function (): void {
+    (new ApiV1Controller())->calendar();
+}, false);
+$router->get('/api/v1/data-quality', static function (): void {
+    (new ApiV1Controller())->dataQuality();
 }, false);
 $router->get('/api/v1/sales-intake', static function (): void {
     (new ApiV1Controller())->salesIntakes();

@@ -21,6 +21,8 @@ $user = auth_user();
             <button class="btn sf-icon-btn" type="button" data-bs-toggle="dropdown" aria-label="Quick actions"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
             <ul class="dropdown-menu dropdown-menu-end sf-menu">
                 <?php if (can('customers.manage')): ?><li><a class="dropdown-item" href="<?= e(url('/customers/new')) ?>">New customer</a></li><?php endif; ?>
+                <?php if (can('expenses.create')): ?><li><a class="dropdown-item" href="<?= e(url('/expenses')) ?>">New expense</a></li><?php endif; ?>
+                <?php if (can('site_surveys.edit')): ?><li><a class="dropdown-item" href="<?= e(url('/surveys')) ?>">New site survey</a></li><?php endif; ?>
                 <?php if (can('quotes.manage')): ?><li><a class="dropdown-item" href="<?= e(url('/quotes/new')) ?>">New quote</a></li><?php endif; ?>
                 <?php if (can('jobs.view')): ?><li><a class="dropdown-item" href="<?= e(url('/jobs')) ?>">Jobs</a></li><?php endif; ?>
                 <?php if (can('materials.record_usage')): ?><li><a class="dropdown-item" href="<?= e(url('/jobs')) ?>">Record material</a></li><?php endif; ?>

@@ -114,6 +114,12 @@ Answer the missing questions, or send them after you have read the draft. Confir
 
 Draft quote creates a draft. It does not send it. A repair, such as a sign that stopped working, goes to a service request instead of a quote.
 
+## How to record an expense
+
+Open Operations → Expenses. Enter the date, category, amount, how it was paid, and a short description. Link the job when the cost belongs to that job. Capture expense saves a draft. Submit for approval sends it on. You cannot approve your own expense.
+
+A company card is recorded and is not queued for reimbursement. Cash or a personal card can be, after approval. Rejected costs are kept and are not added to the job. An approved cost appears once on the job. Reversing it adds an offset and leaves the original line.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

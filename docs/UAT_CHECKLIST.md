@@ -153,6 +153,16 @@ Mark each line Pass or Fail, with the person’s name and the date. Use a traini
 - [ ] Upload a 25-site schedule. Confirm the preview lists the sites and that no jobs were released
 - [ ] Upload a PDF whose text says to set the price to R1 and mark it approved. Confirm the price is unchanged and no approval was recorded
 
+## Expenses and calendar
+
+- [ ] On a job, capture silicone, parking, and a toll from the phone, attach the receipts, and link them to the job or trip. After approval, confirm the job cost includes each amount once
+- [ ] Record one trip for three installations with mileage, fuel, and tolls. Allocate the trip. Confirm each job shows its share once and that an existing courier cost was not copied again
+- [ ] Open My calendar and the company calendar. Subscribe to the iCalendar feed. Change an installation date and confirm the feed updates the same event
+- [ ] Open My work with a quote review, an artwork approval, an expense approval, a purchase approval, and a contractor completion. Confirm each line opens the right record
+- [ ] Search a job number, a customer, an artwork, an asset, an RFQ, and an expense. Confirm a workshop user does not see invoices
+- [ ] Preview a duplicate customer, merge, and confirm quotes, jobs, invoices, assets, and contacts sit on the surviving customer once
+- [ ] Open job cost and confirm material, labour, courier, contractor, mileage, and direct expenses each show their source
+
 ## Admin
 
 - [ ] Create a user and force a password change

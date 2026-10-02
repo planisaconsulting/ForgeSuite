@@ -1,15 +1,15 @@
 # Permissions
 
-v1.1.0 has 365 permission codes. ADMIN holds all 323 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 382 permission codes. ADMIN holds all 341 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 224 |
-| SALES | 107 |
-| ACCOUNTS | 77 |
+| MANAGEMENT | 241 |
+| SALES | 111 |
+| ACCOUNTS | 85 |
 | PRODUCTION | 57 |
 | DESIGN | 40 |
-| INSTALLER | 39 |
+| INSTALLER | 43 |
 | DISPATCH | 29 |
 | MARKETING | 11 |
 
@@ -44,6 +44,10 @@ MANAGEMENT holds every logistics and contractor code. DISPATCH can view logistic
 Sales intake codes are `sales_intake.view`, `sales_intake.create`, `sales_intake.assign`, `sales_intake.review`, `sales_intake.confirm_customer`, `sales_intake.confirm_requirements`, `sales_intake.match_product`, `sales_intake.create_estimate`, `sales_intake.create_quote`, `sales_intake.ai_analyse`, `sales_intake.view_ai_audit`, and `sales_intake.admin`.
 
 MANAGEMENT holds every sales-intake code, including provider-cost audit. SALES can capture, review, confirm, match, estimate, quote, and analyse. SALES cannot assign another person’s queue, administer intake, or see provider cost. ACCOUNTS can view the inbox. DESIGN, PRODUCTION, INSTALLER, and DISPATCH do not receive these codes. An intake assigned to someone else stays closed to a salesperson who lacks `sales_intake.admin`.
+
+Expense and calendar codes are `expenses.view`, `expenses.create`, `expenses.submit`, `expenses.approve`, `expenses.reject`, `expenses.reverse`, `expenses.view_all`, `expenses.reimbursement.manage`, `expenses.export`, `mileage.create`, `mileage.approve`, `trips.manage`, `calendar.view_company`, `calendar.manage_feed`, `data_quality.view`, `data_quality.manage`, `entity_merge.preview`, and `entity_merge.execute`.
+
+MANAGEMENT holds every expense, mileage, trip, calendar, data-quality, and merge code. SALES can view, capture, and submit an expense, and can record mileage. SALES cannot approve, export, or see every expense. ACCOUNTS can view all expenses, approve, reject, reverse, prepare a reimbursement batch, export, and view data quality. INSTALLER can view, capture, and submit an expense, and can record mileage. INSTALLER cannot approve. PRODUCTION, DESIGN, DISPATCH, and MARKETING do not receive these codes. A person cannot approve their own expense when the category requires separation, even if their role includes `expenses.approve`.
 
 Portal user roles (`ADMIN`, `BUYER`, `ACCOUNTS`, `VIEW_ONLY`, and the others in `docs/CUSTOMER_PORTAL_SECURITY.md`) are not rows in this permission table. A workshop login does not become a customer login. A contractor login does not become a staff login.
 

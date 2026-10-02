@@ -740,6 +740,97 @@ final class ApiV1Controller
         $this->send(200, true, ['work' => $rows], []);
     }
 
+    public function expenses(): void
+    {
+        $auth = $this->gate('expenses.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Services\ExpenseService())->page(25, 0, (int) $auth['client']['created_by']);
+        $this->finish($auth, 200, true, ['expenses' => $rows], [], 'expense', null);
+    }
+
+    public function expense(string $id): void
+    {
+        $auth = $this->gate('expenses.read');
+        if ($auth === null) {
+            return;
+        }
+        $row = (new \App\Services\ExpenseService())->open((int) $id, (int) $auth['client']['created_by']);
+        if ($row === null) {
+            $this->finish($auth, 404, false, null, ['expense' => 'That expense was not found.'], 'expense', (int) $id);
+
+            return;
+        }
+        unset($row['extraction_json']);
+        $this->finish($auth, 200, true, ['expense' => $row], [], 'expense', (int) $id);
+    }
+
+    public function expenseAction(string $id, string $action): void
+    {
+        $auth = $this->gate('expenses.write');
+        if ($auth === null) {
+            return;
+        }
+        $service = new \App\Services\ExpenseService();
+        $userId = (int) $auth['client']['created_by'];
+        $result = match ($action) {
+            'submit' => $service->submit((int) $id, $userId),
+            'approve' => $service->approve((int) $id, $userId),
+            'reject' => $service->reject((int) $id, (string) ($_POST['reason'] ?? ''), $userId),
+            default => ['errors' => ['action' => 'That action was not found.']],
+        };
+        $ok = $result['errors'] === [];
+        $this->finish($auth, $ok ? 200 : 422, $ok, [], $result['errors'], 'expense', (int) $id);
+    }
+
+    public function mileage(): void
+    {
+        $auth = $this->gate('expenses.read');
+        if ($auth === null) {
+            return;
+        }
+        $this->finish($auth, 200, true, ['mileage' => 'Record mileage from the expense service. The list stays on the job cost trace.'], [], 'mileage', null);
+    }
+
+    public function trips(): void
+    {
+        $auth = $this->gate('expenses.read');
+        if ($auth === null) {
+            return;
+        }
+        $this->finish($auth, 200, true, ['trips' => 'Trips are created by the trip service and allocated once.'], [], 'trip', null);
+    }
+
+    public function calendar(): void
+    {
+        $auth = $this->gate('expenses.read');
+        if ($auth === null) {
+            return;
+        }
+        $events = (new \App\Services\CalendarFeedService())->events(date('Y-m-d'), date('Y-m-d', strtotime('+14 days')), (int) $auth['client']['created_by'], 'BASIC');
+        $this->finish($auth, 200, true, ['events' => $events], [], 'calendar', null);
+    }
+
+    public function calendarFeed(): void
+    {
+        $auth = $this->gate('expenses.read');
+        if ($auth === null) {
+            return;
+        }
+        $this->finish($auth, 200, true, ['feed' => 'Create a revocable token from CalendarFeedService. The public feed does not use this credential.'], [], 'calendar_feed', null);
+    }
+
+    public function dataQuality(): void
+    {
+        $auth = $this->gate('expenses.read');
+        if ($auth === null) {
+            return;
+        }
+        $scan = (new \App\Services\OperationalWorkspaceService())->scanDataQuality((int) $auth['client']['created_by']);
+        $this->finish($auth, 200, true, $scan, [], 'data_quality', null);
+    }
+
     public function salesIntakes(): void
     {
         $auth = $this->gate('sales_intake.read');

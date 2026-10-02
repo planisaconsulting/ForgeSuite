@@ -32,6 +32,24 @@ $activeNav = $activeNav ?? '';
             <a href="<?= e(url('/m/more')) ?>">More</a>
         </nav>
     <?php endif; ?>
+    <div id="sf-command" class="sf-panel" hidden style="position:fixed;top:4rem;left:50%;transform:translateX(-50%);z-index:1080;width:min(32rem,92vw);">
+        <form method="get" action="<?= e(url('/search')) ?>" class="p-3">
+            <label class="form-label" for="sf-command-q">Search records and actions</label>
+            <input class="form-control form-control-lg" id="sf-command-q" name="q" type="search" autocomplete="off">
+        </form>
+    </div>
+    <script>
+    document.addEventListener('keydown', function (event) {
+        if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'k') return;
+        var tag = (event.target && event.target.tagName) ? event.target.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        event.preventDefault();
+        var box = document.getElementById('sf-command');
+        if (!box) return;
+        box.hidden = !box.hidden;
+        if (!box.hidden) document.getElementById('sf-command-q')?.focus();
+    });
+    </script>
     <script src="<?= e(asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js')) ?>"></script>
     <script src="<?= e(asset('assets/js/app.js')) ?>"></script>
     <script src="<?= e(asset('assets/js/field.js')) ?>"></script>

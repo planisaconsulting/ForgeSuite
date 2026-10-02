@@ -22,6 +22,18 @@
         <?php endif; ?>
     </section>
 <?php endforeach; ?>
+<section class="sf-panel mb-3">
+    <div class="sf-panel-head"><h2>Awaiting me</h2></div>
+    <?php if (($inbox ?? []) === []): ?>
+        <div class="sf-empty"><p>Nothing is waiting on you. Approvals and overdue tasks appear here with a link to the record.</p></div>
+    <?php else: ?>
+        <ul class="sf-feed">
+            <?php foreach ($inbox as $item): ?>
+                <li><a href="<?= e(url((string) $item['href'])) ?>"><?= e((string) $item['title']) ?></a><small><?= e((string) $item['section']) ?> · <?= e((string) $item['priority']) ?> · due <?= e((string) $item['due']) ?></small></li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+</section>
 <section class="sf-panel">
     <div class="sf-panel-head"><h2>Installations</h2></div>
     <?php if ($installations === []): ?><div class="sf-empty"><p>No installations assigned to you in the next two weeks.</p></div><?php else: ?>

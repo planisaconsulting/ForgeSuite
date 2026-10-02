@@ -6,7 +6,7 @@ Take all of these:
 
 - Database: `mysqldump --single-transaction`, or Administration → Backups inside Sign-Forge, which writes a SQL file under `storage/backups/`. That folder is denied to the web.
 - Application files: the code tree, excluding `storage/` runtime data if you back that up separately.
-- Uploaded files: `storage/uploads` (including `storage/uploads/artwork`), `storage/documents`, `storage/signatures`, `storage/quotes`, and `storage/field-photos`. Artwork proofs, production files, proof-of-delivery photos, and contractor photos are in that tree. A database dump without those files loses the bytes the shipment, signature, and work-order rows point at. The dump itself must include shipment records, proof of delivery, signatures, contractor work, tracking history, and logistics exceptions.
+- Uploaded files: `storage/uploads` (including `storage/uploads/artwork`), `storage/documents`, `storage/signatures`, `storage/quotes`, and `storage/field-photos`. Artwork proofs, production files, proof-of-delivery photos, and contractor photos are in that tree. A database dump without those files loses the bytes the shipment, signature, and work-order rows point at. The dump itself must include shipment records, proof of delivery, signatures, contractor work, tracking history, logistics exceptions, expenses, allocations, mileage, trips, calendar feed hashes, and merge history. Receipt bytes live with the other uploads.
 - Configuration: `config.local.php` and mail or integration secrets. Store those in a password manager, not in the database dump folder on the same disk.
 
 Copy each backup off the server. The host panel backup is a second copy, not the only copy. Sign-Forge does not send backups to a named cloud vendor.
