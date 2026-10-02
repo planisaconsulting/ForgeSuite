@@ -250,28 +250,67 @@ $groups = [
         if ($visible === []) {
             continue;
         }
+        $hasActive = false;
+        foreach ($visible as $link) {
+            if ($link[0] === $activeNav) {
+                $hasActive = true;
+                break;
+            }
+        }
         ?>
         <?php if ($group['label'] !== null): ?>
-            <p class="sf-nav-label"><?= e($group['label']) ?></p>
+            <?php
+            $groupId = 'nav-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($group['label']));
+            $groupId = trim($groupId, '-');
+            ?>
+            <div class="sf-nav-group" data-nav-group="<?= e($groupId) ?>">
+                <button type="button"
+                        class="sf-nav-label"
+                        id="<?= e($groupId) ?>-toggle"
+                        aria-expanded="true"
+                        aria-controls="<?= e($groupId) ?>">
+                    <span><?= e($group['label']) ?></span>
+                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <nav class="sf-nav" id="<?= e($groupId) ?>" aria-label="<?= e($group['label']) ?>"<?= $hasActive ? ' data-has-active="1"' : '' ?>>
+                    <?php foreach ($visible as [$key, $label, $href, $icon]): ?>
+                        <?php if ($href === null): ?>
+                            <span class="sf-nav-link is-disabled" aria-disabled="true">
+                                <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
+                                <span><?= e($label) ?></span>
+                                <small>Soon</small>
+                            </span>
+                        <?php else: ?>
+                            <a class="<?= $key === $activeNav ? 'sf-nav-link active' : 'sf-nav-link' ?>"
+                               href="<?= e(url($href)) ?>"
+                               <?= $key === $activeNav ? 'aria-current="page"' : '' ?>>
+                                <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
+                                <span><?= e($label) ?></span>
+                            </a>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </nav>
+            </div>
+        <?php else: ?>
+            <nav class="sf-nav" aria-label="Main">
+                <?php foreach ($visible as [$key, $label, $href, $icon]): ?>
+                    <?php if ($href === null): ?>
+                        <span class="sf-nav-link is-disabled" aria-disabled="true">
+                            <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
+                            <span><?= e($label) ?></span>
+                            <small>Soon</small>
+                        </span>
+                    <?php else: ?>
+                        <a class="<?= $key === $activeNav ? 'sf-nav-link active' : 'sf-nav-link' ?>"
+                           href="<?= e(url($href)) ?>"
+                           <?= $key === $activeNav ? 'aria-current="page"' : '' ?>>
+                            <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
+                            <span><?= e($label) ?></span>
+                        </a>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </nav>
         <?php endif; ?>
-        <nav class="sf-nav" aria-label="<?= e($group['label'] ?? 'Main') ?>">
-            <?php foreach ($visible as [$key, $label, $href, $icon]): ?>
-                <?php if ($href === null): ?>
-                    <span class="sf-nav-link is-disabled" aria-disabled="true">
-                        <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
-                        <span><?= e($label) ?></span>
-                        <small>Soon</small>
-                    </span>
-                <?php else: ?>
-                    <a class="<?= $key === $activeNav ? 'sf-nav-link active' : 'sf-nav-link' ?>"
-                       href="<?= e(url($href)) ?>"
-                       <?= $key === $activeNav ? 'aria-current="page"' : '' ?>>
-                        <i class="fa-solid <?= e($icon) ?>" aria-hidden="true"></i>
-                        <span><?= e($label) ?></span>
-                    </a>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        </nav>
     <?php endforeach; ?>
     <p class="sf-nav-label"><a href="<?= e(url('/help')) ?>"><?= e(\App\Services\RuntimeService::releaseLabel()) ?></a></p>
 </div>

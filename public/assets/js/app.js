@@ -41,4 +41,42 @@
             }
         });
     });
+
+    var collapsedKey = "sf-nav-collapsed";
+    var collapsed = {};
+    try {
+        collapsed = JSON.parse(localStorage.getItem(collapsedKey) || "{}") || {};
+    } catch (error) {
+        collapsed = {};
+    }
+
+    nav.querySelectorAll(".sf-nav-group").forEach(function (group) {
+        var id = group.getAttribute("data-nav-group");
+        var button = group.querySelector("button.sf-nav-label");
+        if (!id || !button) {
+            return;
+        }
+
+        var hasActive = !!group.querySelector(".sf-nav-link.active, .sf-nav[data-has-active]");
+        var setCollapsed = function (isCollapsed) {
+            group.classList.toggle("is-collapsed", isCollapsed);
+            button.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+        };
+
+        setCollapsed(!hasActive && !!collapsed[id]);
+
+        button.addEventListener("click", function () {
+            var isCollapsed = !group.classList.contains("is-collapsed");
+            setCollapsed(isCollapsed);
+            try {
+                var state = JSON.parse(localStorage.getItem(collapsedKey) || "{}") || {};
+                if (isCollapsed) {
+                    state[id] = true;
+                } else {
+                    delete state[id];
+                }
+                localStorage.setItem(collapsedKey, JSON.stringify(state));
+            } catch (error) {}
+        });
+    });
 })();
