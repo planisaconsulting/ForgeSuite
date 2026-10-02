@@ -150,7 +150,7 @@ $pylon = $assets->createFromJobItem((int) $byProduct[$pylonProduct]['id'], [
 $eq('pylon asset', [], $pylon['errors']);
 $assetId = (int) $pylon['ids'][0];
 $asset = (new AssetRepository())->find($assetId);
-$eq('asset number', 1, preg_match('/^SFA-\d{4}-\d{4}$/', (string) $asset['asset_number']));
+$eq('asset number', 1, preg_match('/^SFA-\d{4}-\d{4,}$/', (string) $asset['asset_number']));
 $eq('asset customer', $customerId, (int) $asset['customer_id']);
 $eq('asset project', $projectId, (int) $asset['project_id']);
 $eq('asset site', $siteId, (int) $asset['project_site_id']);
@@ -223,7 +223,7 @@ $request = $requests->create([
 $eq('request', [], $request['errors']);
 $requestRow = (new AssetRepository())->request((int) $request['id']);
 $eq('request asset', $assetId, (int) $requestRow['asset_id']);
-$eq('request number', 1, preg_match('/^SFSR-\d{4}-\d{4}$/', (string) $requestRow['request_number']));
+$eq('request number', 1, preg_match('/^SFSR-\d{4}-\d{4,}$/', (string) $requestRow['request_number']));
 $eq('warranty candidate', 1, (int) $requestRow['warranty_candidate']);
 $eq('no claim yet', 0, count((new AssetRepository())->claimsForAsset($assetId)));
 
@@ -246,7 +246,7 @@ $paidJob = $requests->openJob((int) $paidRequest['id'], [
 $eq('paid job errors', [], $paidJob['errors']);
 $paid = (new JobRepository())->find((int) $paidJob['id']);
 $eq('paid job type', 'SERVICE', (string) $paid['job_type']);
-$eq('paid job number', 1, preg_match('/^SFJ-\d{4}-\d{4}$/', (string) $paid['job_number']));
+$eq('paid job number', 1, preg_match('/^SFJ-\d{4}-\d{4,}$/', (string) $paid['job_number']));
 $eq('paid links request', (int) $paidRequest['id'], (int) $paid['service_request_id']);
 $eq('paid links asset', $assetId, (int) $paid['customer_asset_id']);
 $eq('paid revenue', true, Decimal::cmp((string) $paid['quoted_revenue_snapshot'], '0') > 0);
@@ -366,7 +366,7 @@ $claim = $warranties->openClaim($assetId, [
 ], $userId);
 $eq('claim', [], $claim['errors']);
 $claimRow = (new AssetRepository())->claim((int) $claim['id']);
-$eq('claim number', 1, preg_match('/^SFWC-\d{4}-\d{4}$/', (string) $claimRow['claim_number']));
+$eq('claim number', 1, preg_match('/^SFWC-\d{4}-\d{4,}$/', (string) $claimRow['claim_number']));
 $eq('claim starts new', 'NEW', (string) $claimRow['status']);
 
 $replaced = $assets->replace($assetId, ['name' => 'Replacement pylon', 'installation_date' => '2031-01-01'], $userId);

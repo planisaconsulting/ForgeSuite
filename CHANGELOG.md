@@ -22,6 +22,8 @@ v1.1 Phase 7 adds artwork numbers (`SFAW`), revisions, customer proofs, and prod
 
 v1.1 Phase 8 adds shipments (`SFSHP`), packages and labels, manual courier waybills, tracking events, own-delivery runs, collections, installation packs and sign-off, and contractor work orders (`SFCWO`). Dispatched is not delivered. Delivered is not installed. Installed is not job complete. A contractor sees the assigned scope and does not see quote value, margin, or gross profit. Booking a courier does not mark the goods collected or delivered. Approving a contractor cost posts that cost once. It does not pay the contractor, issue a customer invoice, or close the job.
 
+v1.1 Phase 9 adds sales intake (`SFIN`). An enquiry can propose a customer, quantities, sizes, and a product match. The estimate and the quote are still calculated by the existing pricing services. A person confirms the customer, the requirements, and the product before a draft quote exists. A price, discount, or instruction inside the message does not change the selling price. A repair is routed to a service request. The draft quote stays a draft.
+
 ## 1.0.0
 
 Sign-Forge ERP v1.0.0 is the first release of the signage operations system built through phases 1 to 15.

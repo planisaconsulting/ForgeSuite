@@ -85,3 +85,9 @@ v1.0.0 is a signage operations system. It is not a full accounting ledger, payro
 - Public tracking and the contractor portal were checked by the service tests and by HTTP status. A browser click-through of accept, decline, and proof of delivery was not run.
 - Customer dispatch text is an in-app notice to the acting user. It is not an email, and it does not bypass communication preferences.
 - Geolocation is stored only when a person records arrival, delivery, or sign-off. There is no continuous GPS.
+- Sales intake does not call a live language-model API. The scripted provider drafts wording only. Quantity and size come from deterministic reading of the message. Photographs are not measured. Spreadsheet import accepts CSV text, not a styled Excel workbook.
+- The intake does not send email or WhatsApp. It does not scrape WhatsApp Web. A website form that is already structured is stored without a provider call.
+- Product matching does not rank with a model. There is no automatic customer merge, no automatic product activation, and no automatic quote send.
+- Intake API routes were not called over HTTP. `tests/v11_phase9.php` covers extraction, conflicts, catalogue matching, estimates, and draft quotes in process.
+- The intake timing check inserts 200 rows and reads one page. It does not load 50,000 intakes. A repeated analysis is one request. The test does not start two PHP processes.
+- Provider cost is not calculated. The scripted provider returns no token cost. Analysis retention is a setting. This release does not purge old analysis rows on a schedule.

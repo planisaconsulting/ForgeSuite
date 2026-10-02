@@ -1,12 +1,12 @@
 # Permissions
 
-v1.1.0 has 353 permission codes. ADMIN holds all 311 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
+v1.1.0 has 365 permission codes. ADMIN holds all 323 that are granted in the seed and is also allowed through in code. The other roles, and how many codes they hold:
 
 | Role | Codes |
 | --- | --- |
-| MANAGEMENT | 212 |
-| SALES | 98 |
-| ACCOUNTS | 76 |
+| MANAGEMENT | 224 |
+| SALES | 107 |
+| ACCOUNTS | 77 |
 | PRODUCTION | 57 |
 | DESIGN | 40 |
 | INSTALLER | 39 |
@@ -40,6 +40,10 @@ MANAGEMENT holds every new artwork code. DESIGN can create and revise artwork, s
 Logistics and contractor codes are `logistics.view`, `logistics.shipment.create`, `logistics.shipment.dispatch`, `logistics.shipment.manage`, `logistics.delivery.manage`, `logistics.collection.manage`, `logistics.exceptions.manage`, `installation.schedule`, `installation.execute`, `contractor.manage`, `contractor.assign`, `contractor.work_order.create`, `contractor.work_order.approve`, `contractor.cost.view`, `contractor.cost.approve`, and `contractor.portal.manage`. `installation.signoff` was already there and was not added again.
 
 MANAGEMENT holds every logistics and contractor code. DISPATCH can view logistics, create and dispatch a shipment, manage deliveries and collections, and manage exceptions. DISPATCH cannot manage the shipment record after the fact and cannot see contractor cost. INSTALLER can view logistics, execute an installation, and record sign-off. PRODUCTION and SALES can view logistics. ACCOUNTS can view logistics and contractor cost, and cannot approve that cost. A contractor login is not a staff role. Codes `contractor.work.view`, `contractor.work.accept`, `contractor.work.update`, `contractor.photos.upload`, `contractor.documents.view`, and `contractor.completion.submit` sit on the contractor user, not in this table.
+
+Sales intake codes are `sales_intake.view`, `sales_intake.create`, `sales_intake.assign`, `sales_intake.review`, `sales_intake.confirm_customer`, `sales_intake.confirm_requirements`, `sales_intake.match_product`, `sales_intake.create_estimate`, `sales_intake.create_quote`, `sales_intake.ai_analyse`, `sales_intake.view_ai_audit`, and `sales_intake.admin`.
+
+MANAGEMENT holds every sales-intake code, including provider-cost audit. SALES can capture, review, confirm, match, estimate, quote, and analyse. SALES cannot assign another person’s queue, administer intake, or see provider cost. ACCOUNTS can view the inbox. DESIGN, PRODUCTION, INSTALLER, and DISPATCH do not receive these codes. An intake assigned to someone else stays closed to a salesperson who lacks `sales_intake.admin`.
 
 Portal user roles (`ADMIN`, `BUYER`, `ACCOUNTS`, `VIEW_ONLY`, and the others in `docs/CUSTOMER_PORTAL_SECURITY.md`) are not rows in this permission table. A workshop login does not become a customer login. A contractor login does not become a staff login.
 

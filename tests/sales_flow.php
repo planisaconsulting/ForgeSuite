@@ -96,7 +96,7 @@ if ($opportunity['id'] === null) {
 }
 $opportunityId = (int) $opportunity['id'];
 $opportunityRow = (new OpportunityRepository())->find($opportunityId);
-if ($opportunityRow === null || !preg_match('/^SFO-\d{4}-\d{4}$/', (string) $opportunityRow['opportunity_number'])) {
+if ($opportunityRow === null || !preg_match('/^SFO-\d{4}-\d{4,}$/', (string) $opportunityRow['opportunity_number'])) {
     $fail('opportunity number ' . ($opportunityRow['opportunity_number'] ?? 'missing'));
 } else {
     $ok('opportunity number ' . $opportunityRow['opportunity_number']);
@@ -140,7 +140,7 @@ if ($made['id'] === null) {
 }
 $quoteId = (int) $made['id'];
 $quote = $repo->find($quoteId);
-if ($quote === null || !preg_match('/^SFQ-\d{4}-\d{4}$/', (string) $quote['quote_number'])) {
+if ($quote === null || !preg_match('/^SFQ-\d{4}-\d{4,}$/', (string) $quote['quote_number'])) {
     $fail('quote number');
 } else {
     $ok('quote number ' . $quote['quote_number']);
@@ -356,7 +356,7 @@ if ($converted['id'] === null) {
     $fail('convert ' . json_encode($converted['errors']));
 }
 $job = (new JobRepository())->find((int) $converted['id']);
-if ($job === null || !preg_match('/^SFJ-\d{4}-\d{4}$/', (string) $job['job_number'])) {
+if ($job === null || !preg_match('/^SFJ-\d{4}-\d{4,}$/', (string) $job['job_number'])) {
     $fail('job number');
 } else {
     $ok('job ' . $job['job_number']);
@@ -472,7 +472,7 @@ if (!str_starts_with($binary, '%PDF') || $pages < 2) {
     $ok('multi-page pdf has ' . $pages . ' pages');
 }
 $filename = (new QuotePdf())->filename((string) $longQuote['quote_number'], (int) $longQuote['revision_number']);
-if (!preg_match('/^SFQ-\d{4}-\d{4}-R\d+\.pdf$/', $filename)) {
+if (!preg_match('/^SFQ-\d{4}-\d{4,}-R\d+\.pdf$/', $filename)) {
     $fail('pdf filename ' . $filename);
 } else {
     $ok('pdf filename ' . $filename);

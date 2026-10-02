@@ -43,3 +43,9 @@ CORS is not opened with `Access-Control-Allow-Origin: *`.
 ## Privacy
 
 Customer data is limited to people who have the module permission. Field packs omit cost and margin. Push titles do not include amounts. Logs must not contain passwords, session ids, or API secrets. This review does not by itself make the business POPIA-compliant. Purpose, retention, operator agreements, and incident duties stay with the company.
+
+## Sales intake and assistance
+
+An enquiry is untrusted data. A sentence that says to ignore instructions, delete customers, or set a price is stored as text. It does not run SQL, change a price, or delete a record. Analysis output is limited to the intake schema. Unknown actions and monetary fields are dropped. A product id that is not in the product table is rejected.
+
+The provider, when enabled, receives a shortened copy of the enquiry. It does not receive a tool that can change stock, payments, users, or production release. The API key stays in server configuration, not in the database and not in the browser. Provider cost is visible only with `sales_intake.view_ai_audit`. Executable uploads are rejected before analysis. See `docs/AI_SAFETY.md`.

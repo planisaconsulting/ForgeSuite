@@ -180,6 +180,11 @@ final class NumberingService
         return $this->next('contractor_work_order', 'contractor_work_order_prefix', 'SFCWO');
     }
 
+    public function salesIntake(): string
+    {
+        return $this->next('sales_intake', 'intake_prefix', 'SFIN');
+    }
+
     private function next(string $document, string $setting, string $fallback): string
     {
         $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) SettingsService::get($setting, $fallback)) ?? '');

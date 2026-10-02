@@ -33,6 +33,7 @@ use App\Controllers\ProcurementController;
 use App\Controllers\CustomerHubController;
 use App\Controllers\ArtworkController;
 use App\Controllers\LogisticsController;
+use App\Controllers\SalesIntakeController;
 use App\Controllers\ContractorPortalController;
 use App\Controllers\OpportunityController;
 use App\Controllers\QuoteController;
@@ -430,6 +431,39 @@ $router->post('/opportunities/{id}/activity', static function (string $id): void
     (new OpportunityController())->activity($id);
 }, true, true, 'activities.manage');
 
+$router->get('/sales/intake', static function (): void {
+    (new SalesIntakeController())->index();
+}, true, 'sales_intake.view');
+$router->post('/sales/intake', static function (): void {
+    (new SalesIntakeController())->create();
+}, true, true, 'sales_intake.create');
+$router->get('/sales/intake/{id}', static function (string $id): void {
+    (new SalesIntakeController())->show($id);
+}, true, 'sales_intake.view');
+$router->post('/sales/intake/{id}/analyse', static function (string $id): void {
+    (new SalesIntakeController())->analyse($id);
+}, true, true, 'sales_intake.ai_analyse');
+$router->post('/sales/intake/{id}/customer', static function (string $id): void {
+    (new SalesIntakeController())->confirmCustomer($id);
+}, true, true, 'sales_intake.confirm_customer');
+$router->post('/sales/intake/{id}/fields', static function (string $id): void {
+    (new SalesIntakeController())->confirmField($id);
+}, true, true, 'sales_intake.confirm_requirements');
+$router->post('/sales/intake/{id}/requirements', static function (string $id): void {
+    (new SalesIntakeController())->confirmRequirements($id);
+}, true, true, 'sales_intake.confirm_requirements');
+$router->post('/sales/intake/{id}/matches', static function (string $id): void {
+    (new SalesIntakeController())->match($id);
+}, true, true, 'sales_intake.match_product');
+$router->post('/sales/intake/{id}/product', static function (string $id): void {
+    (new SalesIntakeController())->confirmProduct($id);
+}, true, true, 'sales_intake.match_product');
+$router->post('/sales/intake/{id}/estimate', static function (string $id): void {
+    (new SalesIntakeController())->estimate($id);
+}, true, true, 'sales_intake.create_estimate');
+$router->post('/sales/intake/{id}/quote', static function (string $id): void {
+    (new SalesIntakeController())->quote($id);
+}, true, true, 'sales_intake.create_quote');
 $router->get('/quotes', static function (): void {
     (new QuoteController())->index();
 }, true, 'quotes.view');
@@ -2161,6 +2195,30 @@ $router->get('/api/v1/contractors', static function (): void {
 }, false);
 $router->get('/api/v1/contractor-work-orders', static function (): void {
     (new ApiV1Controller())->contractorWorkOrders();
+}, false);
+$router->get('/api/v1/sales-intake', static function (): void {
+    (new ApiV1Controller())->salesIntakes();
+}, false);
+$router->get('/api/v1/sales-intake/{id}/requirements', static function (string $id): void {
+    (new ApiV1Controller())->salesIntakeSection($id, 'requirements');
+}, false);
+$router->get('/api/v1/sales-intake/{id}/matches', static function (string $id): void {
+    (new ApiV1Controller())->salesIntakeSection($id, 'matches');
+}, false);
+$router->get('/api/v1/sales-intake/{id}/questions', static function (string $id): void {
+    (new ApiV1Controller())->salesIntakeSection($id, 'questions');
+}, false);
+$router->get('/api/v1/sales-intake/{id}/estimate', static function (string $id): void {
+    (new ApiV1Controller())->salesIntakeSection($id, 'estimate');
+}, false);
+$router->get('/api/v1/sales-intake/{id}/quote', static function (string $id): void {
+    (new ApiV1Controller())->salesIntakeSection($id, 'quote');
+}, false);
+$router->post('/api/v1/sales-intake/{id}/analyse', static function (string $id): void {
+    (new ApiV1Controller())->salesIntakeAnalyse($id);
+}, false);
+$router->get('/api/v1/sales-intake/{id}', static function (string $id): void {
+    (new ApiV1Controller())->salesIntake($id);
 }, false);
 $router->get('/api/v1/contractor/work', static function (): void {
     (new ApiV1Controller())->contractorPortalWork();

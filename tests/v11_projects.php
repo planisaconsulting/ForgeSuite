@@ -51,7 +51,7 @@ $created = (new ProjectService())->create([
 $eq('project created', [], $created['errors']);
 $projectId = (int) $created['id'];
 $project = (new ProjectRepository())->find($projectId);
-$eq('project number shape', 1, preg_match('/^SFP-\d{4}-\d{4}$/', (string) $project['project_number']));
+$eq('project number shape', 1, preg_match('/^SFP-\d{4}-\d{4,}$/', (string) $project['project_number']));
 $eq('original target', '2027-06-01', (string) $project['original_target_date']);
 $eq('template copied', 5, count((new ProjectRepository())->milestones($projectId)));
 

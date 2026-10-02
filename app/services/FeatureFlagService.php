@@ -19,6 +19,11 @@ final class FeatureFlagService
         'CUSTOM_FORMS',
         'ADVANCED_WORKFLOWS',
         'OFFLINE_FIELD_MODE',
+        'AI_INTAKE_ANALYSIS',
+        'AI_DOCUMENT_EXTRACTION',
+        'AI_PRODUCT_MATCH_ASSIST',
+        'AI_MESSAGE_DRAFTING',
+        'AI_QUOTE_DESCRIPTION',
     ];
 
     public function __construct(

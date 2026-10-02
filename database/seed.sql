@@ -2088,3 +2088,76 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('pod_statement_version', 'POD-1'),
 ('install_statement_version', 'INSTALL-1')
 ON DUPLICATE KEY UPDATE setting_key = setting_key;
+
+
+-- v1.1 Phase 9 sales intake
+INSERT IGNORE INTO intake_term_mappings (customer_term, erp_category, product_id) VALUES
+('perspex', 'Acrylic', NULL),
+('alubond', 'ACM', NULL),
+('chromadek', 'Chromadek signage', NULL),
+('acm', 'ACM', NULL),
+('one-way vision', 'Perforated window vinyl', NULL),
+('sticker', 'Vinyl', NULL),
+('borde', 'Board', NULL);
+
+INSERT IGNORE INTO intake_requirement_rules (requirement_type, material_category, field_name, prompt_en, prompt_af) VALUES
+('SIGNAGE', 'ACM', 'thickness_mm', 'Please confirm the ACM thickness.', 'Bevestig asseblief die ACM-dikte.'),
+('VEHICLE', NULL, 'make', 'Please confirm the vehicle make.', 'Bevestig asseblief die voertuigmerk.'),
+('VEHICLE', NULL, 'model', 'Please confirm the vehicle model.', 'Bevestig asseblief die model.'),
+('VEHICLE', NULL, 'year', 'Please confirm the vehicle year.', 'Bevestig asseblief die jaar.'),
+('VEHICLE', NULL, 'body', 'Please confirm the body style.', 'Bevestig asseblief die bakstyl.'),
+('VEHICLE', NULL, 'coverage', 'Please confirm full or partial coverage.', 'Bevestig asseblief volle of gedeeltelike dekking.'),
+('VEHICLE', NULL, 'installation', 'Please confirm whether Sign-Forge must install the branding.', 'Bevestig asseblief of Sign-Forge moet installeer.'),
+('ILLUMINATED', NULL, 'font', 'Please confirm the font or supply vector artwork.', 'Bevestig asseblief die lettertipe of stuur vektor-kuns.'),
+('ILLUMINATED', NULL, 'depth', 'Please confirm the letter depth.', 'Bevestig asseblief die letterdiepte.'),
+('ILLUMINATED', NULL, 'face_colour', 'Please confirm the face colour.', 'Bevestig asseblief die voorkleur.'),
+('ILLUMINATED', NULL, 'mounting', 'Please confirm the mounting method.', 'Bevestig asseblief die monteermetode.'),
+('ILLUMINATED', NULL, 'site', 'Please confirm the site address.', 'Bevestig asseblief die terreinadres.'),
+('ILLUMINATED', NULL, 'power', 'Please confirm power and access.', 'Bevestig asseblief krag en toegang.');
+
+INSERT IGNORE INTO permissions (code, name, module) VALUES
+('sales_intake.view', 'View sales intake', 'sales_intake'),
+('sales_intake.create', 'Capture a sales intake', 'sales_intake'),
+('sales_intake.assign', 'Assign sales intake', 'sales_intake'),
+('sales_intake.review', 'Review sales intake', 'sales_intake'),
+('sales_intake.confirm_customer', 'Confirm the intake customer', 'sales_intake'),
+('sales_intake.confirm_requirements', 'Confirm intake requirements', 'sales_intake'),
+('sales_intake.match_product', 'Match an intake product', 'sales_intake'),
+('sales_intake.create_estimate', 'Create an estimate from intake', 'sales_intake'),
+('sales_intake.create_quote', 'Create a draft quote from intake', 'sales_intake'),
+('sales_intake.ai_analyse', 'Run intake analysis', 'sales_intake'),
+('sales_intake.view_ai_audit', 'View intake provider cost', 'sales_intake'),
+('sales_intake.admin', 'Administer sales intake', 'sales_intake');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code IN ('ADMIN', 'MANAGEMENT') AND p.module = 'sales_intake';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'SALES' AND p.code IN (
+    'sales_intake.view', 'sales_intake.create', 'sales_intake.review',
+    'sales_intake.confirm_customer', 'sales_intake.confirm_requirements',
+    'sales_intake.match_product', 'sales_intake.create_estimate',
+    'sales_intake.create_quote', 'sales_intake.ai_analyse'
+);
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p
+WHERE r.code = 'ACCOUNTS' AND p.code = 'sales_intake.view';
+
+INSERT INTO settings (setting_key, setting_value) VALUES
+('intake_prefix', 'SFIN'),
+('intake_max_analyses', '3'),
+('intake_max_input_chars', '8000'),
+('intake_max_attachment_mb', '8'),
+('intake_analysis_retention_days', '365'),
+('intake_prompt_version', '1')
+ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
+
+INSERT IGNORE INTO feature_flags (feature_key, enabled) VALUES
+('AI_INTAKE_ANALYSIS', 0),
+('AI_DOCUMENT_EXTRACTION', 0),
+('AI_PRODUCT_MATCH_ASSIST', 0),
+('AI_MESSAGE_DRAFTING', 0),
+('AI_QUOTE_DESCRIPTION', 0);

@@ -57,6 +57,7 @@ $groups = [
         ['feedback', 'Customer feedback', '/feedback', 'fa-star', 'feedback.view'],
     ]],
     ['label' => 'Sales', 'links' => [
+        ['sales-intake', 'Intake', '/sales/intake', 'fa-inbox', 'sales_intake.view'],
         ['calculator', 'Calculator', '/calculator', 'fa-calculator', 'calculator.use'],
         ['estimates', 'Estimates', '/estimates', 'fa-ruler', 'estimates.view'],
         ['quotes', 'Quotes', '/quotes', 'fa-file-invoice', 'quotes.view'],

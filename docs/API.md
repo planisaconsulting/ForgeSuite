@@ -98,6 +98,18 @@ Logistics reads use scope `logistics.read`:
 
 The shipment object omits internal notes and courier cost. Installations use scope `installations.read` on `GET /api/v1/installations`. Contractors and work orders use scope `contractors.read` on `GET /api/v1/contractors` and `GET /api/v1/contractor-work-orders`. `GET /api/v1/contractor/work` uses the contractor session and returns 401 without it. These routes were not called over HTTP. `tests/v11_phase8.php` covers shipment quantity, delivery, proof of delivery, contractor isolation, and cost posting in process.
 
+Sales intake reads use scope `sales_intake.read`:
+
+- `GET /api/v1/sales-intake`
+- `GET /api/v1/sales-intake/{id}`
+- `GET /api/v1/sales-intake/{id}/requirements`
+- `GET /api/v1/sales-intake/{id}/matches`
+- `GET /api/v1/sales-intake/{id}/questions`
+- `GET /api/v1/sales-intake/{id}/estimate`
+- `GET /api/v1/sales-intake/{id}/quote`
+
+`POST /api/v1/sales-intake/{id}/analyse` uses scope `sales_intake.write`. The same intake analysis limit applies. These routes were not called over HTTP. `tests/v11_phase9.php` covers extraction, matching, estimate, draft quote, and permission rules in process.
+
 Do not send `Access-Control-Allow-Origin: *` in front of these routes. The application does not.
 
 Rate limits apply to public leads, portal login, staff login, and API authentication failures. A very large JSON body is rejected by PHP’s post limit before it is parsed into business records.

@@ -104,6 +104,16 @@ Sign in at `/contractor/`. You see work that has been sent to your company. Acce
 
 On site, start the work, add notes and photos, complete the checklist, and submit. Submission asks Sign-Forge to review. It does not mark the job finished and it does not pay the invoice you upload. You do not see other contractors’ jobs, quote prices, or margin.
 
+## How to take an enquiry
+
+Open Sales → Intake. Paste the message and keep the sender. Analyse reads quantity, size, and material words. It does not fill in thickness, laminate, or installation unless the customer wrote them.
+
+Confirm the customer before a record is linked. If two company names are close, choose one. The desk does not merge them.
+
+Answer the missing questions, or send them after you have read the draft. Confirm the requirements, then find a product. A catalogue item for that customer is preferred. Create the estimate only when the screen says it is ready. The price comes from the product cost and the pricing rules. A budget or a discount in the message is noted and is not applied.
+
+Draft quote creates a draft. It does not send it. A repair, such as a sign that stopped working, goes to a service request instead of a quote.
+
 ## How to record a payment
 
 Open Payments, enter the amount and the date, and allocate it to invoices. If the payment is larger than the invoice, the invoice is paid and the rest stays as customer credit. It does not make the invoice balance negative.

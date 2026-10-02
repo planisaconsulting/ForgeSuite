@@ -740,6 +740,68 @@ final class ApiV1Controller
         $this->send(200, true, ['work' => $rows], []);
     }
 
+    public function salesIntakes(): void
+    {
+        $auth = $this->gate('sales_intake.read');
+        if ($auth === null) {
+            return;
+        }
+        $rows = (new \App\Services\SalesIntakeService())->page(25, 0);
+        $this->finish($auth, 200, true, ['intakes' => $rows], [], 'sales_intake', null);
+    }
+
+    public function salesIntake(string $id): void
+    {
+        $auth = $this->gate('sales_intake.read');
+        if ($auth === null) {
+            return;
+        }
+        $opened = (new \App\Services\SalesIntakeService())->workspace((int) $id, (int) $auth['client']['created_by']);
+        if ($opened['intake'] === null) {
+            $this->finish($auth, 404, false, null, ['intake' => 'That enquiry was not found.'], 'sales_intake', (int) $id);
+
+            return;
+        }
+        unset($opened['intake']['customer_budget']);
+        $this->finish($auth, 200, true, ['intake' => $opened['intake']], [], 'sales_intake', (int) $id);
+    }
+
+    public function salesIntakeAnalyse(string $id): void
+    {
+        $auth = $this->gate('sales_intake.write');
+        if ($auth === null) {
+            return;
+        }
+        $result = (new \App\Services\SalesIntakeService())->analyse((int) $id, (int) $auth['client']['created_by']);
+        $ok = $result['errors'] === [];
+        $this->finish($auth, $ok ? 200 : 422, $ok, ['cached' => $result['cached']], $result['errors'], 'sales_intake', (int) $id);
+    }
+
+    public function salesIntakeSection(string $id, string $section): void
+    {
+        $auth = $this->gate('sales_intake.read');
+        if ($auth === null) {
+            return;
+        }
+        $opened = (new \App\Services\SalesIntakeService())->workspace((int) $id, (int) $auth['client']['created_by']);
+        if ($opened['intake'] === null) {
+            $this->finish($auth, 404, false, null, ['intake' => 'That enquiry was not found.'], 'sales_intake', (int) $id);
+
+            return;
+        }
+        $allowed = ['requirements' => 'fields', 'matches' => 'matches', 'questions' => 'questions', 'estimate' => 'estimate_id', 'quote' => 'quote_id'];
+        if (!isset($allowed[$section])) {
+            $this->finish($auth, 404, false, null, ['section' => 'That section was not found.'], 'sales_intake', (int) $id);
+
+            return;
+        }
+        $key = $allowed[$section];
+        $payload = in_array($key, ['estimate_id', 'quote_id'], true)
+            ? [$key => $opened['intake'][$key] ?? null]
+            : [$section => $opened['intake'][$key] ?? []];
+        $this->finish($auth, 200, true, $payload, [], 'sales_intake', (int) $id);
+    }
+
     /**
      * @return array{client: array<string, mixed>, scopes: list<string>}|null
      */

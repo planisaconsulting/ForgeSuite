@@ -72,6 +72,12 @@ Proof links store a hash, not the raw token. Storage at `/artwork/storage` does 
 
 Courier integration mode `MANUAL` is the working path. `API` does not call a carrier. Tracking links are built only from the courier’s https template. Contractor users are a separate login at `/contractor/`. See `docs/LOGISTICS.md` and `docs/CONTRACTOR_PORTAL.md`.
 
+## Sales intake
+
+`intake_prefix` defaults to SFIN. `intake_max_analyses` is 3. `intake_max_input_chars` is 8000. `intake_max_attachment_mb` is 8. `intake_analysis_retention_days` is 365. `intake_prompt_version` is 1.
+
+`AI_INTAKE_ANALYSIS` and `AI_MESSAGE_DRAFTING` start off. With them off, staff can still capture an enquiry and create an estimate. `ai_provider` must be `scripted` and `ai_enabled` must be 1 before the stand-in drafts wording. Any other provider is treated as unavailable. Do not store an API key in settings. See `docs/AI_PROVIDER_CONFIGURATION.md` and `docs/AI_SAFETY.md`.
+
 ## System health
 
 Administration → System health shows the release, PHP, database, storage, last cron, last backup, failed automations, and failed field sync. It does not show passwords.
